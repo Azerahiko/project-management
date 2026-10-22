@@ -5,11 +5,11 @@ import {
     dashboard,
     documents,
     notifications,
-    projects,
     reports,
     tasks,
     teams,
 } from '@/routes';
+import projects from '@/routes/projects';
 import users from '@/routes/users';
 
 export type MenuItem = {
@@ -47,7 +47,7 @@ export const menuSections: MenuSection[] = [
         items: [
             {
                 label: 'Projects',
-                href: projects.url(),
+                href: projects.index.url(),
                 icon: 'FolderKanban',
                 permission: 'projects.view',
             },
