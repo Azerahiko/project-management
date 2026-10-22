@@ -20,7 +20,12 @@ defineEmits<Emits>();
 
 const page = usePage();
 
-const currentPath = computed(() => window.location.pathname);
+const currentPath = computed(() => {
+    if (typeof window !== 'undefined') {
+        return window.location.pathname;
+    }
+    return new URL(page.url).pathname;
+});
 
 function isActiveRoute(href: string): boolean {
     return (
