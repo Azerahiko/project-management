@@ -12,7 +12,7 @@ defineOptions({
 });
 
 const page = usePage();
-const user = page.props.auth.user;
+const user = page.props.auth?.user;
 const { currentTheme, setTheme } = useTheme();
 const { success } = useToast();
 

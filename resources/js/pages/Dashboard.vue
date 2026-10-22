@@ -11,7 +11,7 @@ defineOptions({
 });
 
 const page = usePage();
-const user = page.props.auth.user;
+const user = page.props.auth?.user;
 const stats = page.props.stats as Record<string, number> | undefined;
 
 const cardsRef = ref<HTMLElement[]>([]);
