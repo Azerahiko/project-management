@@ -20,6 +20,80 @@ export type Permission = {
     updated_at: string;
 };
 
+export type ProjectStatus =
+    | 'draft'
+    | 'active'
+    | 'on_hold'
+    | 'completed'
+    | 'archived';
+export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
+export type ProjectRole = 'owner' | 'manager' | 'member' | 'viewer';
+
+export interface ProjectStatusOption {
+    value: ProjectStatus;
+    label: string;
+    color: string;
+}
+
+export interface ProjectPriorityOption {
+    value: ProjectPriority;
+    label: string;
+    color: string;
+}
+
+export interface ProjectRoleOption {
+    value: ProjectRole;
+    label: string;
+}
+
+export type Project = {
+    id: number;
+    name: string;
+    description: string | null;
+    status: ProjectStatus;
+    status_label: string;
+    status_color: string;
+    priority: ProjectPriority;
+    priority_label: string;
+    priority_color: string;
+    start_date: string | null;
+    end_date: string | null;
+    owner_id: number;
+    owner?: User;
+    members_count?: number;
+    members?: ProjectMember[];
+    can_update?: boolean;
+    can_delete?: boolean;
+    can_manage_members?: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+};
+
+export type ProjectMember = {
+    id: number;
+    project_id: number;
+    user_id: number;
+    role: ProjectRole;
+    role_label: string;
+    joined_at: string;
+    user?: User;
+    is_owner: boolean;
+    created_at: string;
+    updated_at: string;
+};
+
+export type ProjectFilters = {
+    search: string;
+    status: string;
+    priority: string;
+    owner_id: string;
+    sort_by: string;
+    sort_direction: 'asc' | 'desc';
+    page: number;
+    per_page: number;
+};
+
 export type PaginatedResponse<T> = {
     data: T[];
     links: {

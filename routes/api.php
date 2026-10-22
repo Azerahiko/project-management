@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,4 +12,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('can:users.delete');
 
     Route::get('roles', [UserController::class, 'roles'])->middleware('can:users.view');
+
+    // Project routes
+    Route::get('projects', [ProjectController::class, 'index'])->middleware('can:projects.view');
+    Route::post('projects', [ProjectController::class, 'store'])->middleware('can:projects.create');
+    Route::get('projects/managers', [ProjectController::class, 'managers'])->middleware('can:projects.create');
+    Route::get('projects/{project}', [ProjectController::class, 'show'])->middleware('can:projects.view');
+    Route::put('projects/{project}', [ProjectController::class, 'update'])->middleware('can:projects.update');
+    Route::delete('projects/{project}', [ProjectController::class, 'destroy'])->middleware('can:projects.delete');
+
+    // Project member routes
+    Route::get('projects/{project}/members', [ProjectController::class, 'members'])->middleware('can:projects.view');
+    Route::post('projects/{project}/members', [ProjectController::class, 'addMember'])->middleware('can:projects.manage_members');
+    Route::put('projects/{project}/members/{user}', [ProjectController::class, 'updateMember'])->middleware('can:projects.manage_members');
+    Route::delete('projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->middleware('can:projects.manage_members');
 });

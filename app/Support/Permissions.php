@@ -10,6 +10,14 @@ class Permissions
 
     public const PROJECTS_VIEW = 'projects.view';
 
+    public const PROJECTS_CREATE = 'projects.create';
+
+    public const PROJECTS_UPDATE = 'projects.update';
+
+    public const PROJECTS_DELETE = 'projects.delete';
+
+    public const PROJECTS_MANAGE_MEMBERS = 'projects.manage_members';
+
     public const TASKS_VIEW = 'tasks.view';
 
     public const TASK_COLLABORATION_VIEW = 'task-collaboration.view';
@@ -50,6 +58,10 @@ class Permissions
             ],
             'Workspace' => [
                 self::PROJECTS_VIEW => 'Projects View',
+                self::PROJECTS_CREATE => 'Projects Create',
+                self::PROJECTS_UPDATE => 'Projects Update',
+                self::PROJECTS_DELETE => 'Projects Delete',
+                self::PROJECTS_MANAGE_MEMBERS => 'Projects Manage Members',
                 self::TASKS_VIEW => 'Tasks View',
                 self::TASK_COLLABORATION_VIEW => 'Task Collaboration View',
                 self::TEAMS_VIEW => 'Teams View',
@@ -100,6 +112,10 @@ class Permissions
                 self::DASHBOARD_VIEW,
                 self::NOTIFICATIONS_VIEW,
                 self::PROJECTS_VIEW,
+                self::PROJECTS_CREATE,
+                self::PROJECTS_UPDATE,
+                self::PROJECTS_DELETE,
+                self::PROJECTS_MANAGE_MEMBERS,
                 self::TASKS_VIEW,
                 self::TASK_COLLABORATION_VIEW,
                 self::TEAMS_VIEW,
@@ -112,6 +128,8 @@ class Permissions
                 self::DASHBOARD_VIEW,
                 self::NOTIFICATIONS_VIEW,
                 self::PROJECTS_VIEW,
+                self::PROJECTS_CREATE,
+                self::PROJECTS_UPDATE,
                 self::TASKS_VIEW,
                 self::TASK_COLLABORATION_VIEW,
                 self::TEAMS_VIEW,
