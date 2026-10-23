@@ -12,6 +12,8 @@ use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\User;
+use App\Notifications\ProjectMemberAdded;
+use App\Services\NotificationSender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -19,6 +21,10 @@ use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
+    public function __construct(
+        protected NotificationSender $notificationSender
+    ) {}
+
     /**
      * Display a paginated listing of projects.
      */
@@ -175,6 +181,18 @@ class ProjectController extends Controller
                 'role' => $validated['role'],
                 'joined_at' => now(),
             ])->load('user');
+        });
+
+        // Send ProjectMemberAdded notification to the new member
+        $user = $member->user;
+        DB::afterCommit(function () use ($project, $user, $validated, $request) {
+            $this->notificationSender->send($user, ProjectMemberAdded::class, [
+                'project_id' => $project->id,
+                'project_name' => $project->name,
+                'role' => $validated['role'],
+                'added_by_name' => $request->user()->name,
+                'action' => 'project_member_added',
+            ]);
         });
 
         return ProjectMemberResource::make($member)

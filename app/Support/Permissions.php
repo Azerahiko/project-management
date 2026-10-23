@@ -156,7 +156,6 @@ class Permissions
             ],
             Roles::CLIENT => [
                 self::DASHBOARD_VIEW,
-                self::NOTIFICATIONS_VIEW,
                 self::PROJECTS_VIEW,
             ],
         ];

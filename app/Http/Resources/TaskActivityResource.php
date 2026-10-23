@@ -27,6 +27,12 @@ class TaskActivityResource extends JsonResource
             'description' => $activity->description,
             'created_at' => $activity->created_at?->toISOString(),
             'user' => $activity->relationLoaded('user') ? UserResource::make($activity->user)->resolve() : null,
+            'task' => $activity->relationLoaded('task') ? [
+                'id' => $activity->task->id,
+                'title' => $activity->task->title,
+                'project_id' => $activity->task->project_id,
+                'url' => route('tasks.show', $activity->task),
+            ] : null,
         ];
     }
 }
