@@ -15,8 +15,24 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var User $user */
+        /** @var User|null $user */
         $user = $this->resource;
+
+        if (! $user) {
+            return [
+                'id' => null,
+                'name' => null,
+                'email' => null,
+                'email_verified_at' => null,
+                'is_active' => false,
+                'avatar' => null,
+                'initials' => null,
+                'roles' => [],
+                'permissions' => [],
+                'created_at' => null,
+                'updated_at' => null,
+            ];
+        }
 
         return [
             'id' => $user->id,
