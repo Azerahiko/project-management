@@ -7,9 +7,11 @@ use App\Enums\TaskStatus;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -31,6 +33,8 @@ use Illuminate\Support\Carbon;
  * @property-read Project $project
  * @property-read User $assignee
  * @property-read User $creator
+ * @property-read Collection<int, TaskComment> $comments
+ * @property-read Collection<int, TaskActivity> $activities
  * @property bool|null $can_update
  * @property bool|null $can_delete
  */
@@ -98,6 +102,26 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creator_id');
+    }
+
+    /**
+     * Get the comments for the task.
+     *
+     * @return HasMany<TaskComment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class);
+    }
+
+    /**
+     * Get the activities for the task.
+     *
+     * @return HasMany<TaskActivity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(TaskActivity::class);
     }
 
     /**

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\TaskActivityController;
+use App\Http\Controllers\Api\TaskCommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -37,4 +39,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Task assignees
     Route::get('projects/{project}/assignees', [TaskController::class, 'assignees'])->middleware('can:projects.view');
+
+    // Task comments
+    Route::middleware(['can:tasks.view', 'can:task-collaboration.view'])->group(function () {
+        Route::get('tasks/{task}/comments', [TaskCommentController::class, 'index']);
+        Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store']);
+        Route::put('comments/{comment}', [TaskCommentController::class, 'update']);
+        Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy']);
+
+        // Task activities
+        Route::get('tasks/{task}/activities', [TaskActivityController::class, 'index']);
+    });
 });
