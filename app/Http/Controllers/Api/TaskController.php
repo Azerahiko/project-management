@@ -9,6 +9,7 @@ use App\Http\Requests\Api\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
+use App\Services\TaskActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
+    public function __construct(
+        protected TaskActivityLogger $activityLogger
+    ) {}
+
     /**
      * Display a paginated listing of tasks.
      */
@@ -81,6 +86,15 @@ class TaskController extends Controller
 
             $task = Task::create($data);
 
+            $this->activityLogger->log(
+                $task,
+                'task.created',
+                null,
+                null,
+                $task->title,
+                $request->user()
+            );
+
             return $task->load(['project', 'assignee', 'creator']);
         });
 
@@ -112,6 +126,9 @@ class TaskController extends Controller
 
         $data = $request->validated();
 
+        // Capture original raw values for activity logging (before fill)
+        $original = $task->getAttributes();
+
         // Handle status change to/from done
         if (isset($data['status'])) {
             if ($data['status'] === 'done' && $task->status->value !== 'done') {
@@ -124,6 +141,20 @@ class TaskController extends Controller
         $task->fill($data);
         $task->save();
 
+        // Log activity for each changed field using getChanges()
+        $activities = [];
+        $fieldsToWatch = ['status', 'priority', 'assignee_id', 'due_date', 'start_date'];
+
+        foreach ($fieldsToWatch as $field) {
+            if (array_key_exists($field, $task->getChanges())) {
+                $activities[] = ['task.updated', $field, $original[$field] ?? null, $data[$field] ?? null];
+            }
+        }
+
+        if ($activities !== []) {
+            $this->activityLogger->logMultiple($task, $activities, $request->user());
+        }
+
         return TaskResource::make($task->load(['project', 'assignee', 'creator']));
     }
 
@@ -134,7 +165,16 @@ class TaskController extends Controller
     {
         $this->authorize('delete', $task);
 
-        DB::transaction(function () use ($task) {
+        DB::transaction(function () use ($task, $request): void {
+            $this->activityLogger->log(
+                $task,
+                'task.deleted',
+                null,
+                null,
+                $task->title,
+                $request->user()
+            );
+
             $task->delete();
         });
 

@@ -12,7 +12,13 @@ import Button from '@/components/ui/Button.vue';
 import Dropdown from '@/components/ui/Dropdown.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Modal from '@/components/ui/Modal.vue';
-import type { Task, TaskFilters } from '@/types';
+import TaskComments from '@/components/tasks/TaskComments.vue';
+import TaskActivity from '@/components/tasks/TaskActivity.vue';
+import type {
+    Task,
+    TaskFilters,
+    TaskActivity as TaskActivityItem,
+} from '@/types';
 
 defineOptions({
     layout: AppLayout,
@@ -24,6 +30,10 @@ const { fetchAssignees } = useTasks({} as TaskFilters);
 
 const task = page.props.task as Task;
 const taskId = task.id;
+
+const activities = ref<TaskActivityItem[]>([]);
+const activitiesLoading = ref(false);
+const activitiesError = ref<string | null>(null);
 
 const editStatus = ref(false);
 const statusOptions = [
@@ -64,7 +74,26 @@ onMounted(() => {
     if (task.can_update) {
         loadAssignees();
     }
+    fetchActivities();
 });
+
+async function fetchActivities(): Promise<void> {
+    activitiesLoading.value = true;
+    activitiesError.value = null;
+
+    try {
+        const { data: response } = await api.get<{ data: TaskActivityItem[] }>(
+            `/tasks/${taskId}/activities`,
+            { params: { limit: 50 } },
+        );
+        activities.value = response.data;
+    } catch (err: any) {
+        activitiesError.value =
+            err?.response?.data?.message ?? 'Gagal memuat aktivitas.';
+    } finally {
+        activitiesLoading.value = false;
+    }
+}
 
 async function updateStatus(newStatus: string): Promise<void> {
     if (newStatus === task.status) return;
@@ -435,6 +464,16 @@ function formatDateShort(dateString: string | null): string {
                 </button>
             </div>
         </div>
+
+        <!-- Comments Section -->
+        <TaskComments :task="task" />
+
+        <!-- Activity Section -->
+        <TaskActivity
+            :task="task"
+            :activities="activities"
+            :loading="activitiesLoading"
+        />
     </div>
 
     <!-- Assignee Modal -->

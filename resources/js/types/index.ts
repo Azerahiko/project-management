@@ -74,6 +74,32 @@ export type Task = {
     deleted_at: string | null;
 };
 
+export type TaskComment = {
+    id: number;
+    task_id: number;
+    user_id: number;
+    content: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    user?: User;
+    can_update?: boolean;
+    can_delete?: boolean;
+};
+
+export type TaskActivity = {
+    id: number;
+    task_id: number;
+    user_id: number | null;
+    activity_type: string;
+    field: string | null;
+    old_value: string | null;
+    new_value: string | null;
+    description: string;
+    created_at: string;
+    user?: User;
+};
+
 export type TaskFilters = {
     search: string;
     status: string;
@@ -84,6 +110,25 @@ export type TaskFilters = {
     sort_direction: 'asc' | 'desc';
     page: number;
     per_page: number;
+};
+
+export type PaginatedResponse<T> = {
+    data: T[];
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        path: string;
+        per_page: number;
+        to: number | null;
+        total: number;
+    };
 };
 
 export interface ProjectStatusOption {
@@ -149,25 +194,6 @@ export type ProjectFilters = {
     sort_direction: 'asc' | 'desc';
     page: number;
     per_page: number;
-};
-
-export type PaginatedResponse<T> = {
-    data: T[];
-    links: {
-        first: string | null;
-        last: string | null;
-        prev: string | null;
-        next: string | null;
-    };
-    meta: {
-        current_page: number;
-        from: number | null;
-        last_page: number;
-        path: string;
-        per_page: number;
-        to: number | null;
-        total: number;
-    };
 };
 
 export type PageProps = {
