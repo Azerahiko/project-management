@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,4 +27,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('projects/{project}/members', [ProjectController::class, 'addMember'])->middleware('can:projects.manage_members');
     Route::put('projects/{project}/members/{user}', [ProjectController::class, 'updateMember'])->middleware('can:projects.manage_members');
     Route::delete('projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->middleware('can:projects.manage_members');
+
+    // Task routes
+    Route::get('tasks', [TaskController::class, 'index'])->middleware('can:tasks.view');
+    Route::post('tasks', [TaskController::class, 'store'])->middleware('can:tasks.view');
+    Route::get('tasks/{task}', [TaskController::class, 'show'])->middleware('can:tasks.view');
+    Route::put('tasks/{task}', [TaskController::class, 'update'])->middleware('can:tasks.view');
+    Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->middleware('can:tasks.view');
+
+    // Task assignees
+    Route::get('projects/{project}/assignees', [TaskController::class, 'assignees'])->middleware('can:projects.view');
 });

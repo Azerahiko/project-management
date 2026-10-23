@@ -29,6 +29,63 @@ export type ProjectStatus =
 export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
 export type ProjectRole = 'owner' | 'manager' | 'member' | 'viewer';
 
+export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface TaskStatusOption {
+    value: TaskStatus;
+    label: string;
+    color: string;
+}
+
+export interface TaskPriorityOption {
+    value: TaskPriority;
+    label: string;
+    color: string;
+}
+
+export type Task = {
+    id: number;
+    project_id: number;
+    title: string;
+    description: string | null;
+    status: TaskStatus;
+    status_label: string;
+    status_color: string;
+    priority: TaskPriority;
+    priority_label: string;
+    priority_color: string;
+    assignee_id: number | null;
+    creator_id: number;
+    start_date: string | null;
+    due_date: string | null;
+    completed_at: string | null;
+    assignee?: User;
+    creator?: User;
+    project?: {
+        id: number;
+        name: string;
+    };
+    can_update?: boolean;
+    can_delete?: boolean;
+    is_overdue?: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+};
+
+export type TaskFilters = {
+    search: string;
+    status: string;
+    priority: string;
+    assignee_id: string;
+    project_id: string;
+    sort_by: string;
+    sort_direction: 'asc' | 'desc';
+    page: number;
+    per_page: number;
+};
+
 export interface ProjectStatusOption {
     value: ProjectStatus;
     label: string;

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Resources\ProjectResource;
+use App\Http\Resources\TaskResource;
 use App\Http\Resources\UserResource;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -55,7 +57,33 @@ Route::middleware(['auth'])->group(function () {
         })->name('projects.edit');
     });
 
-    Route::inertia('/tasks', 'Tasks/Index')->name('tasks');
+    Route::middleware('can:tasks.view')->group(function () {
+        Route::inertia('/tasks', 'Tasks/Index')->name('tasks.index');
+        Route::inertia('/tasks/create', 'Tasks/Create')->name('tasks.create');
+        Route::get('/tasks/{task}', function (Task $task, Request $request) {
+            abort_unless($request->user()->can('view', $task), 403);
+
+            $task->load(['project', 'assignee', 'creator']);
+            $task->can_update = $request->user()->can('update', $task);
+            $task->can_delete = $request->user()->can('delete', $task);
+
+            return Inertia::render('Tasks/Show', [
+                'task' => TaskResource::make($task)->toArray($request),
+            ]);
+        })->name('tasks.show');
+
+        Route::get('/tasks/{task}/edit', function (Task $task, Request $request) {
+            abort_unless($request->user()->can('update', $task), 403);
+
+            $task->load(['project', 'assignee', 'creator']);
+            $task->can_update = $request->user()->can('update', $task);
+            $task->can_delete = $request->user()->can('delete', $task);
+
+            return Inertia::render('Tasks/Edit', [
+                'task' => TaskResource::make($task)->toArray($request),
+            ]);
+        })->name('tasks.edit');
+    });
     Route::inertia('/collaboration', 'Collaboration/Index')->name('collaboration');
     Route::inertia('/teams', 'Teams/Index')->name('teams');
     Route::inertia('/calendar', 'Calendar/Index')->name('calendar');

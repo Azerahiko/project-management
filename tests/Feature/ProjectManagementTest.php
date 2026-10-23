@@ -1,114 +1,11 @@
 <?php
 
-use App\Enums\ProjectPriority;
+require_once __DIR__.'/helpers.php';
+
 use App\Enums\ProjectRole;
-use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\User;
-use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Support\Facades\Artisan;
-
-function createTestUsers()
-{
-    // Ensure migrations run
-    Artisan::call('migrate', ['--force' => true]);
-
-    // Seed roles and permissions
-    (new RolePermissionSeeder)->run();
-
-    $admin = User::factory()->create([
-        'email' => 'admin@projex.test',
-        'password' => bcrypt('password'),
-        'is_active' => true,
-    ]);
-    $admin->assignRole('administrator');
-
-    $pm = User::factory()->create([
-        'email' => 'pm@projex.test',
-        'password' => bcrypt('password'),
-        'is_active' => true,
-    ]);
-    $pm->assignRole('project_manager');
-
-    $member = User::factory()->create([
-        'email' => 'member@projex.test',
-        'password' => bcrypt('password'),
-        'is_active' => true,
-    ]);
-    $member->assignRole('member');
-
-    return [$admin, $pm, $member];
-}
-
-function createTestProjects($admin, $pm, $member)
-{
-    $project = Project::create([
-        'name' => 'Redesain Website Perusahaan',
-        'description' => 'Test project',
-        'status' => ProjectStatus::ACTIVE,
-        'priority' => ProjectPriority::HIGH,
-        'start_date' => now()->subWeeks(4),
-        'end_date' => now()->addWeeks(4),
-        'owner_id' => $admin->id,
-    ]);
-
-    ProjectMember::create([
-        'project_id' => $project->id,
-        'user_id' => $admin->id,
-        'role' => ProjectRole::OWNER,
-    ]);
-
-    ProjectMember::create([
-        'project_id' => $project->id,
-        'user_id' => $pm->id,
-        'role' => ProjectRole::MANAGER,
-    ]);
-
-    ProjectMember::create([
-        'project_id' => $project->id,
-        'user_id' => $member->id,
-        'role' => ProjectRole::MEMBER,
-    ]);
-
-    $pmProject = Project::create([
-        'name' => 'Sistem Manajemen Inventaris',
-        'description' => 'PM project',
-        'status' => ProjectStatus::DRAFT,
-        'priority' => ProjectPriority::MEDIUM,
-        'start_date' => now()->addWeeks(2),
-        'end_date' => now()->addMonths(3),
-        'owner_id' => $pm->id,
-    ]);
-
-    ProjectMember::create([
-        'project_id' => $pmProject->id,
-        'user_id' => $pm->id,
-        'role' => ProjectRole::OWNER,
-    ]);
-
-    ProjectMember::create([
-        'project_id' => $pmProject->id,
-        'user_id' => $member->id,
-        'role' => ProjectRole::MEMBER,
-    ]);
-
-    $otherProject = Project::create([
-        'name' => 'Aplikasi Mobile Internal',
-        'description' => 'Other project',
-        'status' => ProjectStatus::ON_HOLD,
-        'priority' => ProjectPriority::LOW,
-        'owner_id' => $pm->id,
-    ]);
-
-    ProjectMember::create([
-        'project_id' => $otherProject->id,
-        'user_id' => $pm->id,
-        'role' => ProjectRole::OWNER,
-    ]);
-
-    return [$project, $pmProject, $otherProject];
-}
 
 describe('Project Management', function () {
     describe('Web UI Access', function () {

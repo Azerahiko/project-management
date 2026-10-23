@@ -6,9 +6,9 @@ import {
     documents,
     notifications,
     reports,
-    tasks,
     teams,
 } from '@/routes';
+import tasks from '@/routes/tasks';
 import projects from '@/routes/projects';
 import users from '@/routes/users';
 
@@ -53,7 +53,7 @@ export const menuSections: MenuSection[] = [
             },
             {
                 label: 'Tasks',
-                href: tasks.url(),
+                href: tasks.index.url(),
                 icon: 'CheckSquare',
                 permission: 'tasks.view',
             },
