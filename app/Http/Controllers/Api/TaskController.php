@@ -9,16 +9,23 @@ use App\Http\Requests\Api\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
+use App\Notifications\TaskAssigned;
+use App\Notifications\TaskStatusChanged;
+use App\Services\NotificationSender;
 use App\Services\TaskActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TaskController extends Controller
 {
     public function __construct(
-        protected TaskActivityLogger $activityLogger
+        protected TaskActivityLogger $activityLogger,
+        protected NotificationSender $notificationSender
     ) {}
 
     /**
@@ -98,6 +105,21 @@ class TaskController extends Controller
             return $task->load(['project', 'assignee', 'creator']);
         });
 
+        // Send TaskAssigned notification after commit if assignee is set and not the creator
+        if ($task->assignee_id && $task->assignee_id !== $request->user()->id) {
+            $eventId = Str::uuid()->toString();
+            DB::afterCommit(function () use ($task, $eventId) {
+                $this->notificationSender->send($task->assignee, TaskAssigned::class, [
+                    'task_id' => $task->id,
+                    'task_title' => $task->title,
+                    'project_id' => $task->project_id,
+                    'project_name' => $task->project->name,
+                    'action' => 'assigned',
+                    'event_id' => $eventId,
+                ]);
+            });
+        }
+
         return TaskResource::make($task)
             ->response()
             ->setStatusCode(201);
@@ -126,7 +148,7 @@ class TaskController extends Controller
 
         $data = $request->validated();
 
-        // Capture original raw values for activity logging (before fill)
+        // Capture original raw values for activity logging AND change detection (before fill)
         $original = $task->getAttributes();
 
         // Handle status change to/from done
@@ -137,6 +159,10 @@ class TaskController extends Controller
                 $data['completed_at'] = null;
             }
         }
+
+        // Check for changes BEFORE fill/save
+        $assigneeChanged = isset($data['assignee_id']) && $data['assignee_id'] !== $original['assignee_id'];
+        $statusChanged = isset($data['status']) && $data['status'] !== $original['status'];
 
         $task->fill($data);
         $task->save();
@@ -153,6 +179,53 @@ class TaskController extends Controller
 
         if ($activities !== []) {
             $this->activityLogger->logMultiple($task, $activities, $request->user());
+        }
+
+        // Send TaskAssigned notification if assignee changed
+        if ($assigneeChanged && $task->assignee_id && $task->assignee_id !== $request->user()->id) {
+            $eventId = Str::uuid()->toString();
+            DB::afterCommit(function () use ($task, $eventId) {
+                // Load relationships if not loaded
+                if (! $task->relationLoaded('assignee')) {
+                    $task->load('assignee');
+                }
+                if (! $task->relationLoaded('project')) {
+                    $task->load('project');
+                }
+                $this->notificationSender->send($task->assignee, TaskAssigned::class, [
+                    'task_id' => $task->id,
+                    'task_title' => $task->title,
+                    'project_id' => $task->project_id,
+                    'project_name' => $task->project->name,
+                    'action' => 'assigned',
+                    'event_id' => $eventId,
+                ]);
+            });
+        }
+
+        // Send TaskStatusChanged notification if status changed
+        if ($statusChanged) {
+            $oldStatus = $original['status'] ?? null;
+            $newStatus = $task->status->value;
+            $recipients = $this->getStatusChangeRecipients($task, $request->user());
+
+            if ($recipients->isNotEmpty()) {
+                $eventId = Str::uuid()->toString();
+                DB::afterCommit(function () use ($task, $recipients, $oldStatus, $newStatus, $eventId) {
+                    foreach ($recipients as $recipient) {
+                        $this->notificationSender->send($recipient, TaskStatusChanged::class, [
+                            'task_id' => $task->id,
+                            'task_title' => $task->title,
+                            'project_id' => $task->project_id,
+                            'project_name' => $task->project->name,
+                            'old_status' => $oldStatus,
+                            'new_status' => $newStatus,
+                            'action' => 'status_changed',
+                            'event_id' => $eventId,
+                        ]);
+                    }
+                });
+            }
         }
 
         return TaskResource::make($task->load(['project', 'assignee', 'creator']));
@@ -202,5 +275,39 @@ class TaskController extends Controller
                 'initials' => $user->initials,
             ]),
         ]);
+    }
+
+    /**
+     * Get unique recipients for task status change notifications.
+     * Excludes the actor and deduplicates by user ID.
+     *
+     * @return Collection<int, User>
+     */
+    private function getStatusChangeRecipients(Task $task, User $actor): Collection
+    {
+        $recipients = collect();
+
+        // Assignee
+        if ($task->assignee_id && $task->assignee_id !== $actor->id) {
+            $recipients->push($task->assignee);
+        }
+
+        // Creator
+        if ($task->creator_id !== $actor->id && $task->creator_id !== ($task->assignee_id ?? 0)) {
+            $recipients->push($task->creator);
+        }
+
+        // Project owners & managers (excluding actor, assignee, creator)
+        $projectMembers = $task->project->members()
+            ->wherePivotIn('role', ['owner', 'manager'])
+            ->where('users.id', '!=', $actor->id)
+            ->where('users.id', '!=', $task->assignee_id ?? 0)
+            ->where('users.id', '!=', $task->creator_id)
+            ->get();
+
+        $recipients = $recipients->merge($projectMembers);
+
+        // Deduplicate by user ID
+        return $recipients->unique('id');
     }
 }

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import UserDropdown from './UserDropdown.vue';
+import NotificationDropdown from './NotificationDropdown.vue';
 import { getIcon } from '@/components/sidebar/icons';
 import { useTheme } from '@/composables/useTheme';
 
@@ -68,17 +69,8 @@ function cycleTheme(): void {
                 <component :is="getIcon(getThemeIcon())" class="h-5 w-5" />
             </button>
 
-            <!-- Notifications placeholder -->
-            <button
-                type="button"
-                class="relative rounded-lg p-2 text-surface-500 transition-colors duration-150 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800"
-                aria-label="Notifikasi"
-            >
-                <component :is="getIcon('Bell')" class="h-5 w-5" />
-                <span
-                    class="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"
-                />
-            </button>
+            <!-- Notifications dropdown -->
+            <NotificationDropdown v-if="user" :user="user" />
 
             <!-- User dropdown -->
             <UserDropdown v-if="user" :user="user" />

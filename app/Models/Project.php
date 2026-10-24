@@ -33,6 +33,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, User> $members
  * @property-read Collection<int, ProjectMember> $projectMembers
  * @property-read int|null $members_count
+ * @property-read int|null $tasks_count
+ * @property-read int|null $completed_tasks_count
  * @property bool|null $can_update
  * @property bool|null $can_delete
  * @property bool|null $can_manage_members
@@ -90,6 +92,16 @@ class Project extends Model
     public function projectMembers(): HasMany
     {
         return $this->hasMany(ProjectMember::class);
+    }
+
+    /**
+     * Get all tasks for the project.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\UserResource;
@@ -17,7 +18,9 @@ Route::inertia('/login', 'Auth/Login')->name('login')->middleware('guest');
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
-    Route::inertia('/dashboard', 'Dashboard')->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard')
+        ->middleware('can:dashboard.view');
     Route::inertia('/notifications', 'Notifications/Index')->name('notifications');
 
     // Project routes

@@ -98,6 +98,12 @@ export type TaskActivity = {
     description: string;
     created_at: string;
     user?: User;
+    task?: {
+        id: number;
+        title: string;
+        project_id: number;
+        url: string;
+    };
 };
 
 export type TaskFilters = {
@@ -224,4 +230,98 @@ export type MenuItem = {
 export type MenuSection = {
     label: string;
     items: MenuItem[];
+};
+
+export type NotificationAction =
+    | 'assigned'
+    | 'comment'
+    | 'status_changed'
+    | 'project_member_added';
+
+export type NotificationData = {
+    action: NotificationAction;
+    task_id?: number;
+    task_title?: string;
+    project_id?: number;
+    project_name?: string;
+    comment_id?: number;
+    comment_preview?: string;
+    author_name?: string;
+    old_status?: string;
+    new_status?: string;
+    role?: string;
+    added_by_name?: string;
+    event_id?: string;
+    url: string;
+};
+
+export type Notification = {
+    id: string;
+    type: string;
+    data: NotificationData;
+    read_at: string | null;
+    created_at: string;
+};
+
+export type NotificationFilters = {
+    page: number;
+    per_page: number;
+};
+
+export type DeadlineUrgency = 'overdue' | 'critical' | 'warning' | 'normal';
+
+export type UpcomingDeadline = {
+    id: number;
+    title: string;
+    project?: { id: number; name: string };
+    due_date: string | null;
+    deadline_urgency: DeadlineUrgency;
+};
+
+export type ProjectProgress = {
+    id: number;
+    name: string;
+    description: string | null;
+    tasks_count: number;
+    completed_tasks_count: number;
+    progress_percent: number;
+};
+
+export type RecentActivity = {
+    id: number;
+    task_id: number;
+    user_id: number | null;
+    activity_type: string;
+    field: string | null;
+    old_value: string | null;
+    new_value: string | null;
+    description: string;
+    created_at: string;
+    user?: {
+        name: string;
+        avatar: string | null;
+        initials: string;
+    };
+    task?: {
+        id: number;
+        title: string;
+        project_id: number;
+        url: string;
+    };
+};
+
+export type DashboardStats = {
+    projects_count: number;
+    my_tasks_count: number;
+    overdue_count: number;
+    team_members_count: number;
+    notifications_unread: number;
+};
+
+export type DashboardProps = {
+    stats: DashboardStats;
+    tasks_by_status: Partial<Record<TaskStatus, number>>;
+    upcoming_deadlines: UpcomingDeadline[];
+    recent_activities: RecentActivity[];
+    project_progress: ProjectProgress[];
 };

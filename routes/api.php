@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskActivityController;
 use App\Http\Controllers\Api\TaskCommentController;
@@ -49,5 +50,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Task activities
         Route::get('tasks/{task}/activities', [TaskActivityController::class, 'index']);
+    });
+
+    // Notification routes
+    Route::middleware('can:notifications.view')->group(function () {
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::put('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::put('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     });
 });
