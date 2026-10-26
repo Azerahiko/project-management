@@ -15,11 +15,11 @@ class DummyUserSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            ['name' => 'Budi Santoso', 'email' => 'project.manager@projex.test', 'role' => Roles::PROJECT_MANAGER],
-            ['name' => 'Siti Rahayu', 'email' => 'team.leader@projex.test', 'role' => Roles::TEAM_LEADER],
-            ['name' => 'Andi Wijaya', 'email' => 'member@projex.test', 'role' => Roles::MEMBER],
-            ['name' => 'Dewi Lestari', 'email' => 'reviewer@projex.test', 'role' => Roles::REVIEWER],
-            ['name' => 'Rudi Hartono', 'email' => 'client@projex.test', 'role' => Roles::CLIENT],
+            ['name' => 'Budi Santoso', 'email' => 'project.manager@project.local', 'role' => Roles::PROJECT_MANAGER],
+            ['name' => 'Siti Rahayu', 'email' => 'team.leader@project.local', 'role' => Roles::TEAM_LEADER],
+            ['name' => 'Andi Wijaya', 'email' => 'member@project.local', 'role' => Roles::MEMBER],
+            ['name' => 'Dewi Lestari', 'email' => 'reviewer@project.local', 'role' => Roles::REVIEWER],
+            ['name' => 'Rudi Hartono', 'email' => 'client@project.local', 'role' => Roles::CLIENT],
         ];
 
         foreach ($users as $data) {

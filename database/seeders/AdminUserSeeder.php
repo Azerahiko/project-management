@@ -15,10 +15,10 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $admin = User::updateOrCreate(
-            ['email' => 'admin@projex.test'],
+            ['email' => 'admin@project.local'],
             [
                 'name' => 'System Administrator',
-                'email' => 'admin@projex.test',
+                'email' => 'admin@project.local',
                 'password' => Hash::make('password'),
                 'is_active' => true,
                 'email_verified_at' => now(),
@@ -27,7 +27,7 @@ class AdminUserSeeder extends Seeder
 
         $admin->syncRoles(Roles::ADMINISTRATOR);
 
-        $this->command?->info('Administrator created: admin@projex.test / password');
+        $this->command?->info('Administrator created: admin@project.local / password');
         $this->command?->warn('⚠  Change the default password before deploying to production!');
     }
 }
