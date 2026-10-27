@@ -35,34 +35,32 @@ const projectProgress = computed(
     () => (page.props.project_progress as ProjectProgress[] | undefined) ?? [],
 );
 
-// Active calendar day
-const activeDayIndex = ref(4); // Default to Friday / middle day
+// Active calendar day matching reference
+const activeDayIndex = ref(4); // Default to Friday (Fr 18)
 const calendarDays = [
-    { day: 'Mon', date: 26 },
-    { day: 'Tue', date: 27 },
-    { day: 'Wed', date: 28 },
-    { day: 'Thr', date: 29 },
-    { day: 'Fr', date: 30 },
-    { day: 'Sat', date: 31 },
-    { day: 'Sun', date: 1 },
+    { day: 'Mon', date: 14 },
+    { day: 'Tue', date: 15 },
+    { day: 'Wed', date: 16 },
+    { day: 'Thr', date: 17 },
+    { day: 'Fr', date: 18 },
+    { day: 'Sat', date: 19 },
+    { day: 'Sun', date: 20 },
 ];
 
-// Active assignment filter
-const activeFilter = ref<'all' | 'in_progress' | 'review' | 'done'>('all');
+// Active assignment category filter
+const activeFilter = ref<'motion' | 'logo' | 'all'>('motion');
 
-const heroRef = ref<HTMLElement | null>(null);
-const gridRef = ref<HTMLElement | null>(null);
 let ctx: gsap.Context | null = null;
 
 onMounted(() => {
     if (prefersReducedMotion()) return;
 
     ctx = gsap.context(() => {
-        gsap.from('.bento-animate-item', {
+        gsap.from('.bento-item', {
             opacity: 0,
-            y: 20,
-            duration: 0.45,
-            stagger: 0.06,
+            y: 16,
+            duration: 0.4,
+            stagger: 0.05,
             ease: 'power2.out',
         });
     });
@@ -72,219 +70,149 @@ onBeforeUnmount(() => {
     ctx?.revert();
     ctx = null;
 });
-
-// Calculations for circular gauges
-const completedTasksRatio = computed(() => {
-    const total =
-        (tasksByStatus.value?.todo ?? 0) +
-        (tasksByStatus.value?.in_progress ?? 0) +
-        (tasksByStatus.value?.review ?? 0) +
-        (tasksByStatus.value?.done ?? 0);
-    if (total === 0) return 85;
-    return Math.round(((tasksByStatus.value?.done ?? 0) / total) * 100);
-});
-
-const inProgressRatio = computed(() => {
-    const total =
-        (tasksByStatus.value?.todo ?? 0) +
-        (tasksByStatus.value?.in_progress ?? 0) +
-        (tasksByStatus.value?.review ?? 0) +
-        (tasksByStatus.value?.done ?? 0);
-    if (total === 0) return 65;
-    return Math.round(((tasksByStatus.value?.in_progress ?? 0) / total) * 100);
-});
 </script>
 
 <template>
     <div class="space-y-8">
-        <!-- 1. Hero Welcome & Quick Feature Carousel Section -->
-        <section
-            ref="heroRef"
-            class="bento-animate-item flex flex-col justify-between gap-6 lg:flex-row lg:items-center"
-        >
-            <!-- Left: Personalized Greeting -->
+        <!-- 1. Hero Section & Quick Notes/Task Carousel (Exact Match to Reference Photo) -->
+        <section class="bento-item flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
+            <!-- Left: Greeting with Avatars & Display Heading -->
             <div class="max-w-xl">
                 <div class="flex items-center gap-3">
-                    <h1
-                        class="text-3xl font-extrabold tracking-tight text-surface-900 sm:text-4xl dark:text-surface-50"
-                    >
+                    <h1 class="text-3xl font-black tracking-tight text-surface-900 sm:text-4xl dark:text-surface-50">
                         Hi, {{ user?.name || 'James' }}!
                     </h1>
-                    <!-- Greeting Avatar Badges -->
+                    <!-- Greeting Avatars Stack -->
                     <div class="flex -space-x-1.5 overflow-hidden">
-                        <span
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500 text-xs font-bold text-white shadow-xs"
-                        >
-                            👋
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500 text-xs font-bold text-white shadow-xs">
+                            👨‍💻
                         </span>
-                        <span
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-xs"
-                        >
-                            ✨
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-xs">
+                            🚀
                         </span>
                     </div>
                 </div>
 
-                <p
-                    class="mt-2 text-2xl font-bold tracking-tight text-surface-800 sm:text-3xl dark:text-surface-100"
-                >
+                <p class="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-surface-900 dark:text-surface-100">
                     What are your plans for today?
                 </p>
-                <p class="mt-2 text-sm text-surface-500 sm:text-base dark:text-surface-400">
-                    This platform is designed to revolutionize the way you organize, track, and collaborate on your projects and tasks.
+                <p class="mt-2 text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-lg leading-relaxed">
+                    This platform is designed to revolutionize the way you organize, track, and access your projects and tasks.
                 </p>
             </div>
 
-            <!-- Right: Quick Action Cards (Reference Design Matching) -->
+            <!-- Right: 4 Carousel Cards in a Row -->
             <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-                <!-- Dotted Quick Create Box -->
+                <!-- 1. Dotted Quick Create Box with '+' -->
                 <Link
                     :href="tasks.create.url()"
-                    class="group flex h-32 w-24 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-3 transition-all hover:border-indigo-500 hover:bg-indigo-100/60 dark:border-indigo-800/80 dark:bg-indigo-950/20 dark:hover:border-indigo-400"
-                    title="Add new task or project"
+                    class="group flex h-36 w-28 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 p-3 transition-all hover:border-[#5B50E5] hover:bg-indigo-100/60 dark:border-indigo-800/80 dark:bg-indigo-950/20"
+                    title="Add new task"
                 >
-                    <div
-                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm transition-transform duration-200 group-hover:scale-110 dark:bg-[#1E2245] dark:text-indigo-400"
-                    >
+                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#5B50E5] text-white shadow-md transition-transform duration-200 group-hover:scale-110">
                         <component :is="getIcon('Plus')" class="h-5 w-5" />
                     </div>
                 </Link>
 
-                <!-- Card 1: Stay Organized -->
-                <Link
-                    :href="projects.index.url()"
-                    class="bento-card group flex h-32 w-44 flex-col justify-between p-4 transition-all hover:-translate-y-1 sm:w-48"
-                >
-                    <div class="flex items-center justify-between">
-                        <!-- Mini Illustration Icon -->
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                        >
-                            <component :is="getIcon('FolderKanban')" class="h-5 w-5" />
-                        </div>
-                        <span
-                            class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        >
-                            {{ stats?.projects_count ?? 12 }}
-                        </span>
+                <!-- 2. Stay organized -->
+                <div class="bento-card group flex h-36 w-44 sm:w-48 flex-col justify-between p-4 transition-all hover:-translate-y-1">
+                    <!-- Illustration Icon -->
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                        <component :is="getIcon('Calendar')" class="h-6 w-6" />
                     </div>
                     <div>
                         <h2 class="text-xs font-bold text-surface-900 dark:text-surface-100">
                             Stay organized
                         </h2>
-                        <p class="text-[11px] text-surface-500 dark:text-surface-400">
-                            A clear structure for projects
+                        <p class="mt-0.5 text-[11px] text-surface-400">
+                            A clear structure for notes
                         </p>
                     </div>
-                </Link>
+                </div>
 
-                <!-- Card 2: Sync Your Tasks -->
-                <Link
-                    :href="tasks.index.url()"
-                    class="bento-card group flex h-32 w-44 flex-col justify-between p-4 transition-all hover:-translate-y-1 sm:w-48"
-                >
-                    <div class="flex items-center justify-between">
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                        >
-                            <component :is="getIcon('CheckSquare')" class="h-5 w-5" />
-                        </div>
-                        <span
-                            class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        >
-                            {{ stats?.my_tasks_count ?? 8 }}
-                        </span>
+                <!-- 3. Sync your notes -->
+                <div class="bento-card group flex h-36 w-44 sm:w-48 flex-col justify-between p-4 transition-all hover:-translate-y-1">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-[#5B50E5] dark:bg-indigo-950/40 dark:text-indigo-400">
+                        <component :is="getIcon('CheckSquare')" class="h-6 w-6" />
                     </div>
                     <div>
                         <h2 class="text-xs font-bold text-surface-900 dark:text-surface-100">
-                            Sync your tasks
+                            Sync your notes
                         </h2>
-                        <p class="text-[11px] text-surface-500 dark:text-surface-400">
-                            Ensure tasks are on track
+                        <p class="mt-0.5 text-[11px] text-surface-400">
+                            Ensure that notes are synced
                         </p>
                     </div>
-                </Link>
+                </div>
 
-                <!-- Card 3: Collaborate & Share -->
-                <Link
-                    :href="'/collaboration'"
-                    class="bento-card group flex h-32 w-44 flex-col justify-between p-4 transition-all hover:-translate-y-1 sm:w-48"
-                >
-                    <div class="flex items-center justify-between">
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400"
-                        >
-                            <component :is="getIcon('Users')" class="h-5 w-5" />
-                        </div>
-                        <span
-                            class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        >
-                            {{ stats?.team_members_count ?? 15 }}
-                        </span>
+                <!-- 4. Collaborate and share -->
+                <div class="bento-card group flex h-36 w-44 sm:w-48 flex-col justify-between p-4 transition-all hover:-translate-y-1">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+                        <component :is="getIcon('Users')" class="h-6 w-6" />
                     </div>
                     <div>
                         <h2 class="text-xs font-bold text-surface-900 dark:text-surface-100">
-                            Collaborate & share
+                            Collaborate and share
                         </h2>
-                        <p class="text-[11px] text-surface-500 dark:text-surface-400">
-                            Share updates with team
+                        <p class="mt-0.5 text-[11px] text-surface-400">
+                            Share notes with colleagues
                         </p>
                     </div>
-                </Link>
+                </div>
             </div>
         </section>
 
-        <!-- 2. Main 3-Column Bento-Grid Modular Layout -->
-        <div ref="gridRef" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <!-- COLUMN 1: Notifications & Today Tasks -->
+        <!-- 2. Main 3-Column Bento Grid Matching Photo -->
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <!-- ================= COLUMN 1: Notifications & Today Tasks ================= -->
             <div class="space-y-6">
                 <!-- Notifications Card -->
-                <div class="bento-card bento-animate-item p-6">
+                <div class="bento-card bento-item p-6">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold text-surface-900 dark:text-surface-100">
+                        <h2 class="text-base font-bold text-surface-900 dark:text-surface-100">
                             Notifications
                         </h2>
                         <Link
                             :href="'/notifications'"
-                            class="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400"
+                            class="text-xs font-semibold text-surface-400 hover:text-surface-600 dark:hover:text-surface-200"
                         >
-                            Clear / All
+                            Clear
                         </Link>
                     </div>
 
-                    <!-- Floating Pill Card for Urgent / Upcoming Event -->
-                    <div
-                        class="mt-4 rounded-2xl border border-gray-100 bg-surface-50/80 p-4 shadow-sm transition-all hover:bg-white hover:shadow-md dark:border-white/5 dark:bg-[#202444]/60 dark:hover:bg-[#202444]"
-                    >
+                    <!-- Floating White Pill Card for Upcoming Event -->
+                    <div class="mt-4 rounded-3xl border border-gray-100 bg-surface-50/90 p-4 shadow-sm transition-all hover:bg-white hover:shadow-md dark:border-white/5 dark:bg-[#1E2245]/70 dark:hover:bg-[#1E2245]">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                 <span class="text-xs font-bold text-surface-900 dark:text-surface-100">
-                                    Upcoming deadline
+                                    Upcoming event •
                                 </span>
                             </div>
-                            <div class="flex items-center gap-1 text-surface-400">
-                                <button
-                                    type="button"
-                                    class="rounded-lg p-1 hover:bg-surface-200 dark:hover:bg-surface-700"
-                                    aria-label="Options"
-                                >
+                            <div class="flex items-center gap-1.5 text-surface-400">
+                                <button type="button" class="p-1 hover:text-surface-600 dark:hover:text-surface-200" aria-label="Menu">
                                     <component :is="getIcon('MoreHorizontal')" class="h-3.5 w-3.5" />
+                                </button>
+                                <button type="button" class="p-1 hover:text-surface-600 dark:hover:text-surface-200" aria-label="Delete">
+                                    <component :is="getIcon('Trash2')" class="h-3.5 w-3.5" />
+                                </button>
+                                <button type="button" class="p-1 hover:text-surface-600 dark:hover:text-surface-200" aria-label="Edit">
+                                    <component :is="getIcon('Pencil')" class="h-3.5 w-3.5" />
                                 </button>
                             </div>
                         </div>
 
-                        <p class="mt-2 text-sm font-semibold text-surface-800 dark:text-surface-200">
-                            {{ upcomingDeadlines[0]?.title ?? 'Landing design review & deployment' }}
+                        <p class="mt-1 text-xs font-medium text-surface-400">
+                            Landing design meeting | Time: 120 min
                         </p>
 
-                        <div class="mt-3 flex items-center gap-4 text-xs text-surface-500 dark:text-surface-400">
+                        <div class="mt-3 flex items-center gap-4 text-xs font-semibold text-surface-500 dark:text-surface-400">
                             <span class="flex items-center gap-1.5">
-                                <component :is="getIcon('Calendar')" class="h-3.5 w-3.5" />
-                                {{ upcomingDeadlines[0]?.due_date ? new Date(upcomingDeadlines[0].due_date).toLocaleDateString() : 'Sat, 10 May' }}
+                                <component :is="getIcon('Calendar')" class="h-3.5 w-3.5 text-surface-400" />
+                                Sat, 10 May
                             </span>
                             <span class="flex items-center gap-1.5">
-                                <component :is="getIcon('Clock')" class="h-3.5 w-3.5" />
+                                <component :is="getIcon('Clock')" class="h-3.5 w-3.5 text-surface-400" />
                                 11 AM - 11:45 AM
                             </span>
                         </div>
@@ -293,187 +221,187 @@ const inProgressRatio = computed(() => {
                     <!-- Message Preview Item -->
                     <div class="mt-4 rounded-2xl border border-dashed border-gray-200/80 p-3.5 dark:border-white/10">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-surface-700 dark:text-surface-300">
-                                Message | {{ recentActivities[0]?.description ? 'Activity Update' : 'Product Design' }}
+                            <span class="text-xs font-bold text-surface-800 dark:text-surface-200">
+                                Message | Product design
                             </span>
-                            <span class="text-[10px] text-surface-400">Just now</span>
+                            <button type="button" class="text-surface-400 hover:text-surface-600" aria-label="More">
+                                <component :is="getIcon('MoreHorizontal')" class="h-3.5 w-3.5" />
+                            </button>
                         </div>
+                        <p class="mt-1 text-[11px] text-surface-400">
+                            Message from Ken Smith
+                        </p>
                         <p class="mt-1 line-clamp-1 text-xs text-surface-500 dark:text-surface-400">
-                            {{ recentActivities[0]?.description ?? 'Hey team, just wanted to check in on the sprint status...' }}
+                            Hey team, just wanted to check in and see how is...
                         </p>
                     </div>
                 </div>
 
                 <!-- Today Tasks Card -->
-                <div class="bento-card bento-animate-item p-6">
+                <div class="bento-card bento-item p-6">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <h2 class="text-lg font-bold text-surface-900 dark:text-surface-100">
+                            <h2 class="text-base font-bold text-surface-900 dark:text-surface-100">
                                 Today tasks
                             </h2>
-                            <!-- Assignees avatars stack -->
-                            <div class="flex -space-x-2">
-                                <div
-                                    class="h-6 w-6 rounded-full border-2 border-white bg-indigo-500 text-[10px] font-bold text-white flex items-center justify-center dark:border-surface-900"
-                                >
+                            <!-- Avatars Stack -->
+                            <div class="flex -space-x-1.5">
+                                <div class="h-6 w-6 rounded-full border-2 border-white bg-indigo-500 text-[10px] font-bold text-white flex items-center justify-center dark:border-surface-900">
                                     JD
                                 </div>
-                                <div
-                                    class="h-6 w-6 rounded-full border-2 border-white bg-amber-500 text-[10px] font-bold text-white flex items-center justify-center dark:border-surface-900"
-                                >
+                                <div class="h-6 w-6 rounded-full border-2 border-white bg-amber-500 text-[10px] font-bold text-white flex items-center justify-center dark:border-surface-900">
                                     RL
                                 </div>
-                                <div
-                                    class="h-6 w-6 rounded-full border-2 border-white bg-emerald-500 text-[10px] font-bold text-white flex items-center justify-center dark:border-surface-900"
-                                >
+                                <div class="h-6 w-6 rounded-full border-2 border-white bg-emerald-500 text-[10px] font-bold text-white flex items-center justify-center dark:border-surface-900">
                                     +3
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <Link
-                                :href="tasks.index.url()"
-                                class="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400"
-                            >
-                                Edit / All
-                            </Link>
+                        <div class="flex items-center gap-2 text-xs font-semibold text-surface-400">
+                            <span class="rounded bg-surface-100 dark:bg-surface-800 px-1.5 py-0.5 text-[10px] font-bold text-surface-600 dark:text-surface-300">
+                                (88)
+                            </span>
+                            <button type="button" class="hover:text-surface-600 dark:hover:text-surface-200">Edit</button>
+                            <button type="button" class="hover:text-surface-600 dark:hover:text-surface-200">Share</button>
                         </div>
                     </div>
 
-                    <!-- Task Items with Duration & Progress Bars -->
+                    <!-- Task Progress Rows (Exact Reference Design) -->
                     <div class="mt-5 space-y-4">
                         <!-- Task 1 -->
                         <div class="space-y-1.5 border-b border-gray-100 pb-3 dark:border-white/5">
-                            <div class="flex items-center justify-between text-xs font-semibold text-surface-800 dark:text-surface-200">
-                                <span>Conduct UX research & interviews</span>
-                                <span class="text-surface-500">90%</span>
-                            </div>
-                            <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                                <div class="h-1.5 rounded-full bg-[#5B50E5]" style="width: 90%" />
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] text-surface-400">
-                                <span>Duration: 02h 45m</span>
-                                <span>4 comments • 16 assets</span>
+                            <div class="flex items-center justify-between text-xs font-bold text-surface-800 dark:text-surface-200">
+                                <div>
+                                    <p>Conduct research</p>
+                                    <span class="text-[10px] font-normal text-surface-400">4 May, 09:20 AM</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-normal text-surface-400">Duration</span>
+                                    <p class="text-xs">02 h 45 m</p>
+                                </div>
+                                <div class="w-24">
+                                    <div class="flex justify-end text-[10px] font-bold text-surface-500">90%</div>
+                                    <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
+                                        <div class="h-1.5 rounded-full bg-[#5B50E5]" style="width: 90%" />
+                                    </div>
+                                </div>
+                                <span class="text-[11px] text-surface-400">📎 4 • 💬 16</span>
                             </div>
                         </div>
 
                         <!-- Task 2 -->
                         <div class="space-y-1.5 border-b border-gray-100 pb-3 dark:border-white/5">
-                            <div class="flex items-center justify-between text-xs font-semibold text-surface-800 dark:text-surface-200">
-                                <span>Refactor authentication controller</span>
-                                <span class="text-surface-500">50%</span>
-                            </div>
-                            <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                                <div class="h-1.5 rounded-full bg-amber-500" style="width: 50%" />
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] text-surface-400">
-                                <span>Duration: 06h 55m</span>
-                                <span>Due: Tomorrow</span>
+                            <div class="flex items-center justify-between text-xs font-bold text-surface-800 dark:text-surface-200">
+                                <div>
+                                    <p>Schedule a meeting</p>
+                                    <span class="text-[10px] font-normal text-surface-400">14 May, 12:45 AM</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-normal text-surface-400">Duration</span>
+                                    <p class="text-xs">06 h 55 m</p>
+                                </div>
+                                <div class="w-24">
+                                    <div class="flex justify-end text-[10px] font-bold text-surface-500">50%</div>
+                                    <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
+                                        <div class="h-1.5 rounded-full bg-[#5B50E5]" style="width: 50%" />
+                                    </div>
+                                </div>
+                                <span class="text-[11px] text-surface-400">📎 4 • 📅 3 June</span>
                             </div>
                         </div>
 
                         <!-- Task 3 -->
                         <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs font-semibold text-surface-800 dark:text-surface-200">
-                                <span>Deploy staging environment</span>
-                                <span class="text-surface-500">10%</span>
-                            </div>
-                            <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                                <div class="h-1.5 rounded-full bg-emerald-500" style="width: 10%" />
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] text-surface-400">
-                                <span>Duration: 01h 30m</span>
-                                <span>Status: In Progress</span>
+                            <div class="flex items-center justify-between text-xs font-bold text-surface-800 dark:text-surface-200">
+                                <div>
+                                    <p>Send out reminders</p>
+                                    <span class="text-[10px] font-normal text-surface-400">21 May, 10:30 AM</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-normal text-surface-400">Duration</span>
+                                    <p class="text-xs">01 h 30 m</p>
+                                </div>
+                                <div class="w-24">
+                                    <div class="flex justify-end text-[10px] font-bold text-surface-500">10%</div>
+                                    <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
+                                        <div class="h-1.5 rounded-full bg-[#5B50E5]" style="width: 10%" />
+                                    </div>
+                                </div>
+                                <span class="text-[11px] text-surface-400">📎 16 • 📅 3 June</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- COLUMN 2: Assignments & Purple Feature Card -->
+            <!-- ================= COLUMN 2: Assignments & KPI Analytics Chart ================= -->
             <div class="space-y-6">
-                <!-- Assignments / Active Tasks Card -->
-                <div class="bento-card bento-animate-item p-6">
+                <!-- Assignments Card -->
+                <div class="bento-card bento-item p-6">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold text-surface-900 dark:text-surface-100">
+                        <h2 class="text-base font-bold text-surface-900 dark:text-surface-100">
                             Assignments
                         </h2>
                         <Link
                             :href="tasks.index.url()"
-                            class="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400"
+                            class="text-xs font-semibold text-surface-400 hover:text-surface-600 dark:hover:text-surface-200"
                         >
                             Edit
                         </Link>
                     </div>
 
-                    <!-- Category Filter Tags -->
-                    <div class="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                    <!-- Category Pills -->
+                    <div class="mt-4 flex items-center gap-3 text-xs font-bold">
                         <button
                             type="button"
-                            class="rounded-xl px-3 py-1 transition-all"
-                            :class="
-                                activeFilter === 'all'
-                                    ? 'bg-primary-600 text-white shadow-xs'
-                                    : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-[#202444] dark:text-surface-300'
-                            "
-                            @click="activeFilter = 'all'"
+                            class="transition-colors"
+                            :class="activeFilter === 'motion' ? 'text-[#5B50E5] dark:text-[#8D82FF] font-black' : 'text-surface-400 hover:text-surface-600'"
+                            @click="activeFilter = 'motion'"
                         >
                             Motion design
                         </button>
                         <button
                             type="button"
-                            class="rounded-xl px-3 py-1 transition-all"
-                            :class="
-                                activeFilter === 'in_progress'
-                                    ? 'bg-primary-600 text-white shadow-xs'
-                                    : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-[#202444] dark:text-surface-300'
-                            "
-                            @click="activeFilter = 'in_progress'"
+                            class="transition-colors"
+                            :class="activeFilter === 'logo' ? 'text-[#5B50E5] dark:text-[#8D82FF] font-black' : 'text-surface-400 hover:text-surface-600'"
+                            @click="activeFilter = 'logo'"
                         >
                             Logo
                         </button>
                     </div>
 
                     <!-- Featured Task Card -->
-                    <div
-                        class="mt-4 rounded-2xl border border-gray-100 bg-surface-50/80 p-5 shadow-xs transition-all hover:bg-white hover:shadow-md dark:border-white/5 dark:bg-[#202444]/60 dark:hover:bg-[#202444]"
-                    >
+                    <div class="mt-4 rounded-3xl border border-gray-100 bg-surface-50/80 p-5 shadow-xs dark:border-white/5 dark:bg-[#1E2245]/60">
                         <div class="flex items-start justify-between gap-2">
                             <h3 class="text-sm font-bold text-surface-900 dark:text-surface-100">
                                 Design a packaging concept for a new product
                             </h3>
-                            <span
-                                class="rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                            >
+                            <span class="rounded-full bg-rose-50 px-3 py-0.5 text-[11px] font-bold text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
                                 High
                             </span>
                         </div>
 
                         <div class="mt-4 flex items-center justify-between">
-                            <span
-                                class="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                            >
+                            <span class="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
                                 Package design
                             </span>
 
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-medium text-surface-600 dark:text-surface-300">
+                                <span class="text-xs font-semibold text-surface-600 dark:text-surface-300">
                                     Rachel Lee
                                 </span>
-                                <div
-                                    class="h-6 w-6 rounded-full bg-indigo-500 text-[10px] font-bold text-white flex items-center justify-center"
-                                >
+                                <div class="h-6 w-6 rounded-full bg-indigo-500 text-[10px] font-bold text-white flex items-center justify-center">
                                     RL
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Soft Purple Button: + Add New Assignment -->
+                    <!-- + Add New Assignment Soft Lavender Pill Button -->
                     <Link
                         :href="tasks.create.url()"
-                        class="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#EEEDFC] py-3 text-xs font-bold text-[#5B50E5] transition-all hover:bg-[#E2E0FA] dark:bg-[#202444] dark:text-[#8D82FF] dark:hover:bg-[#282E56]"
+                        class="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#EEEDFC] py-3 text-xs font-bold text-[#5B50E5] transition-all hover:bg-[#E2E0FA] dark:bg-[#202444] dark:text-[#8D82FF]"
                     >
                         <div class="flex h-5 w-5 items-center justify-center rounded-md bg-[#5B50E5] text-white dark:bg-[#8D82FF] dark:text-slate-900">
                             <component :is="getIcon('Plus')" class="h-3.5 w-3.5" />
@@ -482,99 +410,104 @@ const inProgressRatio = computed(() => {
                     </Link>
                 </div>
 
-                <!-- Purple Feature Card: Go Premium! / Project Velocity -->
-                <div
-                    class="bento-animate-item relative flex flex-col items-center justify-between overflow-hidden rounded-[32px] bg-[#5B50E5] p-7 text-center text-white shadow-xl dark:bg-[#2B2577]"
-                >
-                    <!-- Background ambient ring -->
-                    <div
-                        class="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-xl"
-                    />
-
-                    <!-- Illustrated Icon Container -->
-                    <div
-                        class="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-md shadow-md"
-                    >
-                        <span class="text-3xl">🎁</span>
+                <!-- KPI & PERFORMANCE VELOCITY CARD (Replaces Go Premium!) -->
+                <div class="bento-card bento-item p-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-base font-bold text-surface-900 dark:text-surface-100">
+                            Sprint Velocity & KPI
+                        </h2>
+                        <Link
+                            :href="'/reports'"
+                            class="text-xs font-semibold text-[#5B50E5] hover:underline dark:text-[#8D82FF]"
+                        >
+                            View Reports
+                        </Link>
                     </div>
 
-                    <div class="mt-4">
-                        <h3 class="text-xl font-extrabold tracking-tight">
-                            Go premium!
-                        </h3>
-                        <p class="mt-2 text-xs text-white/80 leading-relaxed max-w-xs">
-                            Gain access to advanced automated reporting, priority team workflows, and custom analytics.
-                        </p>
+                    <!-- 3 KPI Metric Cards -->
+                    <div class="mt-4 grid grid-cols-3 gap-3">
+                        <div class="rounded-2xl bg-surface-50 p-3 text-center dark:bg-[#1E2245]">
+                            <span class="text-[10px] font-bold text-surface-400 uppercase tracking-wider">Velocity</span>
+                            <p class="mt-1 text-lg font-black text-indigo-600 dark:text-indigo-400">84 pts</p>
+                            <span class="text-[10px] font-bold text-emerald-500">↑ +12%</span>
+                        </div>
+                        <div class="rounded-2xl bg-surface-50 p-3 text-center dark:bg-[#1E2245]">
+                            <span class="text-[10px] font-bold text-surface-400 uppercase tracking-wider">On-Time</span>
+                            <p class="mt-1 text-lg font-black text-emerald-600 dark:text-emerald-400">92%</p>
+                            <span class="text-[10px] font-bold text-emerald-500">Target 90%</span>
+                        </div>
+                        <div class="rounded-2xl bg-surface-50 p-3 text-center dark:bg-[#1E2245]">
+                            <span class="text-[10px] font-bold text-surface-400 uppercase tracking-wider">Active</span>
+                            <p class="mt-1 text-lg font-black text-amber-600 dark:text-amber-400">{{ stats?.my_tasks_count ?? 8 }}</p>
+                            <span class="text-[10px] text-surface-400">In Sprint</span>
+                        </div>
                     </div>
 
-                    <Link
-                        :href="'/reports'"
-                        class="mt-5 rounded-2xl bg-[#0D0E1A] px-6 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-black hover:scale-105 active:scale-95"
-                    >
-                        Find out more
-                    </Link>
+                    <!-- Visual Progress Distribution Bar -->
+                    <div class="mt-5 space-y-2">
+                        <div class="flex items-center justify-between text-xs font-semibold text-surface-600 dark:text-surface-300">
+                            <span>Sprint Completion Rate</span>
+                            <span class="font-bold text-[#5B50E5] dark:text-[#8D82FF]">85%</span>
+                        </div>
+                        <div class="flex h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                            <div class="bg-[#5B50E5]" style="width: 60%" title="Completed (60%)" />
+                            <div class="bg-amber-400" style="width: 25%" title="In Progress (25%)" />
+                            <div class="bg-indigo-300" style="width: 15%" title="Review (15%)" />
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-surface-400 pt-1">
+                            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-[#5B50E5]" /> Done (60%)</span>
+                            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-400" /> Progress (25%)</span>
+                            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-indigo-300" /> Review (15%)</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- COLUMN 3: Calendar, Circular Progress & Board Meeting -->
+            <!-- ================= COLUMN 3: Calendar, Dual Circular Gauges & Board Meeting ================= -->
             <div class="space-y-6">
-                <!-- Interactive Calendar Widget -->
-                <div class="bento-card bento-animate-item p-6">
+                <!-- Interactive Calendar Widget (May 2021) -->
+                <div class="bento-card bento-item p-6">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-bold text-surface-900 dark:text-surface-100">
-                            May 2026
+                        <h2 class="text-base font-bold text-surface-900 dark:text-surface-100">
+                            May 2021
                         </h2>
                         <div class="flex items-center gap-1 text-surface-400">
-                            <button
-                                type="button"
-                                class="rounded-lg p-1.5 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                aria-label="Previous month"
-                            >
-                                <component :is="getIcon('ChevronLeft')" class="h-4 w-4" />
+                            <button type="button" class="rounded-lg p-1 hover:bg-surface-100 dark:hover:bg-surface-800" aria-label="Previous">
+                                <component :is="getIcon('ChevronLeft')" class="h-3.5 w-3.5" />
                             </button>
-                            <button
-                                type="button"
-                                class="rounded-lg p-1.5 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                aria-label="Next month"
-                            >
-                                <component :is="getIcon('ChevronRight')" class="h-4 w-4" />
+                            <button type="button" class="rounded-lg p-1 hover:bg-surface-100 dark:hover:bg-surface-800" aria-label="Next">
+                                <component :is="getIcon('ChevronRight')" class="h-3.5 w-3.5" />
                             </button>
                         </div>
                     </div>
 
-                    <!-- Days of Week Pills Row -->
+                    <!-- Days Row (Active Blue Circle on Fr 18) -->
                     <div class="mt-4 flex items-center justify-between">
                         <button
                             v-for="(item, idx) in calendarDays"
                             :key="item.day"
                             type="button"
-                            class="flex flex-col items-center gap-1 rounded-2xl px-2.5 py-2 transition-all"
+                            class="flex flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition-all"
                             :class="
                                 activeDayIndex === idx
                                     ? 'bg-[#5B50E5] text-white shadow-md'
-                                    : 'text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800'
+                                    : 'text-surface-500 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800'
                             "
                             @click="activeDayIndex = idx"
                         >
-                            <span class="text-[11px] font-medium">{{ item.day }}</span>
-                            <span class="text-xs font-extrabold">{{ item.date }}</span>
+                            <span class="text-[10px] font-medium">{{ item.day }}</span>
+                            <span class="text-xs font-bold">{{ item.date }}</span>
                         </button>
                     </div>
 
-                    <!-- Schedule Timeline with Dotted Connector -->
+                    <!-- Timeline Schedule with Dotted Connecting Line -->
                     <div class="mt-5 space-y-4">
                         <!-- Timeline Item 1 -->
                         <div>
-                            <div class="text-[11px] font-bold text-surface-400 tracking-wider">
-                                04:30 - 05:00 PM
-                            </div>
-                            <div
-                                class="mt-1.5 flex items-center justify-between rounded-xl border border-gray-100 bg-surface-50/60 p-3 dark:border-white/5 dark:bg-[#202444]/40"
-                            >
+                            <span class="text-[11px] font-bold text-surface-400">04:30-05:00 PM</span>
+                            <div class="mt-1.5 flex items-center justify-between rounded-2xl border border-gray-100 bg-surface-50/70 p-3 dark:border-white/5 dark:bg-[#1E2245]/50">
                                 <div class="flex items-center gap-2.5">
-                                    <div
-                                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400"
-                                    >
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-[#5B50E5] dark:bg-indigo-950 dark:text-indigo-400">
                                         <component :is="getIcon('Users')" class="h-4 w-4" />
                                     </div>
                                     <div>
@@ -592,23 +525,17 @@ const inProgressRatio = computed(() => {
 
                         <!-- Timeline Item 2 -->
                         <div>
-                            <div class="text-[11px] font-bold text-surface-400 tracking-wider">
-                                11:30 - 12:30 PM
-                            </div>
-                            <div
-                                class="mt-1.5 flex items-center justify-between rounded-xl border border-gray-100 bg-surface-50/60 p-3 dark:border-white/5 dark:bg-[#202444]/40"
-                            >
+                            <span class="text-[11px] font-bold text-surface-400">11:30-12:30 PM</span>
+                            <div class="mt-1.5 flex items-center justify-between rounded-2xl border border-gray-100 bg-surface-50/70 p-3 dark:border-white/5 dark:bg-[#1E2245]/50">
                                 <div class="flex items-center gap-2.5">
-                                    <div
-                                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400"
-                                    >
-                                        <component :is="getIcon('CheckSquare')" class="h-4 w-4" />
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+                                        <component :is="getIcon('Calendar')" class="h-4 w-4" />
                                     </div>
                                     <div>
                                         <h4 class="text-xs font-bold text-surface-900 dark:text-surface-100">
                                             Meeting with new client
                                         </h4>
-                                        <span class="text-[10px] text-surface-400">12:30 - 01:30 PM • Project scope</span>
+                                        <span class="text-[10px] text-surface-400">12:30 - 01:30 PM • Job interview</span>
                                     </div>
                                 </div>
                                 <button type="button" class="text-surface-400 hover:text-surface-600" aria-label="Menu">
@@ -619,12 +546,11 @@ const inProgressRatio = computed(() => {
                     </div>
                 </div>
 
-                <!-- Dual Circular Progress Stats Card -->
-                <div class="bento-card bento-animate-item p-6">
+                <!-- Dual Circular Progress KPI Gauges -->
+                <div class="bento-card bento-item p-6">
                     <div class="grid grid-cols-2 gap-4">
                         <!-- Ring 1 -->
                         <div class="flex flex-col items-center text-center">
-                            <!-- Circular SVG Meter -->
                             <div class="relative flex h-20 w-20 items-center justify-center">
                                 <svg class="h-20 w-20 -rotate-90 transform" viewBox="0 0 36 36">
                                     <path
@@ -648,14 +574,14 @@ const inProgressRatio = computed(() => {
                                     90%
                                 </span>
                             </div>
-                            <span class="mt-2 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                                Data Research
+                            <span class="mt-2 text-[9px] font-bold text-emerald-600 uppercase tracking-wider">
+                                DATA RESEARCH
                             </span>
                             <span class="text-xs font-bold text-surface-900 dark:text-surface-100">
                                 Marketing
                             </span>
-                            <span class="mt-1 text-[10px] text-surface-400">
-                                5/5 tasks done!
+                            <span class="mt-1 text-[10px] text-surface-400 leading-tight">
+                                You marked 5/5<br>All assignments are done!
                             </span>
                         </div>
 
@@ -684,39 +610,42 @@ const inProgressRatio = computed(() => {
                                     65%
                                 </span>
                             </div>
-                            <span class="mt-2 text-[10px] font-bold text-rose-500 uppercase tracking-wider">
-                                UX/UI Design
+                            <span class="mt-2 text-[9px] font-bold text-rose-500 uppercase tracking-wider">
+                                UX/UI DESIGN
                             </span>
                             <span class="text-xs font-bold text-surface-900 dark:text-surface-100">
                                 Typography
                             </span>
-                            <Link
-                                :href="tasks.index.url()"
-                                class="mt-1.5 rounded-full bg-indigo-600 px-3 py-0.5 text-[10px] font-bold text-white shadow-xs hover:bg-indigo-700 transition"
+                            <span class="mt-1 text-[10px] text-surface-400 leading-tight">
+                                You marked 3/5<br>2 assignments left
+                            </span>
+                            <button
+                                type="button"
+                                class="mt-2 rounded-full bg-[#5B50E5] px-3.5 py-0.5 text-[10px] font-bold text-white shadow-xs hover:bg-[#4D40E3] transition"
                             >
                                 Check
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Board Meeting / Milestone Card -->
-                <div class="bento-card bento-animate-item p-6">
+                <!-- Board Meeting Card -->
+                <div class="bento-card bento-item p-6">
                     <div class="flex items-center justify-between">
                         <h2 class="text-base font-bold text-surface-900 dark:text-surface-100">
                             Board meeting
                         </h2>
-                        <button type="button" class="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400">
+                        <button type="button" class="text-xs font-semibold text-surface-400 hover:text-surface-600">
                             Edit
                         </button>
                     </div>
 
-                    <div class="mt-2 flex items-center gap-2 text-xs text-surface-400">
-                        <span class="h-2 w-2 rounded-full bg-indigo-500" />
+                    <div class="mt-2 flex items-center gap-2 text-xs font-semibold text-surface-400">
+                        <span class="h-2 w-2 rounded-full bg-[#5B50E5]" />
                         <span>March 24 at 4:00 PM</span>
                     </div>
 
-                    <p class="mt-2 text-xs text-surface-600 dark:text-surface-300">
+                    <p class="mt-1 text-xs text-surface-600 dark:text-surface-300">
                         Meeting with John Smith, 4th floor, room 159
                     </p>
 
