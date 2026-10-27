@@ -64,32 +64,37 @@ function handleSwitchTheme(theme: Theme): void {
                 <img
                     src="/images/logo.png"
                     :alt="page.props.app.name"
-                    class="h-7 w-auto max-w-[140px] sm:max-w-[160px] object-contain drop-shadow-xs"
+                    class="h-7 w-auto max-w-[140px] object-contain drop-shadow-xs sm:max-w-[160px]"
                 />
             </Link>
 
             <!-- Navigation Tabs -->
-            <nav class="hidden items-center gap-2 md:flex lg:gap-4 pl-2 border-l border-gray-200/80 dark:border-white/10">
+            <nav
+                class="hidden items-center gap-2 border-l border-gray-200/80 pl-2 md:flex lg:gap-4 dark:border-white/10"
+            >
                 <Link
                     :href="'/dashboard'"
-                    class="group relative flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-bold transition-all"
+                    class="group relative flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all sm:text-sm"
                     :class="
                         currentPath === '/dashboard'
                             ? 'text-[#5B50E5] dark:text-[#8D82FF]'
                             : 'text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100'
                     "
                 >
-                    <component :is="getIcon('LayoutDashboard')" class="h-4 w-4" />
+                    <component
+                        :is="getIcon('LayoutDashboard')"
+                        class="h-4 w-4"
+                    />
                     <span>Dashboard</span>
                     <span
                         v-if="currentPath === '/dashboard'"
-                        class="absolute -bottom-[21px] left-2 right-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
+                        class="absolute right-2 -bottom-[21px] left-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
                     />
                 </Link>
 
                 <Link
                     :href="projects.index.url()"
-                    class="group relative flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-bold transition-all"
+                    class="group relative flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all sm:text-sm"
                     :class="
                         currentPath.startsWith('/projects')
                             ? 'text-[#5B50E5] dark:text-[#8D82FF]'
@@ -100,13 +105,13 @@ function handleSwitchTheme(theme: Theme): void {
                     <span>Workflows</span>
                     <span
                         v-if="currentPath.startsWith('/projects')"
-                        class="absolute -bottom-[21px] left-2 right-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
+                        class="absolute right-2 -bottom-[21px] left-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
                     />
                 </Link>
 
                 <Link
                     :href="tasks.index.url()"
-                    class="group relative flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-bold transition-all"
+                    class="group relative flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all sm:text-sm"
                     :class="
                         currentPath.startsWith('/tasks')
                             ? 'text-[#5B50E5] dark:text-[#8D82FF]'
@@ -117,23 +122,28 @@ function handleSwitchTheme(theme: Theme): void {
                     <span>Tasks</span>
                     <span
                         v-if="currentPath.startsWith('/tasks')"
-                        class="absolute -bottom-[21px] left-2 right-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
+                        class="absolute right-2 -bottom-[21px] left-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
                     />
                 </Link>
             </nav>
         </div>
 
         <!-- Center: Search Pill Bar -->
-        <div class="hidden flex-1 max-w-xs xl:max-w-md md:block">
+        <div class="hidden max-w-xs flex-1 md:block xl:max-w-md">
             <form @submit="handleSearch" class="relative">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <component :is="getIcon('Search')" class="h-4 w-4 text-surface-400" />
+                <div
+                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5"
+                >
+                    <component
+                        :is="getIcon('Search')"
+                        class="h-4 w-4 text-surface-400"
+                    />
                 </div>
                 <input
                     v-model="searchQuery"
                     type="search"
                     placeholder="Search or type command"
-                    class="w-full rounded-2xl border border-gray-200/80 bg-surface-50/70 py-2 pr-10 pl-9 text-xs font-medium text-surface-900 transition-all placeholder:text-surface-400 focus:border-[#5B50E5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5B50E5]/20 dark:border-white/10 dark:bg-[#1C1F37] dark:text-surface-100 dark:focus:bg-[#202444]"
+                    class="w-full rounded-2xl border border-gray-200/80 bg-surface-50/70 py-2 pr-10 pl-9 text-xs font-medium text-surface-900 transition-all placeholder:text-surface-400 focus:border-[#5B50E5] focus:bg-white focus:ring-2 focus:ring-[#5B50E5]/20 focus:outline-none dark:border-white/10 dark:bg-[#1C1F37] dark:text-surface-100 dark:focus:bg-[#202444]"
                 />
             </form>
         </div>
@@ -141,7 +151,9 @@ function handleSwitchTheme(theme: Theme): void {
         <!-- Right Side: Light/Dark Switcher, Notification, Action Pills & Add Board Button -->
         <div class="flex items-center gap-2 sm:gap-3">
             <!-- Light / Dark Pill Toggle -->
-            <div class="flex items-center rounded-2xl bg-surface-100/80 p-1 dark:bg-[#1C1F37]">
+            <div
+                class="flex items-center rounded-2xl bg-surface-100/80 p-1 dark:bg-[#1C1F37]"
+            >
                 <button
                     type="button"
                     class="flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition-all"
@@ -152,7 +164,10 @@ function handleSwitchTheme(theme: Theme): void {
                     "
                     @click="handleSwitchTheme('light')"
                 >
-                    <component :is="getIcon('Sun')" class="h-3.5 w-3.5 text-amber-500" />
+                    <component
+                        :is="getIcon('Sun')"
+                        class="h-3.5 w-3.5 text-amber-500"
+                    />
                     <span class="hidden sm:inline">Light</span>
                 </button>
                 <button
@@ -165,7 +180,10 @@ function handleSwitchTheme(theme: Theme): void {
                     "
                     @click="handleSwitchTheme('dark')"
                 >
-                    <component :is="getIcon('Moon')" class="h-3.5 w-3.5 text-indigo-400" />
+                    <component
+                        :is="getIcon('Moon')"
+                        class="h-3.5 w-3.5 text-indigo-400"
+                    />
                     <span class="hidden sm:inline">Dark</span>
                 </button>
             </div>
@@ -179,17 +197,23 @@ function handleSwitchTheme(theme: Theme): void {
             <!-- Export Data Pill Button -->
             <button
                 type="button"
-                class="hidden xl:flex items-center gap-1.5 rounded-2xl border border-gray-200/80 bg-surface-50/80 px-3.5 py-2 text-xs font-bold text-surface-700 hover:bg-surface-100 dark:border-white/10 dark:bg-[#1C1F37] dark:text-surface-300"
+                class="hidden items-center gap-1.5 rounded-2xl border border-gray-200/80 bg-surface-50/80 px-3.5 py-2 text-xs font-bold text-surface-700 hover:bg-surface-100 xl:flex dark:border-white/10 dark:bg-[#1C1F37] dark:text-surface-300"
             >
-                <component :is="getIcon('Activity')" class="h-3.5 w-3.5 text-surface-400" />
+                <component
+                    :is="getIcon('Activity')"
+                    class="h-3.5 w-3.5 text-surface-400"
+                />
                 <span>Export data</span>
-                <span class="rounded bg-indigo-100 px-1 py-0.2 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">.xls</span>
+                <span
+                    class="py-0.2 rounded bg-indigo-100 px-1 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                    >.xls</span
+                >
             </button>
 
             <!-- Add new board / task CTA Button -->
             <Link
                 :href="tasks.create.url()"
-                class="flex items-center gap-2 rounded-2xl bg-[#0D0E1A] px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-black hover:scale-105 active:scale-95 dark:bg-white dark:text-[#0D0E1A] dark:hover:bg-slate-100"
+                class="flex items-center gap-2 rounded-2xl bg-[#0D0E1A] px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-black active:scale-95 dark:bg-white dark:text-[#0D0E1A] dark:hover:bg-slate-100"
             >
                 <span>Add new task</span>
             </Link>

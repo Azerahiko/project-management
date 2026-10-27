@@ -34,8 +34,8 @@ function animateEnter(): void {
     ctx = gsap.context(() => {
         gsap.fromTo(
             main.value,
-            { opacity: 0, y: 12 },
-            { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' },
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' },
         );
     }, main.value);
 }
@@ -59,22 +59,9 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="relative min-h-screen bg-[#F0F2F9] p-2 transition-colors duration-300 sm:p-4 lg:p-6 dark:bg-[#0B0D19]"
+        class="min-h-screen bg-[#F0F2F9] p-3 font-sans transition-colors duration-300 sm:p-5 lg:p-7 dark:bg-[#0B0D19]"
     >
-        <!-- Background subtle decorative ambient curved shapes -->
-        <div
-            class="pointer-events-none fixed inset-0 overflow-hidden opacity-40 dark:opacity-20"
-            aria-hidden="true"
-        >
-            <div
-                class="absolute -top-[20%] -left-[10%] h-[600px] w-[600px] rounded-full bg-gradient-to-br from-indigo-300/30 to-purple-200/0 blur-3xl"
-            />
-            <div
-                class="absolute -bottom-[20%] -right-[10%] h-[700px] w-[700px] rounded-full bg-gradient-to-tl from-indigo-400/20 to-blue-200/0 blur-3xl"
-            />
-        </div>
-
-        <!-- Sidebar backdrop (mobile) -->
+        <!-- Mobile Sidebar Backdrop -->
         <div
             v-if="sidebarOpen"
             class="animate-fade-in fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs lg:hidden"
@@ -82,23 +69,20 @@ onBeforeUnmount(() => {
             aria-hidden="true"
         />
 
-        <!-- Bento Canvas Container -->
+        <!-- Main Fullscreen Card Canvas (Rounded [44px] Matching Photo) -->
         <div
-            class="bento-canvas relative mx-auto flex min-h-[96vh] w-full max-w-[1720px] overflow-hidden shadow-2xl transition-all"
+            class="relative mx-auto flex min-h-[95vh] w-full max-w-[1780px] rounded-[36px] border border-slate-100/90 bg-white shadow-[0_20px_60px_-15px_rgba(26,32,60,0.06)] sm:rounded-[44px] dark:border-white/[0.05] dark:bg-[#141628] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)]"
         >
-            <!-- Curved Indigo Dock Sidebar -->
+            <!-- Curved Wave Purple Dock Sidebar -->
             <Sidebar :open="sidebarOpen" @close="closeSidebar" />
 
-            <!-- Main Content Canvas Area -->
+            <!-- Main Content Area -->
             <div class="flex min-w-0 flex-1 flex-col overflow-y-auto">
-                <!-- Top Navigation Bar -->
                 <TopBar
                     :sidebar-open="sidebarOpen"
                     @toggle-sidebar="toggleSidebar"
                 />
-
-                <!-- Page Content Body -->
-                <main ref="main" class="flex-1 p-4 sm:p-6 lg:p-8">
+                <main ref="main" class="flex-1 p-5 sm:p-7 lg:p-9">
                     <slot />
                 </main>
             </div>
