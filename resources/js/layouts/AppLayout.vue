@@ -59,7 +59,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="min-h-screen bg-[#F0F2F9] p-3 font-sans transition-colors duration-300 sm:p-4 lg:p-5 dark:bg-[#0B0D19]"
+        class="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 transition-colors duration-300 dark:bg-[#0B0D17] dark:text-slate-100"
     >
         <!-- Mobile Sidebar Backdrop -->
         <div
@@ -69,19 +69,17 @@ onBeforeUnmount(() => {
             aria-hidden="true"
         />
 
-        <div class="flex min-h-[96vh] w-full gap-4 lg:gap-5">
-            <!-- Floating Rounded Sidebar (Matching Reference Photo Exactly) -->
+        <div class="flex min-h-screen w-full">
+            <!-- Clean Sticky Sidebar -->
             <Sidebar :open="sidebarOpen" @close="closeSidebar" />
 
-            <!-- Main Content Container with Rounded [32px] Border -->
-            <div
-                class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-sm sm:rounded-[32px] dark:border-white/5 dark:bg-[#141628]"
-            >
+            <!-- Main Content Area -->
+            <div class="flex min-w-0 flex-1 flex-col">
                 <TopBar
                     :sidebar-open="sidebarOpen"
                     @toggle-sidebar="toggleSidebar"
                 />
-                <main ref="main" class="flex-1 px-4 pb-8 sm:px-6 lg:px-8">
+                <main ref="main" class="flex-1 p-5 sm:p-6 lg:p-8">
                     <slot />
                 </main>
             </div>
