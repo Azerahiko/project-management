@@ -23,20 +23,21 @@ defineEmits<Emits>();
 
 const page = usePage();
 
+// Fully reactive URL tracking with Inertia usePage()
 const currentPath = computed(() => {
-    if (typeof window !== 'undefined') {
-        return window.location.pathname;
-    }
-    return new URL(page.url).pathname;
+    const rawUrl = page.url || '';
+    return rawUrl.split('?')[0].split('#')[0];
 });
 
 function isActive(href: string): boolean {
-    if (href === '/dashboard') {
-        return currentPath.value === '/dashboard' || currentPath.value === '/';
+    const path = currentPath.value;
+    const cleanHref = href.split('?')[0].split('#')[0];
+
+    if (cleanHref === '/dashboard' || cleanHref === '/') {
+        return path === '/dashboard' || path === '/';
     }
-    return (
-        currentPath.value === href || currentPath.value.startsWith(`${href}/`)
-    );
+
+    return path === cleanHref || path.startsWith(`${cleanHref}/`);
 }
 
 const userPermissions = computed(
@@ -50,7 +51,7 @@ function can(perm?: string): boolean {
 
 const stats = computed(() => (page.props.stats as any) || {});
 
-// Menu items matching the reference photo exactly, mapped safely to existing application routes
+// Menu items matching the Vendify visual style, wired to real DigitalCode application routes
 const sidebarItems = computed(() => [
     {
         label: 'Home',
@@ -187,36 +188,23 @@ watch(
     >
         <!-- Top: Logo & Main Navigation List -->
         <div class="flex flex-col">
-            <!-- Brand Logo Section (Exact Vendify Match) -->
+            <!-- Brand Logo Section (DigitalCode Official Logo Mark & Name) -->
             <div class="flex items-center justify-between px-1 pt-1 pb-6">
                 <Link
                     href="/dashboard"
-                    class="group flex items-center gap-3 transition-opacity hover:opacity-90"
+                    class="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
                 >
-                    <!-- Exact Vendify Two-Tone Circle Logo -->
-                    <svg
-                        viewBox="0 0 36 36"
-                        class="h-8 w-8 shrink-0 transition-transform duration-200 group-hover:scale-105"
-                        fill="none"
-                        aria-hidden="true"
-                    >
-                        <!-- Left half: solid black -->
-                        <path
-                            d="M 18 2 A 16 16 0 0 0 18 34 Z"
-                            fill="#0D0E12"
-                            class="dark:fill-white"
-                        />
-                        <!-- Top-right quadrant: Neon Lime Green -->
-                        <path
-                            d="M 18 2 A 16 16 0 0 1 34 18 L 18 18 Z"
-                            fill="#D2F87A"
-                        />
-                    </svg>
+                    <!-- Official DigitalCode Logo Mark -->
+                    <img
+                        src="/images/logo-mark.png"
+                        alt="DigitalCode"
+                        class="h-8 w-8 shrink-0 object-contain drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
+                    />
 
                     <span
-                        class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+                        class="text-lg font-black tracking-tight text-slate-900 dark:text-white"
                     >
-                        Vendify
+                        DigitalCode
                     </span>
                 </Link>
 
@@ -231,7 +219,7 @@ watch(
                 </button>
             </div>
 
-            <!-- Vertical Navigation List (Pill Buttons) -->
+            <!-- Vertical Navigation List (Pill Buttons with Reactive Active State) -->
             <nav class="flex flex-col gap-1.5 pt-1">
                 <Link
                     v-for="item in allowedItems"
@@ -354,7 +342,7 @@ watch(
                     <h3
                         class="text-lg font-bold text-slate-900 dark:text-white"
                     >
-                        Pusat Bantuan & Dukungan
+                        Pusat Bantuan & Dukungan DigitalCode
                     </h3>
                     <button
                         type="button"
@@ -368,12 +356,12 @@ watch(
                     class="text-sm leading-relaxed text-slate-600 dark:text-slate-300"
                 >
                     Butuh bantuan terkait manajemen tugas, proyek, atau akun
-                    Anda? Hubungi tim support teknis melalui email:
+                    DigitalCode Anda? Hubungi tim support teknis melalui email:
                     <a
-                        href="mailto:support@vendify.local"
+                        href="mailto:support@project.local"
                         class="font-semibold text-indigo-600 underline dark:text-indigo-400"
                     >
-                        support@vendify.local
+                        support@project.local
                     </a>
                 </p>
                 <div class="mt-6 flex justify-end">

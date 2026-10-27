@@ -105,7 +105,7 @@ onBeforeUnmount(() => {
                         :is="getIcon('Lock')"
                         class="h-3 w-3 text-slate-400"
                     />
-                    <span>Master.com</span>
+                    <span>digitalcode.local</span>
                     <component
                         :is="getIcon('Activity')"
                         class="ml-auto h-3 w-3 cursor-pointer text-slate-400 hover:text-slate-600"
