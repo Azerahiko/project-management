@@ -22,6 +22,7 @@ const props = defineProps<Props>();
 defineEmits<Emits>();
 
 const page = usePage();
+const user = computed(() => page.props.auth?.user);
 
 // Fully reactive URL tracking with Inertia usePage()
 const currentPath = computed(() => {
@@ -51,7 +52,7 @@ function can(perm?: string): boolean {
 
 const stats = computed(() => (page.props.stats as any) || {});
 
-// Menu items matching the Vendify visual style, wired to real DigitalCode application routes
+// Menu items matching the reference photo visual rhythm and mapped to real routes
 const sidebarItems = computed(() => [
     {
         label: 'Home',
@@ -130,7 +131,7 @@ function handleLogout(): void {
 }
 
 const MOBILE_BREAKPOINT = 1024;
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 270;
 
 let drawerCtx: gsap.Context | null = null;
 
@@ -183,29 +184,50 @@ watch(
 <template>
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between overflow-y-auto border-r border-slate-200/70 bg-white p-5 transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-white/5 dark:bg-[#151829]"
+        class="fixed inset-y-0 left-0 z-50 flex h-full w-[265px] shrink-0 flex-col justify-between overflow-y-auto border-r border-slate-200/80 bg-white p-5 shadow-[4px_0_24px_-10px_rgba(0,0,0,0.03)] transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-white/5 dark:bg-[#151829] dark:shadow-none"
         aria-label="Navigasi Utama"
     >
-        <!-- Top: Logo & Main Navigation List -->
+        <!-- Top: Brand Header & Main Menu -->
         <div class="flex flex-col">
-            <!-- Brand Logo Section (DigitalCode Official Logo Mark & Name) -->
-            <div class="flex items-center justify-between px-1 pt-1 pb-6">
+            <!-- Brand Logo Header Section -->
+            <div
+                class="flex items-center justify-between border-b border-slate-100/80 px-1 pt-1 pb-6 dark:border-white/5"
+            >
                 <Link
                     href="/dashboard"
-                    class="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
+                    class="group flex items-center gap-3 transition-opacity hover:opacity-90"
                 >
-                    <!-- Official DigitalCode Logo Mark -->
-                    <img
-                        src="/images/logo-mark.png"
-                        alt="DigitalCode"
-                        class="h-8 w-8 shrink-0 object-contain drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
-                    />
-
-                    <span
-                        class="text-lg font-black tracking-tight text-slate-900 dark:text-white"
+                    <!-- Official Logo Mark in Sleek Dark Capsule -->
+                    <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0D0E12] p-2 shadow-sm ring-1 shadow-black/15 ring-white/10 transition-transform duration-200 group-hover:scale-105 dark:bg-white dark:ring-black/5"
                     >
-                        DigitalCode
-                    </span>
+                        <img
+                            src="/images/logo-mark.png"
+                            alt="DigitalCode"
+                            class="h-full w-full object-contain"
+                        />
+                    </div>
+
+                    <!-- Brand Name & Pro Pill -->
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-base font-black tracking-tight text-slate-900 dark:text-white"
+                            >
+                                DigitalCode
+                            </span>
+                            <span
+                                class="rounded-full bg-[#D2F87A] px-1.5 py-0.5 text-[9px] font-black text-slate-900 shadow-2xs"
+                            >
+                                PRO
+                            </span>
+                        </div>
+                        <span
+                            class="text-[11px] font-medium text-slate-400 dark:text-slate-500"
+                        >
+                            Task Management
+                        </span>
+                    </div>
                 </Link>
 
                 <!-- Mobile Drawer Close Button -->
@@ -219,16 +241,16 @@ watch(
                 </button>
             </div>
 
-            <!-- Vertical Navigation List (Pill Buttons with Reactive Active State) -->
-            <nav class="flex flex-col gap-1.5 pt-1">
+            <!-- Navigation Links List (Matching Reference Pill Format Exactly) -->
+            <nav class="flex flex-col gap-1.5 pt-5">
                 <Link
                     v-for="item in allowedItems"
                     :key="item.href"
                     :href="item.href"
-                    class="group flex items-center justify-between rounded-full px-4 py-2.5 text-[13px] transition-all duration-200"
+                    class="group flex items-center justify-between rounded-full px-4 py-2.5 text-[13.5px] transition-all duration-200"
                     :class="
                         isActive(item.href)
-                            ? 'bg-[#0D0E12] font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900'
+                            ? 'scale-[1.01] bg-[#0D0E12] font-semibold text-white shadow-md shadow-black/10 dark:bg-white dark:text-slate-900'
                             : 'font-medium text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
                     "
                     @click="isMobile() ? $emit('close') : undefined"
@@ -244,7 +266,7 @@ watch(
                                     : 'text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200'
                             "
                         />
-                        <span>{{ item.label }}</span>
+                        <span class="tracking-tight">{{ item.label }}</span>
                     </div>
 
                     <!-- Right: Badge Count & Chevron (e.g. "1 >") -->
@@ -260,7 +282,7 @@ watch(
                             {{ item.badge }}
                         </span>
                         <ChevronRight
-                            class="h-3.5 w-3.5 stroke-[2.5]"
+                            class="h-3.5 w-3.5 stroke-[2.5] transition-transform duration-150 group-hover:translate-x-0.5"
                             :class="
                                 isActive(item.href)
                                     ? 'text-white/70 dark:text-slate-500'
@@ -272,60 +294,100 @@ watch(
             </nav>
         </div>
 
-        <!-- Bottom Footer Navigation (Support & Help Center / Logout) -->
-        <div
-            class="border-slate-150/70 mt-8 border-t px-1 pt-4 dark:border-white/5"
-        >
-            <div class="flex flex-col gap-1.5">
-                <!-- Support Action Button -->
-                <button
-                    type="button"
-                    class="group flex w-full items-center justify-between rounded-full px-4 py-2.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-                    @click="handleSupportClick"
-                >
-                    <div class="flex items-center gap-3">
-                        <component
-                            :is="getIcon('Headphones')"
-                            class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200"
-                        />
-                        <span>Support</span>
+        <!-- Bottom: User Mini Profile + Support & Keluar -->
+        <div class="mt-8 flex flex-col gap-3">
+            <!-- Active User Mini Profile Card -->
+            <div
+                v-if="user"
+                class="flex items-center gap-3 rounded-2xl bg-slate-50/90 p-2.5 transition-colors dark:bg-white/[0.03]"
+            >
+                <div class="relative">
+                    <img
+                        v-if="user.avatar"
+                        :src="user.avatar"
+                        :alt="user.name"
+                        class="h-9 w-9 rounded-full object-cover ring-2 ring-white dark:ring-slate-800"
+                    />
+                    <div
+                        v-else
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-[#0D0E12] text-xs font-bold text-white shadow-xs dark:bg-white dark:text-slate-900"
+                    >
+                        {{
+                            user.initials || user.name.slice(0, 2).toUpperCase()
+                        }}
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span
-                            class="text-xs font-semibold text-slate-400 group-hover:text-slate-600 dark:text-slate-500"
-                        >
-                            1
-                        </span>
-                        <ChevronRight
-                            class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-slate-500 dark:text-slate-600"
-                        />
-                    </div>
-                </button>
+                    <!-- Online Green Pulse Indicator -->
+                    <span
+                        class="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#151829]"
+                    />
+                </div>
+                <div class="flex min-w-0 flex-1 flex-col">
+                    <span
+                        class="truncate text-xs font-bold text-slate-900 dark:text-white"
+                    >
+                        {{ user.name }}
+                    </span>
+                    <span
+                        class="truncate text-[10px] font-medium text-slate-400 dark:text-slate-500"
+                    >
+                        {{ user.roles?.[0] || 'Team Member' }}
+                    </span>
+                </div>
+            </div>
 
-                <!-- Help Center / Logout Action -->
-                <button
-                    type="button"
-                    class="group flex w-full items-center justify-between rounded-full px-4 py-2.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
-                    @click="handleLogout"
-                >
-                    <div class="flex items-center gap-3">
-                        <component
-                            :is="getIcon('LogOut')"
-                            class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-rose-500 dark:text-slate-500 dark:group-hover:text-rose-400"
-                        />
-                        <span>Help Center</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span
-                            class="text-xs font-semibold text-slate-400 group-hover:text-rose-500 dark:text-slate-500"
-                        >
-                            1
-                        </span>
-                        <ChevronRight
-                            class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-rose-400 dark:text-slate-600"
-                        />
-                    </div>
-                </button>
+            <!-- Footer Navigation (Support & Help Center) -->
+            <div class="border-slate-150/80 border-t pt-3 dark:border-white/5">
+                <div class="flex flex-col gap-1">
+                    <!-- Support Action Button -->
+                    <button
+                        type="button"
+                        class="group flex w-full items-center justify-between rounded-full px-4 py-2 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+                        @click="handleSupportClick"
+                    >
+                        <div class="flex items-center gap-3">
+                            <component
+                                :is="getIcon('Headphones')"
+                                class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200"
+                            />
+                            <span>Support</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-semibold text-slate-400 group-hover:text-slate-600 dark:text-slate-500"
+                            >
+                                1
+                            </span>
+                            <ChevronRight
+                                class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-slate-500 dark:text-slate-600"
+                            />
+                        </div>
+                    </button>
+
+                    <!-- Help Center / Logout Action -->
+                    <button
+                        type="button"
+                        class="group flex w-full items-center justify-between rounded-full px-4 py-2 text-[13px] font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
+                        @click="handleLogout"
+                    >
+                        <div class="flex items-center gap-3">
+                            <component
+                                :is="getIcon('LogOut')"
+                                class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-rose-500 dark:text-slate-500 dark:group-hover:text-rose-400"
+                            />
+                            <span>Help Center</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-semibold text-slate-400 group-hover:text-rose-500 dark:text-slate-500"
+                            >
+                                1
+                            </span>
+                            <ChevronRight
+                                class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-rose-400 dark:text-slate-600"
+                            />
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
 
