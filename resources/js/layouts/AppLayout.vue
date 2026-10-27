@@ -59,7 +59,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 transition-colors duration-300 dark:bg-[#0B0D17] dark:text-slate-100"
+        class="min-h-screen bg-white font-sans text-slate-900 transition-colors duration-300 dark:bg-[#0B0D17] dark:text-slate-100"
     >
         <!-- Mobile Sidebar Backdrop -->
         <div
@@ -70,11 +70,13 @@ onBeforeUnmount(() => {
         />
 
         <div class="flex min-h-screen w-full">
-            <!-- Clean Sticky Sidebar -->
+            <!-- Modern Frosted Sidebar (Matching Reference Image Exactly) -->
             <Sidebar :open="sidebarOpen" @close="closeSidebar" />
 
-            <!-- Main Content Area -->
-            <div class="flex min-w-0 flex-1 flex-col">
+            <!-- Main Content Canvas (Pure White in Light Mode) -->
+            <div
+                class="flex min-w-0 flex-1 flex-col bg-white dark:bg-[#0B0D17]"
+            >
                 <TopBar
                     :sidebar-open="sidebarOpen"
                     @toggle-sidebar="toggleSidebar"
