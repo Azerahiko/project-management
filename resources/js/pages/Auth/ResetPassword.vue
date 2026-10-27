@@ -125,7 +125,7 @@ onUnmounted(() => {
                 <img
                     src="/images/logo.png"
                     alt="Dijital Code"
-                    class="h-8 w-auto max-w-[240px] object-contain drop-shadow-xs sm:h-9"
+                    class="h-9 w-auto max-w-[260px] object-contain drop-shadow-xs sm:h-10"
                 />
             </div>
 

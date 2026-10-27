@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, Link } from '@inertiajs/vue3';
 import UserDropdown from './UserDropdown.vue';
 import NotificationDropdown from './NotificationDropdown.vue';
 import { getIcon } from '@/components/sidebar/icons';
@@ -49,9 +49,22 @@ function cycleTheme(): void {
             <component :is="getIcon('Menu')" class="h-6 w-6" />
         </button>
 
+        <!-- Mobile brand logo -->
+        <Link
+            :href="'/dashboard'"
+            class="flex items-center gap-2 lg:hidden"
+            aria-label="Dashboard"
+        >
+            <img
+                src="/images/logo.png"
+                :alt="page.props.app.name"
+                class="h-7 w-auto max-w-[140px] object-contain drop-shadow-xs"
+            />
+        </Link>
+
         <!-- Page title / breadcrumb area -->
         <h1
-            class="flex-1 truncate text-lg font-semibold text-surface-900 dark:text-surface-100"
+            class="hidden flex-1 truncate text-lg font-semibold text-surface-900 lg:block dark:text-surface-100"
         >
             {{ page.props.app.name }}
         </h1>

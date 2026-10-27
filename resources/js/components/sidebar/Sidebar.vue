@@ -90,24 +90,21 @@ watch(
     >
         <!-- Brand -->
         <div
-            class="flex h-16 items-center gap-3 border-b border-white/20 px-4 dark:border-surface-700/30"
+            class="flex h-16 items-center justify-between border-b border-white/20 px-4 dark:border-surface-700/30"
         >
-            <div
-                class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-600 shadow-sm"
+            <Link
+                :href="'/dashboard'"
+                class="flex items-center gap-2.5 overflow-hidden transition-opacity hover:opacity-90 focus:outline-none"
             >
-                <component
-                    :is="getIcon('CheckSquare')"
-                    class="h-5 w-5 text-white"
+                <img
+                    src="/images/logo.png"
+                    :alt="page.props.app.name"
+                    class="h-8 w-auto max-w-[175px] object-contain drop-shadow-xs"
                 />
-            </div>
-            <span
-                class="truncate text-lg font-semibold text-surface-900 dark:text-surface-100"
-            >
-                {{ page.props.app.shortName }}
-            </span>
+            </Link>
             <button
                 type="button"
-                class="ml-auto rounded-lg p-2 text-surface-500 hover:bg-surface-100 lg:hidden dark:text-surface-400 dark:hover:bg-surface-800"
+                class="rounded-lg p-2 text-surface-500 hover:bg-surface-100 lg:hidden dark:text-surface-400 dark:hover:bg-surface-800"
                 aria-label="Tutup menu"
                 @click="$emit('close')"
             >
@@ -131,8 +128,12 @@ watch(
                 :href="'/dashboard'"
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-surface-600 transition-colors duration-150 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800"
             >
-                <component :is="getIcon('Settings')" class="h-5 w-5" />
-                <span>{{ page.props.app.name }}</span>
+                <img
+                    src="/images/logo-mark.png"
+                    :alt="page.props.app.name"
+                    class="h-5 w-5 object-contain"
+                />
+                <span class="truncate">{{ page.props.app.name }}</span>
             </Link>
         </div>
     </aside>
