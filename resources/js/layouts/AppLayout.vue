@@ -59,7 +59,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="min-h-screen bg-[#F0F2F9] p-3 font-sans transition-colors duration-300 sm:p-5 lg:p-7 dark:bg-[#0B0D19]"
+        class="min-h-screen bg-[#F4F7FB] p-2.5 font-sans transition-colors duration-300 sm:p-4 lg:p-6 dark:bg-[#0D0F18]"
     >
         <!-- Mobile Sidebar Backdrop -->
         <div
@@ -69,20 +69,22 @@ onBeforeUnmount(() => {
             aria-hidden="true"
         />
 
-        <!-- Main Fullscreen Card Canvas (Rounded [44px] Matching Photo) -->
+        <!-- App Window Container (Clean Neo-SaaS Window with rounded-[36px]) -->
         <div
-            class="relative mx-auto flex min-h-[95vh] w-full max-w-[1780px] rounded-[36px] border border-slate-100/90 bg-white shadow-[0_20px_60px_-15px_rgba(26,32,60,0.06)] sm:rounded-[44px] dark:border-white/[0.05] dark:bg-[#141628] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)]"
+            class="relative mx-auto flex min-h-[95vh] w-full max-w-[1780px] overflow-hidden rounded-[28px] border border-slate-200/70 bg-white shadow-[0_20px_50px_-20px_rgba(15,23,42,0.06)] sm:rounded-[36px] dark:border-white/[0.06] dark:bg-[#151829] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)]"
         >
-            <!-- Curved Wave Purple Dock Sidebar -->
+            <!-- White Sidebar (Vendify Aesthetic with Pill Badges) -->
             <Sidebar :open="sidebarOpen" @close="closeSidebar" />
 
-            <!-- Main Content Area -->
-            <div class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+            <!-- Main Content Canvas (Soft #F4F7FB tint) -->
+            <div
+                class="flex min-w-0 flex-1 flex-col overflow-y-auto bg-[#F4F7FB] dark:bg-[#0E101D]"
+            >
                 <TopBar
                     :sidebar-open="sidebarOpen"
                     @toggle-sidebar="toggleSidebar"
                 />
-                <main ref="main" class="flex-1 p-5 sm:p-7 lg:p-9">
+                <main ref="main" class="flex-1 p-4 sm:p-6 lg:p-8">
                     <slot />
                 </main>
             </div>

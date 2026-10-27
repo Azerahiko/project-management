@@ -2,10 +2,12 @@
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import { getIcon } from './icons';
+import { ChevronRight } from '@lucide/vue';
 import { gsap } from 'gsap';
 import { prefersReducedMotion } from '@/lib/motion';
 import { logout } from '@/routes';
 import tasks from '@/routes/tasks';
+import projects from '@/routes/projects';
 import users from '@/routes/users';
 
 interface Props {
@@ -46,67 +48,87 @@ function can(perm?: string): boolean {
     return userPermissions.value.includes(perm);
 }
 
-const unreadNotifications = computed(() => {
-    return (page.props.stats as any)?.notifications_unread ?? 0;
-});
+const stats = computed(() => (page.props.stats as any) || {});
 
-// The exact 8 icon buttons matching the reference photo
+// Nav items matching the reference aesthetic with our application routes
 const sidebarItems = computed(() => [
     {
-        label: 'Dashboard',
+        label: 'Home',
         href: '/dashboard',
-        icon: 'LayoutDashboard',
+        icon: 'Home',
         permission: 'dashboard.view',
+        badge: 1,
     },
     {
-        label: 'Users / Teams',
+        label: 'Live Orders',
+        href: tasks.index.url(),
+        icon: 'CheckSquare',
+        permission: 'tasks.view',
+        badge: stats.value.my_tasks_count ?? 1,
+    },
+    {
+        label: 'Projects',
+        href: projects.index.url(),
+        icon: 'FolderKanban',
+        permission: 'projects.view',
+        badge: stats.value.projects_count ?? 1,
+    },
+    {
+        label: 'Team Members',
         href: can('users.view') ? users.index.url() : '/teams',
-        icon: 'User',
+        icon: 'Users',
         permission: can('users.view') ? 'users.view' : 'teams.view',
-    },
-    {
-        label: 'Reports & KPI',
-        href: '/reports',
-        icon: 'BarChart3',
-        permission: 'reports.view',
-        isPro: true,
-    },
-    {
-        label: 'Notifications',
-        href: '/notifications',
-        icon: 'Bell',
-        permission: 'notifications.view',
-        hasDot: unreadNotifications.value > 0,
+        badge: stats.value.team_members_count ?? 1,
     },
     {
         label: 'Calendar',
         href: '/calendar',
         icon: 'Calendar',
         permission: 'calendar.view',
+        badge: 1,
     },
     {
-        label: 'Documents',
-        href: '/documents',
-        icon: 'FileText',
-        permission: 'documents.view',
-    },
-    {
-        label: 'Tasks',
-        href: tasks.index.url(),
-        icon: 'CheckSquare',
-        permission: 'tasks.view',
-    },
-    {
-        label: 'Activity Log',
+        label: 'Stock / Activity',
         href: '/activity-log',
         icon: 'Activity',
         permission: 'activity-log.view',
+        badge: 1,
+    },
+    {
+        label: 'Reports',
+        href: '/reports',
+        icon: 'BarChart3',
+        permission: 'reports.view',
+        badge: 1,
+    },
+    {
+        label: 'Settings',
+        href: '/profile',
+        icon: 'Settings',
+        badge: 1,
     },
 ]);
 
 const allowedItems = computed(() =>
     sidebarItems.value.filter((item) => can(item.permission)),
 );
+
+const bottomItems = computed(() => [
+    {
+        label: 'Support',
+        href: '#support',
+        icon: 'Headphones',
+        badge: 1,
+        isAction: true,
+    },
+    {
+        label: 'Keluar',
+        href: '#logout',
+        icon: 'LogOut',
+        badge: 1,
+        isLogout: true,
+    },
+]);
 
 const MOBILE_BREAKPOINT = 1024;
 const SIDEBAR_WIDTH = 260;
@@ -164,103 +186,153 @@ function handleLogout(): void {
 </script>
 
 <template>
-    <!-- Desktop: Floating Curved Wave Wing Dock (Matching Reference Photo Pixel-for-Pixel) -->
-    <!-- Mobile: Slide-over Drawer -->
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[260px] flex-col justify-between bg-[#5B50E5] p-5 shadow-2xl transition-transform duration-300 lg:sticky lg:top-24 lg:z-30 lg:h-[530px] lg:w-[84px] lg:translate-x-0 lg:bg-transparent lg:p-0 lg:shadow-none"
+        class="fixed inset-y-0 left-0 z-50 flex h-full w-[260px] flex-col justify-between border-r border-slate-100 bg-white p-5 transition-transform duration-300 lg:static lg:z-10 lg:w-[250px] lg:shrink-0 lg:translate-x-0 dark:border-white/5 dark:bg-[#151829]"
         aria-label="Navigasi Utama"
     >
-        <!-- Desktop SVG Curved Wave Background (S-curves matching photo) -->
-        <svg
-            class="pointer-events-none absolute inset-0 -z-10 hidden h-full w-full drop-shadow-[0_10px_25px_rgba(91,80,229,0.35)] lg:block"
-            viewBox="0 0 88 530"
-            fill="none"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-        >
-            <path
-                d="M 0 0 C 0 35, 30 55, 88 80 L 88 450 C 30 475, 0 495, 0 530 Z"
-                fill="#5B50E5"
-                class="dark:fill-[#2D257A]"
-            />
-        </svg>
+        <!-- Top: Brand Logo Section -->
+        <div>
+            <div class="flex items-center justify-between pb-6">
+                <Link
+                    href="/dashboard"
+                    class="flex items-center gap-3 transition hover:opacity-90"
+                >
+                    <!-- Two-tone Pie / Circle Logo (Exact Reference Match) -->
+                    <div
+                        class="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0D0E12] shadow-xs dark:bg-white"
+                    >
+                        <!-- Top-Right Neon Lime Wedge -->
+                        <div
+                            class="absolute top-0 right-0 h-4.5 w-4.5 rounded-bl-full bg-[#D2F87A]"
+                        />
+                    </div>
+                    <div class="flex flex-col">
+                        <span
+                            class="text-xl font-black tracking-tight text-slate-900 dark:text-white"
+                        >
+                            {{ page.props.app?.name || 'Vendify' }}
+                        </span>
+                    </div>
+                </Link>
 
-        <!-- Mobile Drawer Header -->
-        <div class="flex w-full items-center justify-between pb-4 lg:hidden">
-            <span class="text-xs font-black tracking-wider text-white uppercase"
-                >Menu</span
-            >
-            <button
-                type="button"
-                class="rounded-xl p-1.5 text-white/80 hover:bg-white/10 hover:text-white"
-                @click="$emit('close')"
-            >
-                <component :is="getIcon('X')" class="h-5 w-5" />
-            </button>
+                <!-- Mobile Close Button -->
+                <button
+                    type="button"
+                    class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 lg:hidden dark:text-slate-500 dark:hover:bg-white/5"
+                    @click="$emit('close')"
+                    aria-label="Tutup menu"
+                >
+                    <component :is="getIcon('X')" class="h-5 w-5" />
+                </button>
+            </div>
+
+            <!-- Navigation Items List -->
+            <nav class="flex flex-col gap-1 pt-1">
+                <Link
+                    v-for="item in allowedItems"
+                    :key="item.href"
+                    :href="item.href"
+                    class="group flex items-center justify-between rounded-full px-4 py-2.5 text-[13px] transition-all duration-200"
+                    :class="
+                        isActive(item.href)
+                            ? 'bg-[#0D0E12] font-bold text-white shadow-sm dark:bg-white dark:text-slate-900'
+                            : 'font-medium text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
+                    "
+                    @click="isMobile() ? $emit('close') : undefined"
+                >
+                    <div class="flex items-center gap-3">
+                        <component
+                            :is="getIcon(item.icon)"
+                            class="h-4.5 w-4.5 stroke-[2.2] transition-colors"
+                            :class="
+                                isActive(item.href)
+                                    ? 'text-white dark:text-slate-900'
+                                    : 'text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200'
+                            "
+                        />
+                        <span>{{ item.label }}</span>
+                    </div>
+
+                    <!-- Right Count & Chevron (e.g. "1 >") -->
+                    <div class="flex items-center gap-1.5">
+                        <span
+                            class="text-xs font-semibold"
+                            :class="
+                                isActive(item.href)
+                                    ? 'text-white/80 dark:text-slate-700'
+                                    : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500'
+                            "
+                        >
+                            {{ item.badge }}
+                        </span>
+                        <ChevronRight
+                            class="h-3.5 w-3.5 stroke-[2.5]"
+                            :class="
+                                isActive(item.href)
+                                    ? 'text-white/70 dark:text-slate-500'
+                                    : 'text-slate-300 group-hover:text-slate-500 dark:text-slate-600'
+                            "
+                        />
+                    </div>
+                </Link>
+            </nav>
         </div>
 
-        <!-- 8 Iconic Buttons (Centered in the vertical dock) -->
-        <nav
-            class="flex flex-1 flex-col items-center justify-center gap-2.5 px-2 py-4 lg:gap-2.5 lg:pt-[76px] lg:pb-[76px]"
-        >
-            <Link
-                v-for="item in allowedItems"
-                :key="item.href"
-                :href="item.href"
-                class="group relative flex w-full items-center gap-3.5 rounded-2xl p-2.5 transition-all duration-200 lg:h-11 lg:w-11 lg:justify-center lg:p-0"
-                :class="
-                    isActive(item.href)
-                        ? 'scale-105 bg-white font-bold text-[#5B50E5] shadow-lg shadow-indigo-950/25 dark:bg-[#1E2245] dark:text-[#8D82FF]'
-                        : 'text-white/80 hover:bg-white/15 hover:text-white dark:hover:bg-white/10'
-                "
-                @click="isMobile() ? $emit('close') : undefined"
-            >
-                <div class="relative flex items-center justify-center">
-                    <component
-                        :is="getIcon(item.icon)"
-                        class="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
-                    />
-
-                    <!-- Green PRO Pill Badge -->
-                    <span
-                        v-if="item.isPro"
-                        class="py-0.2 absolute -top-1.5 -right-2.5 rounded-full bg-emerald-400 px-1 text-[8px] font-black tracking-wider text-slate-900 uppercase shadow-xs"
+        <!-- Bottom: Support & Keluar Items -->
+        <div class="border-t border-slate-100 pt-4 dark:border-white/5">
+            <div class="flex flex-col gap-1">
+                <template v-for="item in bottomItems" :key="item.label">
+                    <button
+                        v-if="item.isLogout"
+                        type="button"
+                        class="group flex w-full items-center justify-between rounded-full px-4 py-2.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
+                        @click="handleLogout"
                     >
-                        PRO
-                    </span>
+                        <div class="flex items-center gap-3">
+                            <component
+                                :is="getIcon(item.icon)"
+                                class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-rose-500 dark:text-slate-500 dark:group-hover:text-rose-400"
+                            />
+                            <span>{{ item.label }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-semibold text-slate-400 group-hover:text-rose-500 dark:text-slate-500"
+                            >
+                                {{ item.badge }}
+                            </span>
+                            <ChevronRight
+                                class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-rose-400 dark:text-slate-600"
+                            />
+                        </div>
+                    </button>
 
-                    <!-- Amber Notification Dot -->
-                    <span
-                        v-if="item.hasDot"
-                        class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-[#5B50E5] dark:ring-[#2D257A]"
-                    />
-                </div>
-
-                <!-- Label (Visible on mobile drawer) -->
-                <span class="text-sm font-semibold text-white lg:hidden">{{
-                    item.label
-                }}</span>
-
-                <!-- Desktop Floating Pill Tooltip -->
-                <div
-                    class="pointer-events-none absolute left-full z-50 ml-3 hidden rounded-xl bg-slate-900/90 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow-xl backdrop-blur-sm transition-all group-hover:block dark:bg-slate-800/95"
-                >
-                    {{ item.label }}
-                </div>
-            </Link>
-        </nav>
-
-        <!-- Mobile Drawer Bottom Logout -->
-        <div class="border-t border-white/15 pt-4 lg:hidden">
-            <button
-                type="button"
-                class="flex w-full items-center gap-3 rounded-2xl p-2.5 text-white/80 transition-colors hover:bg-rose-500/20 hover:text-rose-200"
-                @click="handleLogout"
-            >
-                <component :is="getIcon('LogOut')" class="h-5 w-5" />
-                <span class="text-sm font-semibold">Keluar</span>
-            </button>
+                    <a
+                        v-else
+                        :href="item.href"
+                        class="group flex items-center justify-between rounded-full px-4 py-2.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+                    >
+                        <div class="flex items-center gap-3">
+                            <component
+                                :is="getIcon(item.icon)"
+                                class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200"
+                            />
+                            <span>{{ item.label }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="text-xs font-semibold text-slate-400 group-hover:text-slate-600 dark:text-slate-500"
+                            >
+                                {{ item.badge }}
+                            </span>
+                            <ChevronRight
+                                class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-slate-500 dark:text-slate-600"
+                            />
+                        </div>
+                    </a>
+                </template>
+            </div>
         </div>
     </aside>
 </template>
