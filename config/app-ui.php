@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'name' => env('APP_COMPANY_NAME', 'DigitalCode Taks Flow'),
+    'name' => env('APP_COMPANY_NAME', 'Vendify'),
 
     /*
     |--------------------------------------------------------------------------
@@ -23,6 +23,6 @@ return [
     |
     */
 
-    'short_name' => env('APP_SHORT_NAME', 'DigitalCode Taks Flow'),
+    'short_name' => env('APP_SHORT_NAME', 'Vendify'),
 
 ];

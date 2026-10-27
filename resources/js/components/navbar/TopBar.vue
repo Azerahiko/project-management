@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { usePage, Link, router } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { usePage, router } from '@inertiajs/vue3';
 import UserDropdown from './UserDropdown.vue';
 import NotificationDropdown from './NotificationDropdown.vue';
 import { getIcon } from '@/components/sidebar/icons';
 import { useTheme, type Theme } from '@/composables/useTheme';
-import tasks from '@/routes/tasks';
-import projects from '@/routes/projects';
 
 interface Props {
     sidebarOpen: boolean;
@@ -20,22 +18,16 @@ defineProps<Props>();
 defineEmits<Emits>();
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
+const user = computed(() => page.props.auth?.user);
 const { currentTheme, setTheme } = useTheme();
 
-const currentPath = computed(() => {
-    if (typeof window !== 'undefined') {
-        return window.location.pathname;
-    }
-    return new URL(page.url).pathname;
+const currentDateString = computed(() => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 });
 
-const searchQuery = ref('');
-
-function handleSearch(e: Event): void {
-    e.preventDefault();
-    if (!searchQuery.value.trim()) return;
-    router.visit(tasks.index.url({ query: { search: searchQuery.value } }));
+function handleRefresh(): void {
+    router.reload();
 }
 
 function handleSwitchTheme(theme: Theme): void {
@@ -45,178 +37,101 @@ function handleSwitchTheme(theme: Theme): void {
 
 <template>
     <header
-        class="sticky top-0 z-40 flex h-20 items-center justify-between gap-4 border-b border-gray-100/80 bg-white/90 px-5 backdrop-blur-md sm:px-8 lg:px-10 dark:border-white/[0.06] dark:bg-[#141628]/90"
+        class="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5 lg:px-8"
     >
-        <!-- Left: Brand Logo & Navigation Tabs (Exact Reference Match) -->
-        <div class="flex items-center gap-4 sm:gap-6">
-            <!-- Mobile Menu Toggle Button -->
+        <!-- Left: Mobile Menu Toggle & Title -->
+        <div class="flex items-center gap-3">
             <button
                 type="button"
-                class="rounded-xl p-2 text-surface-500 hover:bg-surface-100 lg:hidden dark:text-surface-400 dark:hover:bg-surface-800"
+                class="rounded-xl p-2 text-slate-600 hover:bg-slate-200/60 lg:hidden dark:text-slate-300 dark:hover:bg-white/10"
                 aria-label="Buka menu"
                 @click="$emit('toggle-sidebar')"
             >
                 <component :is="getIcon('Menu')" class="h-6 w-6" />
             </button>
-
-            <!-- Brand Logo -->
-            <Link :href="'/dashboard'" class="flex items-center">
-                <img
-                    src="/images/logo.png"
-                    :alt="page.props.app.name"
-                    class="h-7 w-auto max-w-[140px] object-contain drop-shadow-xs sm:max-w-[160px]"
-                />
-            </Link>
-
-            <!-- Navigation Tabs -->
-            <nav
-                class="hidden items-center gap-2 border-l border-gray-200/80 pl-2 md:flex lg:gap-4 dark:border-white/10"
-            >
-                <Link
-                    :href="'/dashboard'"
-                    class="group relative flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all sm:text-sm"
-                    :class="
-                        currentPath === '/dashboard'
-                            ? 'text-[#5B50E5] dark:text-[#8D82FF]'
-                            : 'text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100'
-                    "
-                >
-                    <component
-                        :is="getIcon('LayoutDashboard')"
-                        class="h-4 w-4"
-                    />
-                    <span>Dashboard</span>
-                    <span
-                        v-if="currentPath === '/dashboard'"
-                        class="absolute right-2 -bottom-[21px] left-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
-                    />
-                </Link>
-
-                <Link
-                    :href="projects.index.url()"
-                    class="group relative flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all sm:text-sm"
-                    :class="
-                        currentPath.startsWith('/projects')
-                            ? 'text-[#5B50E5] dark:text-[#8D82FF]'
-                            : 'text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100'
-                    "
-                >
-                    <component :is="getIcon('FolderKanban')" class="h-4 w-4" />
-                    <span>Workflows</span>
-                    <span
-                        v-if="currentPath.startsWith('/projects')"
-                        class="absolute right-2 -bottom-[21px] left-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
-                    />
-                </Link>
-
-                <Link
-                    :href="tasks.index.url()"
-                    class="group relative flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all sm:text-sm"
-                    :class="
-                        currentPath.startsWith('/tasks')
-                            ? 'text-[#5B50E5] dark:text-[#8D82FF]'
-                            : 'text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100'
-                    "
-                >
-                    <component :is="getIcon('CheckSquare')" class="h-4 w-4" />
-                    <span>Tasks</span>
-                    <span
-                        v-if="currentPath.startsWith('/tasks')"
-                        class="absolute right-2 -bottom-[21px] left-2 h-0.5 rounded-full bg-[#5B50E5] dark:bg-[#8D82FF]"
-                    />
-                </Link>
-            </nav>
         </div>
 
-        <!-- Center: Search Pill Bar -->
-        <div class="hidden max-w-xs flex-1 md:block xl:max-w-md">
-            <form @submit="handleSearch" class="relative">
-                <div
-                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5"
-                >
-                    <component
-                        :is="getIcon('Search')"
-                        class="h-4 w-4 text-surface-400"
-                    />
-                </div>
-                <input
-                    v-model="searchQuery"
-                    type="search"
-                    placeholder="Search or type command"
-                    class="w-full rounded-2xl border border-gray-200/80 bg-surface-50/70 py-2 pr-10 pl-9 text-xs font-medium text-surface-900 transition-all placeholder:text-surface-400 focus:border-[#5B50E5] focus:bg-white focus:ring-2 focus:ring-[#5B50E5]/20 focus:outline-none dark:border-white/10 dark:bg-[#1C1F37] dark:text-surface-100 dark:focus:bg-[#202444]"
-                />
-            </form>
-        </div>
-
-        <!-- Right Side: Light/Dark Switcher, Notification, Action Pills & Add Board Button -->
-        <div class="flex items-center gap-2 sm:gap-3">
-            <!-- Light / Dark Pill Toggle -->
+        <!-- Right: Action Bar (Exact Match to Reference Mockup) -->
+        <div class="flex items-center gap-2.5 sm:gap-3">
+            <!-- Calendar Date Pill (e.g. "January 2025") -->
             <div
-                class="flex items-center rounded-2xl bg-surface-100/80 p-1 dark:bg-[#1C1F37]"
+                class="hidden items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs sm:flex dark:border-white/10 dark:bg-[#151829] dark:text-slate-200"
+            >
+                <component
+                    :is="getIcon('Calendar')"
+                    class="h-3.5 w-3.5 text-slate-500 dark:text-slate-400"
+                />
+                <span>{{ currentDateString }}</span>
+            </div>
+
+            <!-- Export Pill Button -->
+            <button
+                type="button"
+                class="hidden items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 sm:flex dark:border-white/10 dark:bg-[#151829] dark:text-slate-200 dark:hover:bg-white/5"
+            >
+                <component
+                    :is="getIcon('FileText')"
+                    class="h-3.5 w-3.5 text-slate-500 dark:text-slate-400"
+                />
+                <span>Export</span>
+            </button>
+
+            <!-- Circular Neon Lime Refresh Button -->
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-[#D2F87A] text-slate-900 shadow-2xs transition-transform hover:scale-105 active:scale-95"
+                title="Refresh data"
+                @click="handleRefresh"
+            >
+                <component
+                    :is="getIcon('Activity')"
+                    class="h-4 w-4 stroke-[2.3]"
+                />
+            </button>
+
+            <!-- Theme Toggle Pill (Light / Dark) -->
+            <div
+                class="flex items-center rounded-2xl border border-slate-200/80 bg-white p-0.5 shadow-2xs dark:border-white/10 dark:bg-[#151829]"
             >
                 <button
                     type="button"
-                    class="flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition-all"
+                    class="rounded-xl p-1.5 transition-colors"
                     :class="
                         currentTheme === 'light'
-                            ? 'bg-white text-surface-900 shadow-xs'
-                            : 'text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100'
+                            ? 'bg-slate-100 text-slate-900 shadow-2xs'
+                            : 'text-slate-400 hover:text-slate-700'
                     "
                     @click="handleSwitchTheme('light')"
+                    title="Light Mode"
                 >
                     <component
                         :is="getIcon('Sun')"
                         class="h-3.5 w-3.5 text-amber-500"
                     />
-                    <span class="hidden sm:inline">Light</span>
                 </button>
                 <button
                     type="button"
-                    class="flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition-all"
+                    class="rounded-xl p-1.5 transition-colors"
                     :class="
                         currentTheme === 'dark'
-                            ? 'bg-[#292D5A] text-white shadow-xs'
-                            : 'text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100'
+                            ? 'bg-slate-800 text-white shadow-2xs'
+                            : 'text-slate-400 hover:text-slate-200'
                     "
                     @click="handleSwitchTheme('dark')"
+                    title="Dark Mode"
                 >
                     <component
                         :is="getIcon('Moon')"
                         class="h-3.5 w-3.5 text-indigo-400"
                     />
-                    <span class="hidden sm:inline">Dark</span>
                 </button>
             </div>
 
             <!-- Notifications Dropdown -->
             <NotificationDropdown v-if="user" :user="user" />
 
-            <!-- User Dropdown -->
+            <!-- User Profile Avatar Dropdown -->
             <UserDropdown v-if="user" :user="user" />
-
-            <!-- Export Data Pill Button -->
-            <button
-                type="button"
-                class="hidden items-center gap-1.5 rounded-2xl border border-gray-200/80 bg-surface-50/80 px-3.5 py-2 text-xs font-bold text-surface-700 hover:bg-surface-100 xl:flex dark:border-white/10 dark:bg-[#1C1F37] dark:text-surface-300"
-            >
-                <component
-                    :is="getIcon('Activity')"
-                    class="h-3.5 w-3.5 text-surface-400"
-                />
-                <span>Export data</span>
-                <span
-                    class="py-0.2 rounded bg-indigo-100 px-1 text-[9px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                    >.xls</span
-                >
-            </button>
-
-            <!-- Add new board / task CTA Button -->
-            <Link
-                :href="tasks.create.url()"
-                class="flex items-center gap-2 rounded-2xl bg-[#0D0E1A] px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-black active:scale-95 dark:bg-white dark:text-[#0D0E1A] dark:hover:bg-slate-100"
-            >
-                <span>Add new task</span>
-            </Link>
         </div>
     </header>
 </template>
