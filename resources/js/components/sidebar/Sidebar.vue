@@ -2,13 +2,14 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import { getIcon } from './icons';
-import { ChevronRight } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, MessageCircle } from '@lucide/vue';
 import { gsap } from 'gsap';
 import { prefersReducedMotion } from '@/lib/motion';
 import { logout } from '@/routes';
 import tasks from '@/routes/tasks';
 import projects from '@/routes/projects';
 import users from '@/routes/users';
+import { useTheme } from '@/composables/useTheme';
 
 interface Props {
     open: boolean;
@@ -22,9 +23,16 @@ const props = defineProps<Props>();
 defineEmits<Emits>();
 
 const page = usePage();
-const user = computed(() => page.props.auth?.user);
+const { currentTheme, setTheme } = useTheme();
 
-// Fully reactive URL tracking with Inertia usePage()
+// Collapsed state (Narrow Dock vs Expanded) matching reference image
+const isCollapsed = ref(false);
+
+function toggleCollapse(): void {
+    isCollapsed.value = !isCollapsed.value;
+}
+
+// Reactive URL tracking
 const currentPath = computed(() => {
     const rawUrl = page.url || '';
     return rawUrl.split('?')[0].split('#')[0];
@@ -50,65 +58,48 @@ function can(perm?: string): boolean {
     return userPermissions.value.includes(perm);
 }
 
-const stats = computed(() => (page.props.stats as any) || {});
-
-// Menu items matching the reference photo visual rhythm and mapped to real routes
 const sidebarItems = computed(() => [
     {
-        label: 'Home',
+        label: 'Dashboard',
         href: '/dashboard',
         icon: 'Home',
         permission: 'dashboard.view',
-        badge: 1,
     },
     {
-        label: 'Live Orders',
+        label: 'Tasks',
         href: tasks.index.url(),
         icon: 'CheckSquare',
         permission: 'tasks.view',
-        badge: stats.value.my_tasks_count ?? 1,
     },
     {
-        label: 'Order History',
+        label: 'Projects',
         href: projects.index.url(),
         icon: 'FolderKanban',
         permission: 'projects.view',
-        badge: stats.value.projects_count ?? 1,
     },
     {
-        label: 'Offers',
+        label: 'Team Members',
         href: can('users.view') ? users.index.url() : '/teams',
         icon: 'Users',
         permission: can('users.view') ? 'users.view' : 'teams.view',
-        badge: stats.value.team_members_count ?? 1,
     },
     {
-        label: 'Products',
-        href: '/documents',
-        icon: 'FileText',
-        permission: 'documents.view',
-        badge: 1,
+        label: 'Reports',
+        href: '/reports',
+        icon: 'BarChart3',
+        permission: 'reports.view',
     },
     {
-        label: 'Stock',
+        label: 'Activity Log',
         href: '/activity-log',
         icon: 'Activity',
         permission: 'activity-log.view',
-        badge: 1,
-    },
-    {
-        label: 'Massage',
-        href: '/notifications',
-        icon: 'MessageSquare',
-        permission: 'notifications.view',
-        badge: stats.value.notifications_unread || 1,
     },
     {
         label: 'Settings',
         href: '/settings',
         icon: 'Settings',
         permission: 'settings.view',
-        badge: 1,
     },
 ]);
 
@@ -126,12 +117,12 @@ function closeSupportModal(): void {
     showSupportModal.value = false;
 }
 
-function handleLogout(): void {
-    router.post(logout.url(), {}, { preserveScroll: true });
+function handleToggleTheme(): void {
+    setTheme(currentTheme.value === 'dark' ? 'light' : 'dark');
 }
 
 const MOBILE_BREAKPOINT = 1024;
-const SIDEBAR_WIDTH = 270;
+const SIDEBAR_WIDTH = 260;
 
 let drawerCtx: gsap.Context | null = null;
 
@@ -184,22 +175,27 @@ watch(
 <template>
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[265px] shrink-0 flex-col justify-between overflow-y-auto border-r border-slate-200/80 bg-white p-5 shadow-[4px_0_24px_-10px_rgba(0,0,0,0.03)] transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-white/5 dark:bg-[#151829] dark:shadow-none"
+        class="fixed inset-y-0 left-0 z-50 flex h-full flex-col justify-between overflow-y-auto transition-all duration-300 select-none lg:sticky lg:top-4 lg:z-30 lg:h-[calc(100vh-2rem)] lg:translate-x-0"
+        :class="[
+            isCollapsed ? 'p-3 lg:w-[84px]' : 'p-5 lg:w-[255px]',
+            'w-[260px] p-5',
+            'rounded-[32px] border shadow-xl',
+            'border-slate-200/80 bg-white text-slate-800 shadow-slate-200/50',
+            'dark:border-indigo-400/20 dark:bg-[#5B50E5] dark:text-white dark:shadow-indigo-950/40',
+        ]"
         aria-label="Navigasi Utama"
     >
-        <!-- Top: Brand Header & Main Menu -->
+        <!-- Top Section: Brand + Collapse Toggle Button -->
         <div class="flex flex-col">
-            <!-- Brand Logo Header Section -->
-            <div
-                class="flex items-center justify-between border-b border-slate-100/80 px-1 pt-1 pb-6 dark:border-white/5"
-            >
+            <div class="relative flex items-center justify-between pt-1 pb-6">
+                <!-- Expanded Brand (Logo Mark + DigitalCode) -->
                 <Link
+                    v-if="!isCollapsed"
                     href="/dashboard"
                     class="group flex items-center gap-3 transition-opacity hover:opacity-90"
                 >
-                    <!-- Official Logo Mark in Sleek Dark Capsule -->
                     <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0D0E12] p-2 shadow-sm ring-1 shadow-black/15 ring-white/10 transition-transform duration-200 group-hover:scale-105 dark:bg-white dark:ring-black/5"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-900 p-2 shadow-sm transition-transform duration-200 group-hover:scale-105 dark:bg-white"
                     >
                         <img
                             src="/images/logo-mark.png"
@@ -207,33 +203,49 @@ watch(
                             class="h-full w-full object-contain"
                         />
                     </div>
-
-                    <!-- Brand Name & Pro Pill -->
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-1.5">
-                            <span
-                                class="text-base font-black tracking-tight text-slate-900 dark:text-white"
-                            >
-                                DigitalCode
-                            </span>
-                            <span
-                                class="rounded-full bg-[#D2F87A] px-1.5 py-0.5 text-[9px] font-black text-slate-900 shadow-2xs"
-                            >
-                                PRO
-                            </span>
-                        </div>
-                        <span
-                            class="text-[11px] font-medium text-slate-400 dark:text-slate-500"
-                        >
-                            Task Management
-                        </span>
-                    </div>
+                    <span
+                        class="text-lg font-black tracking-tight text-slate-900 dark:text-white"
+                    >
+                        DigitalCode
+                    </span>
                 </Link>
+
+                <!-- Collapsed Brand (Logo Mark only, centered) -->
+                <div v-else class="flex w-full items-center justify-center">
+                    <Link
+                        href="/dashboard"
+                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 p-2 shadow-sm dark:bg-white"
+                        title="DigitalCode Dashboard"
+                    >
+                        <img
+                            src="/images/logo-mark.png"
+                            alt="DigitalCode"
+                            class="h-full w-full object-contain"
+                        />
+                    </Link>
+                </div>
+
+                <!-- Desktop Collapse/Expand Circular Toggle Button (Matches Reference Exact Circle) -->
+                <button
+                    type="button"
+                    class="hidden h-6 w-6 items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 shadow-xs transition hover:scale-110 lg:flex dark:border-white/20 dark:bg-white/10 dark:text-white"
+                    :class="
+                        isCollapsed ? 'absolute top-2.5 -right-1' : 'relative'
+                    "
+                    :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                    @click="toggleCollapse"
+                >
+                    <ChevronLeft
+                        v-if="!isCollapsed"
+                        class="h-3.5 w-3.5 stroke-[2.5]"
+                    />
+                    <ChevronRight v-else class="h-3.5 w-3.5 stroke-[2.5]" />
+                </button>
 
                 <!-- Mobile Drawer Close Button -->
                 <button
                     type="button"
-                    class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-white"
+                    class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"
                     @click="$emit('close')"
                     aria-label="Tutup menu"
                 >
@@ -241,174 +253,201 @@ watch(
                 </button>
             </div>
 
-            <!-- Navigation Links List (Matching Reference Pill Format Exactly) -->
-            <nav class="flex flex-col gap-1.5 pt-5">
+            <!-- Navigation Links List -->
+            <nav class="flex flex-col gap-1.5 pt-1">
                 <Link
                     v-for="item in allowedItems"
                     :key="item.href"
                     :href="item.href"
-                    class="group flex items-center justify-between rounded-full px-4 py-2.5 text-[13.5px] transition-all duration-200"
-                    :class="
+                    class="group relative flex items-center rounded-2xl transition-all duration-200"
+                    :class="[
+                        isCollapsed
+                            ? 'mx-auto h-11 w-11 justify-center p-0'
+                            : 'gap-3.5 px-4 py-3',
                         isActive(item.href)
-                            ? 'scale-[1.01] bg-[#0D0E12] font-semibold text-white shadow-md shadow-black/10 dark:bg-white dark:text-slate-900'
-                            : 'font-medium text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
-                    "
+                            ? 'bg-[#5B50E5] font-bold text-white shadow-md shadow-indigo-500/25 dark:bg-[#4338CA] dark:shadow-indigo-950/50'
+                            : 'font-medium text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-white/80 dark:hover:bg-white/15 dark:hover:text-white',
+                    ]"
+                    :title="isCollapsed ? item.label : undefined"
                     @click="isMobile() ? $emit('close') : undefined"
                 >
-                    <!-- Left: Icon & Label -->
-                    <div class="flex items-center gap-3">
-                        <component
-                            :is="getIcon(item.icon)"
-                            class="h-4.5 w-4.5 stroke-[2.2] transition-colors"
-                            :class="
-                                isActive(item.href)
-                                    ? 'text-white dark:text-slate-900'
-                                    : 'text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200'
-                            "
-                        />
-                        <span class="tracking-tight">{{ item.label }}</span>
-                    </div>
+                    <!-- Icon -->
+                    <component
+                        :is="getIcon(item.icon)"
+                        class="h-5 w-5 shrink-0 stroke-[2] transition-transform duration-200 group-hover:scale-110"
+                        :class="
+                            isActive(item.href)
+                                ? 'text-white'
+                                : 'text-slate-400 group-hover:text-slate-800 dark:text-white/70 dark:group-hover:text-white'
+                        "
+                    />
 
-                    <!-- Right: Badge Count & Chevron (e.g. "1 >") -->
-                    <div class="flex items-center gap-1.5">
-                        <span
-                            class="text-xs font-semibold"
-                            :class="
-                                isActive(item.href)
-                                    ? 'text-white/80 dark:text-slate-700'
-                                    : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500'
-                            "
-                        >
-                            {{ item.badge }}
-                        </span>
-                        <ChevronRight
-                            class="h-3.5 w-3.5 stroke-[2.5] transition-transform duration-150 group-hover:translate-x-0.5"
-                            :class="
-                                isActive(item.href)
-                                    ? 'text-white/70 dark:text-slate-500'
-                                    : 'text-slate-300 group-hover:text-slate-500 dark:text-slate-600'
-                            "
-                        />
+                    <!-- Label (Visible when expanded) -->
+                    <span
+                        v-if="!isCollapsed"
+                        class="text-[13.5px] tracking-tight whitespace-nowrap"
+                    >
+                        {{ item.label }}
+                    </span>
+
+                    <!-- Desktop Collapsed Tooltip -->
+                    <div
+                        v-if="isCollapsed"
+                        class="pointer-events-none absolute left-full z-50 ml-3 hidden rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow-xl group-hover:block dark:bg-white dark:text-slate-900"
+                    >
+                        {{ item.label }}
                     </div>
                 </Link>
             </nav>
         </div>
 
-        <!-- Bottom: User Mini Profile + Support & Keluar -->
-        <div class="mt-8 flex flex-col gap-3">
-            <!-- Active User Mini Profile Card -->
+        <!-- Bottom Section: Premium Card + Support Button + Dark Mode Switch -->
+        <div class="mt-6 flex flex-col gap-3.5">
+            <!-- 1. "Get more power with our Premium features now!" Card (Exact Reference Match) -->
             <div
-                v-if="user"
-                class="flex items-center gap-3 rounded-2xl bg-slate-50/90 p-2.5 transition-colors dark:bg-white/[0.03]"
+                v-if="!isCollapsed"
+                class="relative overflow-hidden rounded-2xl border p-4 transition-all"
+                :class="
+                    currentTheme === 'dark'
+                        ? 'border-white/20 bg-white text-slate-900 shadow-md'
+                        : 'border-slate-100 bg-slate-50 text-slate-800'
+                "
             >
-                <div class="relative">
-                    <img
-                        v-if="user.avatar"
-                        :src="user.avatar"
-                        :alt="user.name"
-                        class="h-9 w-9 rounded-full object-cover ring-2 ring-white dark:ring-slate-800"
-                    />
-                    <div
-                        v-else
-                        class="flex h-9 w-9 items-center justify-center rounded-full bg-[#0D0E12] text-xs font-bold text-white shadow-xs dark:bg-white dark:text-slate-900"
-                    >
-                        {{
-                            user.initials || user.name.slice(0, 2).toUpperCase()
-                        }}
+                <div class="relative z-10 flex flex-col">
+                    <p class="text-[11.5px] leading-relaxed font-semibold">
+                        Get more power with our
+                        <span class="font-extrabold text-[#5B50E5]"
+                            >Premium</span
+                        >
+                        features now!
+                    </p>
+
+                    <!-- Circular Action Arrow Button & Mini Illustration -->
+                    <div class="mt-3 flex items-center justify-between">
+                        <button
+                            type="button"
+                            class="flex h-6 w-6 items-center justify-center rounded-full bg-[#5B50E5] text-white shadow-xs transition hover:scale-110"
+                            @click="handleSupportClick"
+                            title="Learn more"
+                        >
+                            <ChevronRight class="h-3.5 w-3.5 stroke-[2.5]" />
+                        </button>
+
+                        <!-- Isometric Illustration representation -->
+                        <div
+                            class="flex h-9 w-12 items-center justify-center rounded-xl bg-indigo-50 text-base shadow-2xs dark:bg-indigo-100"
+                        >
+                            📊🚀
+                        </div>
                     </div>
-                    <!-- Online Green Pulse Indicator -->
-                    <span
-                        class="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#151829]"
-                    />
-                </div>
-                <div class="flex min-w-0 flex-1 flex-col">
-                    <span
-                        class="truncate text-xs font-bold text-slate-900 dark:text-white"
-                    >
-                        {{ user.name }}
-                    </span>
-                    <span
-                        class="truncate text-[10px] font-medium text-slate-400 dark:text-slate-500"
-                    >
-                        {{ user.roles?.[0] || 'Team Member' }}
-                    </span>
                 </div>
             </div>
 
-            <!-- Footer Navigation (Support & Help Center) -->
-            <div class="border-slate-150/80 border-t pt-3 dark:border-white/5">
-                <div class="flex flex-col gap-1">
-                    <!-- Support Action Button -->
-                    <button
-                        type="button"
-                        class="group flex w-full items-center justify-between rounded-full px-4 py-2 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-                        @click="handleSupportClick"
-                    >
-                        <div class="flex items-center gap-3">
-                            <component
-                                :is="getIcon('Headphones')"
-                                class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200"
-                            />
-                            <span>Support</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span
-                                class="text-xs font-semibold text-slate-400 group-hover:text-slate-600 dark:text-slate-500"
-                            >
-                                1
-                            </span>
-                            <ChevronRight
-                                class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-slate-500 dark:text-slate-600"
-                            />
-                        </div>
-                    </button>
+            <!-- Mini Collapsed Promo Indicator (when collapsed) -->
+            <div
+                v-else
+                class="flex flex-col items-center justify-center rounded-2xl border p-2 text-center"
+                :class="
+                    currentTheme === 'dark'
+                        ? 'border-white/20 bg-white text-slate-900'
+                        : 'border-slate-100 bg-slate-50 text-slate-800'
+                "
+            >
+                <span class="text-[9px] font-bold text-[#5B50E5]">PRO</span>
+                <button
+                    type="button"
+                    class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#5B50E5] text-white"
+                    @click="handleSupportClick"
+                >
+                    <ChevronRight class="h-3 w-3 stroke-[2.5]" />
+                </button>
+            </div>
 
-                    <!-- Help Center / Logout Action -->
-                    <button
-                        type="button"
-                        class="group flex w-full items-center justify-between rounded-full px-4 py-2 text-[13px] font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
-                        @click="handleLogout"
-                    >
-                        <div class="flex items-center gap-3">
-                            <component
-                                :is="getIcon('LogOut')"
-                                class="h-4.5 w-4.5 stroke-[2.2] text-slate-400 group-hover:text-rose-500 dark:text-slate-500 dark:group-hover:text-rose-400"
-                            />
-                            <span>Help Center</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span
-                                class="text-xs font-semibold text-slate-400 group-hover:text-rose-500 dark:text-slate-500"
-                            >
-                                1
-                            </span>
-                            <ChevronRight
-                                class="h-3.5 w-3.5 stroke-[2.5] text-slate-300 group-hover:text-rose-400 dark:text-slate-600"
-                            />
-                        </div>
-                    </button>
+            <!-- 2. Support Pill Button (Exact Reference Match) -->
+            <button
+                type="button"
+                class="group flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-98"
+                :class="
+                    currentTheme === 'dark'
+                        ? 'bg-white text-[#5B50E5] shadow-indigo-950/20'
+                        : 'bg-[#5B50E5] text-white shadow-indigo-500/20'
+                "
+                @click="handleSupportClick"
+            >
+                <MessageCircle class="h-4 w-4 stroke-[2.3]" />
+                <span v-if="!isCollapsed">Support</span>
+            </button>
+
+            <!-- 3. Dark/Light Mode iOS-style Switch Toggle (Exact Reference Match) -->
+            <div
+                class="flex items-center justify-between rounded-2xl px-2 py-1.5 transition-colors"
+                :class="
+                    currentTheme === 'dark'
+                        ? 'bg-white/10 text-white'
+                        : 'bg-slate-100 text-slate-700'
+                "
+            >
+                <!-- Label with Sun/Moon Icon -->
+                <div
+                    v-if="!isCollapsed"
+                    class="flex items-center gap-2 text-xs font-bold"
+                >
+                    <component
+                        :is="getIcon(currentTheme === 'dark' ? 'Moon' : 'Sun')"
+                        class="h-4 w-4"
+                        :class="
+                            currentTheme === 'dark'
+                                ? 'text-amber-300'
+                                : 'text-amber-500'
+                        "
+                    />
+                    <span>{{
+                        currentTheme === 'dark' ? 'Light Mode' : 'Dark Mode'
+                    }}</span>
                 </div>
+
+                <!-- Toggle Switch Control -->
+                <button
+                    type="button"
+                    role="switch"
+                    :aria-checked="currentTheme === 'dark'"
+                    class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                    :class="[
+                        currentTheme === 'dark'
+                            ? 'bg-white dark:bg-white'
+                            : 'bg-slate-300',
+                        isCollapsed ? 'mx-auto' : '',
+                    ]"
+                    @click="handleToggleTheme"
+                >
+                    <span
+                        class="pointer-events-none inline-block h-4 w-4 transform rounded-full shadow-md ring-0 transition duration-200 ease-in-out"
+                        :class="
+                            currentTheme === 'dark'
+                                ? 'translate-x-4 bg-[#5B50E5]'
+                                : 'translate-x-0 bg-white'
+                        "
+                    />
+                </button>
             </div>
         </div>
 
-        <!-- Clean Modal Support Information -->
+        <!-- Support Modal Popup -->
         <div
             v-if="showSupportModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
             @click.self="closeSupportModal"
         >
             <div
-                class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl dark:bg-[#1A1D30]"
+                class="w-full max-w-md rounded-3xl bg-white p-6 text-slate-900 shadow-2xl dark:bg-[#1A1D30] dark:text-white"
             >
                 <div class="flex items-center justify-between pb-3">
-                    <h3
-                        class="text-lg font-bold text-slate-900 dark:text-white"
-                    >
-                        Pusat Bantuan & Dukungan DigitalCode
+                    <h3 class="text-lg font-bold">
+                        Pusat Bantuan & Fitur Premium
                     </h3>
                     <button
                         type="button"
-                        class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
+                        class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
                         @click="closeSupportModal"
                     >
                         <component :is="getIcon('X')" class="h-5 w-5" />
@@ -417,19 +456,20 @@ watch(
                 <p
                     class="text-sm leading-relaxed text-slate-600 dark:text-slate-300"
                 >
-                    Butuh bantuan terkait manajemen tugas, proyek, atau akun
-                    DigitalCode Anda? Hubungi tim support teknis melalui email:
+                    Nikmati kemampuan penuh DigitalCode dengan fitur manajemen
+                    proyek, alur kerja otomatis, dan analitik real-time. Hubungi
+                    support kami di
                     <a
                         href="mailto:support@project.local"
                         class="font-semibold text-indigo-600 underline dark:text-indigo-400"
                     >
-                        support@project.local
-                    </a>
+                        support@project.local </a
+                    >.
                 </p>
                 <div class="mt-6 flex justify-end">
                     <button
                         type="button"
-                        class="rounded-full bg-[#0D0E12] px-5 py-2 text-xs font-bold text-white transition hover:bg-black dark:bg-white dark:text-slate-900"
+                        class="rounded-full bg-[#5B50E5] px-5 py-2 text-xs font-bold text-white transition hover:bg-[#4338CA]"
                         @click="closeSupportModal"
                     >
                         Tutup
