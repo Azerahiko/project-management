@@ -183,7 +183,7 @@ watch(
 <template>
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between border-r border-slate-200/70 bg-white p-5 transition-transform duration-300 lg:static lg:z-10 lg:h-auto lg:min-h-full lg:translate-x-0 dark:border-white/5 dark:bg-[#151829]"
+        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between overflow-y-auto border-r border-slate-200/70 bg-white p-5 transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-white/5 dark:bg-[#151829]"
         aria-label="Navigasi Utama"
     >
         <!-- Top: Logo & Main Navigation List -->
