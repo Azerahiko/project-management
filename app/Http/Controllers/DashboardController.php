@@ -10,7 +10,6 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskActivity;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -36,7 +35,7 @@ class DashboardController extends Controller
                 ->where('status', '!=', TaskStatus::DONE)
                 ->whereNotNull('due_date')
                 ->where('due_date', '<', now())->count(),
-            'team_members_count' => $this->getTeamMembersCount($user, $accessibleProjects),
+            'team_members_count' => $this->getTeamMembersCount($accessibleProjects),
             'notifications_unread' => $user->can('notifications.view')
                 ? $user->unreadNotifications()->count()
                 : 0,
@@ -104,27 +103,18 @@ class DashboardController extends Controller
     /**
      * @param  Builder<Project>  $projectsQuery
      */
-    private function getTeamMembersCount(User $user, $projectsQuery): int
+    private function getTeamMembersCount($projectsQuery): int
     {
-        if ($user->hasRole('administrator')) {
-            $projectIds = (clone $projectsQuery)->pluck('id')->toArray();
+        $projectIds = (clone $projectsQuery)->pluck('id')->toArray();
 
-            return \DB::table('project_members')
-                ->whereIn('project_id', $projectIds)
-                ->distinct('user_id')
-                ->count('user_id');
+        if ($projectIds === []) {
+            return 0;
         }
 
-        if ($user->hasRole('project_manager')) {
-            $projectIds = (clone $projectsQuery)->pluck('id')->toArray();
-
-            return \DB::table('project_members')
-                ->whereIn('project_id', $projectIds)
-                ->distinct('user_id')
-                ->count('user_id');
-        }
-
-        return 0;
+        return \DB::table('project_members')
+            ->whereIn('project_id', $projectIds)
+            ->distinct('user_id')
+            ->count('user_id');
     }
 
     private function getDeadlineUrgency(?string $dueDate): string

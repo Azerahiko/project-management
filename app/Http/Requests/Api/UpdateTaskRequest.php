@@ -57,8 +57,12 @@ class UpdateTaskRequest extends FormRequest
                 $task = $this->route('task');
                 $assigneeId = $this->integer('assignee_id');
 
-                if ($task instanceof Task && $assigneeId && ! $task->project->hasMember(User::find($assigneeId))) {
-                    $validator->errors()->add('assignee_id', 'Assignee must be a member of the project.');
+                if ($task instanceof Task && $assigneeId) {
+                    $assignee = User::find($assigneeId);
+
+                    if ($assignee && ! $task->project->hasMember($assignee)) {
+                        $validator->errors()->add('assignee_id', 'Assignee must be a member of the project.');
+                    }
                 }
             }
         });

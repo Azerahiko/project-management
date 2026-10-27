@@ -85,6 +85,26 @@ describe('Dashboard Controller', function () {
             expect($stats['projects_count'])->toBe(1); // project is ACTIVE
         });
 
+        it('team_leader sees unique members from accessible projects', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $teamLeader = User::factory()->create(['is_active' => true]);
+            $teamLeader->assignRole('team_leader');
+
+            ProjectMember::create([
+                'project_id' => $project->id,
+                'user_id' => $teamLeader->id,
+                'role' => ProjectRole::MEMBER,
+            ]);
+
+            $response = $this->actingAs($teamLeader)->get(route('dashboard'));
+            $response->assertOk();
+
+            $stats = $response->inertiaProps('stats');
+            expect($stats['team_members_count'])->toBe(4);
+        });
+
         it('member sees only assigned tasks in my_tasks_count', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);

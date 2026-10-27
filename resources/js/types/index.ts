@@ -215,6 +215,7 @@ export type PageProps = {
     flash: {
         success: () => string | null;
         error: () => string | null;
+        status?: () => string | null;
     };
     errors: Record<string, string[]>;
 };

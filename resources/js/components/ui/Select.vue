@@ -7,6 +7,7 @@ interface Props {
     modelValue?: string;
     options: { value: string; label: string }[];
     disabled?: boolean;
+    loading?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -32,15 +33,25 @@ const hintId = props.hint ? `${selectId}-hint` : undefined;
         <select
             :id="selectId"
             :value="modelValue"
-            :disabled="disabled"
+            :disabled="disabled || loading"
             :aria-invalid="!!error"
+            :aria-busy="loading"
             :aria-describedby="[errorId, hintId].filter(Boolean).join(' ') || undefined"
             :class="['input', { 'input-error': error }]"
             @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
         >
-            <option v-for="opt in options" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-            </option>
+            <slot v-if="loading" name="loading">
+                <option value="" disabled>Memuat...</option>
+            </slot>
+            <template v-else>
+                <option
+                    v-for="opt in options"
+                    :key="opt.value"
+                    :value="opt.value"
+                >
+                    {{ opt.label }}
+                </option>
+            </template>
         </select>
         <p v-if="error" :id="errorId" class="form-error" role="alert">
             {{ error }}

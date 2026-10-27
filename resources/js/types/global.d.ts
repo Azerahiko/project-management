@@ -30,6 +30,7 @@ declare module '@inertiajs/core' {
             flash: {
                 success: () => string | null;
                 error: () => string | null;
+                status?: () => string | null;
             };
             errors: Record<string, string[]>;
             ziggy: {
@@ -56,6 +57,7 @@ declare module 'vue' {
                 flash: {
                     success: () => string | null;
                     error: () => string | null;
+                    status?: () => string | null;
                 };
                 errors: Record<string, string[]>;
             }

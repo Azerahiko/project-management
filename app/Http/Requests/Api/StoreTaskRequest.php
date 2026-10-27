@@ -90,8 +90,12 @@ class StoreTaskRequest extends FormRequest
                 $project = Project::find($this->integer('project_id'));
                 $assigneeId = $this->integer('assignee_id');
 
-                if ($project && $assigneeId && ! $project->hasMember(User::find($assigneeId))) {
-                    $validator->errors()->add('assignee_id', 'Assignee must be a member of the project.');
+                if ($project && $assigneeId) {
+                    $assignee = User::find($assigneeId);
+
+                    if ($assignee && ! $project->hasMember($assignee)) {
+                        $validator->errors()->add('assignee_id', 'Assignee must be a member of the project.');
+                    }
                 }
             }
         });

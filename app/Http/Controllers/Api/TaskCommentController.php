@@ -11,6 +11,7 @@ use App\Models\TaskComment;
 use App\Notifications\TaskCommentAdded;
 use App\Services\NotificationSender;
 use App\Services\TaskActivityLogger;
+use App\Support\Pagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -28,8 +29,8 @@ class TaskCommentController extends Controller
     {
         $this->authorize('view', $task);
 
-        $perPage = min((int) $request->integer('per_page', 15), 50);
-        $page = (int) $request->integer('page', 1);
+        $perPage = Pagination::perPage($request, 15, 50);
+        $page = Pagination::page($request);
 
         $comments = $task->comments()
             ->with('user')

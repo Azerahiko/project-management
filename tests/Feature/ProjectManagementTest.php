@@ -57,6 +57,18 @@ describe('Project Management', function () {
             $this->actingAs($member)->get("/projects/{$project->id}/edit")->assertForbidden();
         });
 
+        it('denies project managers access to edit pages for projects they cannot manage', function () {
+            [$admin, $pm] = createTestUsers();
+            $target = Project::factory()->create(['owner_id' => $admin->id]);
+            ProjectMember::create([
+                'project_id' => $target->id,
+                'user_id' => $admin->id,
+                'role' => ProjectRole::OWNER,
+            ]);
+
+            $this->actingAs($pm)->get("/projects/{$target->id}/edit")->assertForbidden();
+        });
+
         it('allows project member to view project detail', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
@@ -165,6 +177,71 @@ describe('Project Management', function () {
                 ->assertForbidden();
         });
 
+        it('syncs project ownership when the owner changes', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $this->actingAs($admin)
+                ->putJson("/api/projects/{$project->id}", [
+                    'owner_id' => $pm->id,
+                ])
+                ->assertOk()
+                ->assertJsonPath('data.owner_id', $pm->id);
+
+            $this->assertDatabaseHas('projects', [
+                'id' => $project->id,
+                'owner_id' => $pm->id,
+            ]);
+            $this->assertDatabaseHas('project_members', [
+                'project_id' => $project->id,
+                'user_id' => $pm->id,
+                'role' => 'owner',
+            ]);
+            $this->assertDatabaseHas('project_members', [
+                'project_id' => $project->id,
+                'user_id' => $admin->id,
+                'role' => 'manager',
+            ]);
+        });
+
+        it('rejects transferring ownership to an inactive user', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+            $inactive = User::factory()->create([
+                'email' => 'inactive@projex.test',
+                'is_active' => false,
+            ]);
+            $inactive->assignRole('project_manager');
+
+            $this->actingAs($admin)
+                ->putJson("/api/projects/{$project->id}", [
+                    'owner_id' => $inactive->id,
+                ])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('owner_id');
+
+            $this->assertDatabaseHas('projects', [
+                'id' => $project->id,
+                'owner_id' => $admin->id,
+            ]);
+        });
+
+        it('denies project managers from transferring project ownership', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $this->actingAs($pm)
+                ->putJson("/api/projects/{$project->id}", [
+                    'owner_id' => $pm->id,
+                ])
+                ->assertForbidden();
+
+            $this->assertDatabaseHas('projects', [
+                'id' => $project->id,
+                'owner_id' => $admin->id,
+            ]);
+        });
+
         it('allows admin to delete project via API', function () {
             [$admin] = createTestUsers();
             $target = Project::factory()->create(['owner_id' => $admin->id]);
@@ -256,6 +333,25 @@ describe('Project Management', function () {
                 ->assertJsonStructure([
                     'meta' => ['current_page', 'last_page', 'per_page', 'total'],
                 ]);
+
+            $this->actingAs($admin)
+                ->getJson('/api/projects?per_page=-5')
+                ->assertOk()
+                ->assertJsonPath('meta.per_page', 1);
+        });
+
+        it('returns accurate member counts in the project listing', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            createTestProjects($admin, $pm, $member);
+
+            $response = $this->actingAs($admin)
+                ->getJson('/api/projects?search=Redesain')
+                ->assertOk();
+
+            $project = collect($response->json('data'))->firstWhere('name', 'Redesain Website Perusahaan');
+
+            expect($project)->not->toBeNull();
+            expect($project['members_count'])->toBe(3);
         });
 
         it('allows getting project managers list', function () {
@@ -298,6 +394,42 @@ describe('Project Management', function () {
             [, , $otherProject] = createTestProjects($admin, $pm, $member);
             $this->actingAs($member)
                 ->getJson("/api/projects/{$otherProject->id}/members")
+                ->assertForbidden();
+        });
+
+        it('lists only active users who are not already project members', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+            $candidate = User::factory()->create([
+                'email' => 'candidate@projex.test',
+                'is_active' => true,
+            ]);
+            $candidate->assignRole('member');
+            $inactive = User::factory()->create([
+                'email' => 'inactive@projex.test',
+                'is_active' => false,
+            ]);
+            $inactive->assignRole('member');
+
+            $response = $this->actingAs($pm)
+                ->getJson("/api/projects/{$project->id}/available-users")
+                ->assertOk();
+
+            $ids = collect($response->json('data'))->pluck('id');
+
+            expect($ids)->toContain($candidate->id);
+            expect($ids)->not->toContain($admin->id);
+            expect($ids)->not->toContain($pm->id);
+            expect($ids)->not->toContain($member->id);
+            expect($ids)->not->toContain($inactive->id);
+        });
+
+        it('denies regular members from listing available users', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $this->actingAs($member)
+                ->getJson("/api/projects/{$project->id}/available-users")
                 ->assertForbidden();
         });
 

@@ -14,6 +14,7 @@ use App\Notifications\TaskAssigned;
 use App\Notifications\TaskStatusChanged;
 use App\Services\NotificationSender;
 use App\Services\TaskActivityLogger;
+use App\Support\Pagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -59,7 +60,7 @@ class TaskController extends Controller
                     $request->string('sort_direction')->toString() === 'desc' ? 'desc' : 'asc'
                 );
             }, fn ($query) => $query->latest())
-            ->paginate((int) $request->integer('per_page', 15))
+            ->paginate(Pagination::perPage($request))
             ->withQueryString();
 
         // Add authorization flags to each task

@@ -182,6 +182,56 @@ describe('User Management RBAC', function () {
                 ])
                 ->assertForbidden();
         });
+
+        it('allows the last active administrator to update their own profile', function () {
+            $this->actingAs($this->admin)
+                ->putJson("/api/users/{$this->admin->id}", [
+                    'name' => 'Updated Administrator',
+                    'email' => 'updated-admin@projex.test',
+                    'role' => 'administrator',
+                    'is_active' => true,
+                ])
+                ->assertOk()
+                ->assertJsonPath('data.name', 'Updated Administrator');
+
+            $this->assertDatabaseHas('users', [
+                'id' => $this->admin->id,
+                'name' => 'Updated Administrator',
+                'is_active' => true,
+            ]);
+        });
+
+        it('blocks demoting the last active administrator', function () {
+            $this->actingAs($this->admin)
+                ->putJson("/api/users/{$this->admin->id}", [
+                    'name' => $this->admin->name,
+                    'email' => $this->admin->email,
+                    'role' => 'member',
+                ])
+                ->assertForbidden();
+
+            expect($this->admin->fresh()->hasRole('administrator'))->toBeTrue();
+        });
+
+        it('allows demoting an administrator when another active administrator exists', function () {
+            $otherAdmin = User::factory()->create([
+                'email' => 'admin2@projex.test',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]);
+            $otherAdmin->assignRole('administrator');
+
+            $this->actingAs($this->admin)
+                ->putJson("/api/users/{$this->admin->id}", [
+                    'name' => $this->admin->name,
+                    'email' => $this->admin->email,
+                    'role' => 'member',
+                ])
+                ->assertOk();
+
+            expect($this->admin->fresh()->hasRole('administrator'))->toBeFalse();
+            expect($this->admin->fresh()->hasRole('member'))->toBeTrue();
+        });
     });
 
     describe('API list and roles', function () {
@@ -193,6 +243,11 @@ describe('User Management RBAC', function () {
                     'data',
                     'meta' => ['current_page', 'last_page', 'total'],
                 ]);
+
+            $this->actingAs($this->admin)
+                ->getJson('/api/users?per_page=-5')
+                ->assertOk()
+                ->assertJsonPath('meta.per_page', 1);
         });
 
         it('allows admin to get assignable roles', function () {

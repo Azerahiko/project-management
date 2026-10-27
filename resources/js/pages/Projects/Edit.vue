@@ -21,6 +21,12 @@ const { fetchManagers } = useProjects({} as ProjectFilters);
 
 const page = usePage();
 const initialProject = page.props.project as Project;
+const currentUser = page.props.auth?.user;
+const canChangeOwner = computed(
+    () =>
+        initialProject.owner_id === currentUser?.id ||
+        currentUser?.roles.includes('administrator') === true,
+);
 
 const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -256,6 +262,7 @@ function goBack(): void {
                     ]"
                     label="Project Manager"
                     :loading="loadingManagers"
+                    :disabled="!canChangeOwner"
                     :error="errors.owner_id?.[0]"
                     @change="clearError('owner_id')"
                 >

@@ -44,11 +44,6 @@ class UserPolicy
             return false;
         }
 
-        // The last active administrator must never be deactivated.
-        if ($this->isActiveAdministrator($targetUser) && $this->activeAdministratorsExcluding($targetUser) === 0) {
-            return false;
-        }
-
         return true;
     }
 

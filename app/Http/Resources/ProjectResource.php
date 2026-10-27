@@ -35,7 +35,7 @@ class ProjectResource extends JsonResource
             'end_date' => $project->end_date?->toISOString(),
             'owner_id' => $project->owner_id,
             'owner' => $project->relationLoaded('owner') ? UserResource::make($project->owner)->resolve() : null,
-            'members_count' => $project->relationLoaded('projectMembers') ? $project->projectMembers->count() : null,
+            'members_count' => $project->members_count ?? ($project->relationLoaded('projectMembers') ? $project->projectMembers->count() : null),
             'members' => $project->relationLoaded('projectMembers') ? ProjectMemberResource::collection($project->projectMembers)->resolve() : null,
             'can_update' => $project->can_update,
             'can_delete' => $project->can_delete,

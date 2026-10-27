@@ -4,7 +4,6 @@ namespace App\Http\Requests\Api;
 
 use App\Enums\ProjectPriority;
 use App\Enums\ProjectStatus;
-use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -33,7 +32,7 @@ class StoreProjectRequest extends FormRequest
             'priority' => ['sometimes', 'required', 'string', Rule::in(array_column(ProjectPriority::options(), 'value'))],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'owner_id' => ['sometimes', 'required', 'integer', 'exists:users,id'],
+            'owner_id' => ['sometimes', 'required', 'integer', Rule::exists('users', 'id')->where('is_active', true)],
         ];
     }
 

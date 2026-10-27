@@ -7,6 +7,7 @@ use App\Http\Requests\Api\StoreUserRequest;
 use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\Pagination;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class UserController extends Controller
 
                 $query->orderBy(in_array($sortBy, ['name', 'email', 'created_at'], true) ? $sortBy : 'created_at', $direction);
             }, fn ($query) => $query->latest())
-            ->paginate((int) $request->integer('per_page', 15))
+            ->paginate(Pagination::perPage($request))
             ->withQueryString();
 
         return UserResource::collection($users);
@@ -89,6 +90,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): UserResource
     {
         $this->authorize('update', $user);
+        $this->ensureLastActiveAdministratorIsPreserved($request, $user);
 
         DB::transaction(function () use ($request, $user) {
             $data = $request->safe()->only(['name', 'email', 'avatar']);
@@ -164,5 +166,31 @@ class UserController extends Controller
             $roles,
             fn (string $role) => $role !== Roles::ADMINISTRATOR,
         ));
+    }
+
+    /**
+     * Prevent deactivating or demoting the last active administrator.
+     */
+    protected function ensureLastActiveAdministratorIsPreserved(UpdateUserRequest $request, User $user): void
+    {
+        if (! $user->is_active || ! $user->hasRole(Roles::ADMINISTRATOR)) {
+            return;
+        }
+
+        $willBeDeactivated = $request->has('is_active') && ! $request->boolean('is_active');
+        $willBeDemoted = $request->filled('role') && $request->validated('role') !== Roles::ADMINISTRATOR;
+
+        if (! $willBeDeactivated && ! $willBeDemoted) {
+            return;
+        }
+
+        $otherActiveAdministrators = User::role(Roles::ADMINISTRATOR)
+            ->where('is_active', true)
+            ->whereKeyNot($user->getKey())
+            ->count();
+
+        if ($otherActiveAdministrators === 0) {
+            abort(403, 'Tidak dapat menonaktifkan atau menurunkan peran administrator aktif terakhir.');
+        }
     }
 }

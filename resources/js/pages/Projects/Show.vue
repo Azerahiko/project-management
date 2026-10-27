@@ -23,9 +23,8 @@ defineOptions({
 
 const page = usePage();
 const { success, error: toastError, warning } = useToast();
-const { fetchManagers, addMember, updateMember, removeMember } = useProjects(
-    {} as ProjectFilters,
-);
+const { fetchAvailableUsers, addMember, updateMember, removeMember } =
+    useProjects({} as ProjectFilters);
 
 const project = page.props.project as Project;
 const projectId = project.id;
@@ -43,7 +42,7 @@ const memberColumns = [
     { key: 'actions', label: 'Aksi' },
 ];
 
-const managers = ref<
+const availableUsers = ref<
     Array<{
         id: number;
         name: string;
@@ -52,7 +51,7 @@ const managers = ref<
         initials: string;
     }>
 >([]);
-const loadingManagers = ref(false);
+const loadingAvailableUsers = ref(false);
 
 const addMemberModalOpen = ref(false);
 const newMemberForm = reactive({
@@ -69,25 +68,27 @@ const deleteLoading = ref(false);
 const editMemberRole = ref<{ member: ProjectMember; role: string } | null>(
     null,
 );
+const savingMemberRole = ref(false);
 
-async function loadManagers(): Promise<void> {
-    loadingManagers.value = true;
+async function loadAvailableUsers(): Promise<void> {
+    loadingAvailableUsers.value = true;
     try {
-        managers.value = await fetchManagers();
+        availableUsers.value = await fetchAvailableUsers(projectId);
     } catch {
-        toastError('Gagal memuat daftar manager', 'Silakan coba lagi.');
+        toastError('Gagal memuat daftar pengguna', 'Silakan coba lagi.');
     } finally {
-        loadingManagers.value = false;
+        loadingAvailableUsers.value = false;
     }
 }
 
-onMounted(loadManagers);
+onMounted(loadAvailableUsers);
 
 function openAddMemberModal(): void {
     newMemberForm.user_id = '';
     newMemberForm.role = 'member';
     newMemberErrors.value = {};
     addMemberModalOpen.value = true;
+    void loadAvailableUsers();
 }
 
 async function executeAddMember(): Promise<void> {
@@ -123,9 +124,11 @@ function startEditMemberRole(member: ProjectMember): void {
 }
 
 async function saveMemberRole(): Promise<void> {
-    if (!editMemberRole.value) return;
+    if (!editMemberRole.value || savingMemberRole.value) return;
 
     const { member, role } = editMemberRole.value;
+
+    savingMemberRole.value = true;
 
     try {
         await updateMember(projectId, member.user_id, role);
@@ -136,6 +139,8 @@ async function saveMemberRole(): Promise<void> {
         if (err.response?.data?.message) {
             toastError('Gagal memperbarui peran', err.response.data.message);
         }
+    } finally {
+        savingMemberRole.value = false;
     }
 }
 
@@ -461,7 +466,6 @@ function formatDateShort(dateString: string | null): string {
                             :options="memberRoleOptions"
                             class="w-40"
                             @change="saveMemberRole"
-                            @blur="saveMemberRole"
                         />
                     </div>
                     <div v-else class="flex items-center gap-2">
@@ -550,15 +554,15 @@ function formatDateShort(dateString: string | null): string {
                 v-model="newMemberForm.user_id"
                 :options="[
                     { value: '', label: 'Pilih Pengguna' },
-                    ...managers.map((m) => ({
-                        value: String(m.id),
-                        label: `${m.name} (${m.email})`,
+                    ...availableUsers.map((user) => ({
+                        value: String(user.id),
+                        label: `${user.name} (${user.email})`,
                     })),
                 ]"
                 label="Pengguna *"
                 required
                 :error="newMemberErrorBag.user_id?.[0]"
-                :loading="loadingManagers"
+                :loading="loadingAvailableUsers"
                 @change="
                     () => {
                         if (newMemberErrorBag.user_id)

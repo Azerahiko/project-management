@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
+use App\Support\Pagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -16,8 +17,8 @@ class NotificationController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $perPage = min((int) $request->integer('per_page', 15), 50);
-        $page = (int) $request->integer('page', 1);
+        $perPage = Pagination::perPage($request, 15, 50);
+        $page = Pagination::page($request);
 
         $notifications = $request->user()->notifications()
             ->latest()

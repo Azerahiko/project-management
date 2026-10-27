@@ -247,6 +247,33 @@ describe('Task Management', function () {
                 ->assertJsonValidationErrors('assignee_id');
         });
 
+        it('returns a validation error for a non-existent assignee instead of crashing', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $this->actingAs($admin)
+                ->postJson('/api/tasks', [
+                    'project_id' => $project->id,
+                    'title' => 'Test',
+                    'assignee_id' => 999999,
+                ])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('assignee_id');
+        });
+
+        it('returns a validation error when updating with a non-existent assignee', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+            [$task] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+
+            $this->actingAs($admin)
+                ->putJson("/api/tasks/{$task->id}", [
+                    'assignee_id' => 999999,
+                ])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('assignee_id');
+        });
+
         it('allows admin to update task via API', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
@@ -447,6 +474,11 @@ describe('Task Management', function () {
                 ->assertJsonStructure([
                     'meta' => ['current_page', 'last_page', 'per_page', 'total'],
                 ]);
+
+            $this->actingAs($admin)
+                ->getJson('/api/tasks?per_page=-5')
+                ->assertOk()
+                ->assertJsonPath('meta.per_page', 1);
         });
 
         it('filters tasks by assignee', function () {

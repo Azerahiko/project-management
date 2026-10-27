@@ -14,6 +14,7 @@ use App\Models\ProjectMember;
 use App\Models\User;
 use App\Notifications\ProjectMemberAdded;
 use App\Services\NotificationSender;
+use App\Support\Pagination;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -33,7 +34,7 @@ class ProjectController extends Controller
         $this->authorize('viewAny', Project::class);
 
         $projects = Project::query()
-            ->with(['owner', 'members'])
+            ->with('owner')
             ->withCount('members')
             ->accessibleBy($request->user())
             ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
@@ -55,7 +56,7 @@ class ProjectController extends Controller
                 $allowedSorts = ['name', 'status', 'priority', 'start_date', 'end_date', 'created_at'];
                 $query->orderBy(in_array($sortBy, $allowedSorts, true) ? $sortBy : 'created_at', $direction);
             }, fn ($query) => $query->latest())
-            ->paginate((int) $request->integer('per_page', 15))
+            ->paginate(Pagination::perPage($request))
             ->withQueryString();
 
         // Add authorization flags to each project
@@ -93,7 +94,7 @@ class ProjectController extends Controller
                 'joined_at' => now(),
             ]);
 
-            return $project->load(['owner', 'members']);
+            return $project->load(['owner', 'projectMembers.user']);
         });
 
         return ProjectResource::make($project)
@@ -123,8 +124,27 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        $project->fill($request->validated());
-        $project->save();
+        $data = $request->validated();
+        $newOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : $project->owner_id;
+        $ownerChanged = $newOwnerId !== $project->owner_id;
+
+        // Only the current owner or an administrator may transfer ownership.
+        if ($ownerChanged
+            && ! $request->user()->hasRole('administrator')
+            && $project->owner_id !== $request->user()->id) {
+            abort(403, 'Hanya pemilik proyek atau administrator yang dapat mengubah pemilik proyek.');
+        }
+
+        DB::transaction(function () use ($project, $data, $newOwnerId, $ownerChanged) {
+            $previousOwnerId = $project->owner_id;
+
+            $project->fill($data);
+            $project->save();
+
+            if ($ownerChanged) {
+                $this->syncProjectOwner($project, $newOwnerId, $previousOwnerId);
+            }
+        });
 
         return ProjectResource::make($project->load(['owner', 'projectMembers.user']));
     }
@@ -243,6 +263,32 @@ class ProjectController extends Controller
     }
 
     /**
+     * List active users who can still be added to the project.
+     */
+    public function availableUsers(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('manageMembers', $project);
+
+        $users = User::query()
+            ->where('is_active', true)
+            ->whereDoesntHave('projectMemberships', function ($query) use ($project) {
+                $query->where('project_id', $project->id);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'avatar']);
+
+        return response()->json([
+            'data' => $users->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar,
+                'initials' => $user->initials,
+            ]),
+        ]);
+    }
+
+    /**
      * List available project managers (users with project_manager role or administrator).
      */
     public function managers(): JsonResponse
@@ -264,5 +310,20 @@ class ProjectController extends Controller
                 'initials' => $user->initials,
             ]),
         ]);
+    }
+
+    /**
+     * Keep the project member pivot in sync when ownership changes.
+     */
+    private function syncProjectOwner(Project $project, int $newOwnerId, int $previousOwnerId): void
+    {
+        $project->projectMembers()
+            ->where('user_id', $previousOwnerId)
+            ->update(['role' => ProjectRole::MANAGER]);
+
+        $project->projectMembers()->updateOrCreate(
+            ['user_id' => $newOwnerId],
+            ['role' => ProjectRole::OWNER]
+        );
     }
 }

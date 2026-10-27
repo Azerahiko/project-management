@@ -443,6 +443,22 @@ test('can list notifications with pagination', function () {
     $this->assertEquals(1, count($response->json('data')));
 });
 
+test('clamps invalid notification pagination parameters', function () {
+    $this->member1->notifications()->create([
+        'id' => Str::uuid(),
+        'type' => TaskAssigned::class,
+        'notifiable_type' => User::class,
+        'notifiable_id' => $this->member1->id,
+        'data' => ['action' => 'assigned', 'task_id' => $this->task->id, 'event_id' => Str::uuid()],
+    ]);
+
+    $this->actingAs($this->member1)
+        ->getJson('/api/notifications?per_page=-5&page=-1')
+        ->assertOk()
+        ->assertJsonPath('meta.per_page', 1)
+        ->assertJsonPath('meta.current_page', 1);
+});
+
 test('can get unread count', function () {
     $this->member1->notifications()->create([
         'id' => Str::uuid(),

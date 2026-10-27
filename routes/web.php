@@ -14,6 +14,17 @@ use Inertia\Inertia;
 // Public login page (Inertia)
 Route::inertia('/login', 'Auth/Login')->name('login')->middleware('guest');
 
+// Password reset request page (Inertia)
+Route::inertia('/forgot-password', 'Auth/ForgotPassword')->name('password.request')->middleware('guest');
+
+// Password reset form page (Inertia)
+Route::get('/reset-password/{token}', function (Request $request, string $token) {
+    return Inertia::render('Auth/ResetPassword', [
+        'email' => (string) $request->query('email', ''),
+        'token' => $token,
+    ]);
+})->name('password.reset')->middleware('guest');
+
 // Fortify registers its own POST /login and POST /logout routes automatically.
 
 // Authenticated routes
@@ -21,7 +32,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard')
         ->middleware('can:dashboard.view');
-    Route::inertia('/notifications', 'Notifications/Index')->name('notifications');
+    Route::inertia('/notifications', 'Notifications/Index')
+        ->name('notifications')
+        ->middleware('can:notifications.view');
 
     // Project routes
     Route::middleware('can:projects.view')->group(function () {
@@ -49,6 +62,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware('can:projects.update')->group(function () {
         Route::get('/projects/{project}/edit', function (Project $project, Request $request) {
+            abort_unless($request->user()->can('update', $project), 403);
+
             $project->load(['owner', 'projectMembers.user']);
             $project->can_update = $request->user()->can('update', $project);
             $project->can_delete = $request->user()->can('delete', $project);
@@ -87,12 +102,24 @@ Route::middleware(['auth'])->group(function () {
             ]);
         })->name('tasks.edit');
     });
-    Route::inertia('/collaboration', 'Collaboration/Index')->name('collaboration');
-    Route::inertia('/teams', 'Teams/Index')->name('teams');
-    Route::inertia('/calendar', 'Calendar/Index')->name('calendar');
-    Route::inertia('/documents', 'Documents/Index')->name('documents');
-    Route::inertia('/reports', 'Reports/Index')->name('reports');
-    Route::inertia('/activity-log', 'ActivityLog/Index')->name('activity-log');
+    Route::inertia('/collaboration', 'Collaboration/Index')
+        ->name('collaboration')
+        ->middleware('can:task-collaboration.view');
+    Route::inertia('/teams', 'Teams/Index')
+        ->name('teams')
+        ->middleware('can:teams.view');
+    Route::inertia('/calendar', 'Calendar/Index')
+        ->name('calendar')
+        ->middleware('can:calendar.view');
+    Route::inertia('/documents', 'Documents/Index')
+        ->name('documents')
+        ->middleware('can:documents.view');
+    Route::inertia('/reports', 'Reports/Index')
+        ->name('reports')
+        ->middleware('can:reports.view');
+    Route::inertia('/activity-log', 'ActivityLog/Index')
+        ->name('activity-log')
+        ->middleware('can:activity-log.view');
 
     // Admin-only routes
     Route::middleware('can:users.view')->group(function () {

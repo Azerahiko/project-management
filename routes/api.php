@@ -27,6 +27,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Project member routes
     Route::get('projects/{project}/members', [ProjectController::class, 'members'])->middleware('can:projects.view');
+    Route::get('projects/{project}/available-users', [ProjectController::class, 'availableUsers'])->middleware('can:projects.manage_members');
     Route::post('projects/{project}/members', [ProjectController::class, 'addMember'])->middleware('can:projects.manage_members');
     Route::put('projects/{project}/members/{user}', [ProjectController::class, 'updateMember'])->middleware('can:projects.manage_members');
     Route::delete('projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->middleware('can:projects.manage_members');

@@ -85,4 +85,23 @@ describe('Authentication', function () {
         $this->get('/api/users')
             ->assertUnauthorized();
     });
+
+    it('renders the forgot password page for guests', function () {
+        $this->get('/forgot-password')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Auth/ForgotPassword'));
+    });
+
+    it('handles password reset link requests', function () {
+        $user = User::factory()->create([
+            'email' => 'member@project.local',
+            'is_active' => true,
+        ]);
+
+        $response = $this->post('/forgot-password', [
+            'email' => 'member@project.local',
+        ]);
+
+        $response->assertSessionHas('status');
+    });
 });

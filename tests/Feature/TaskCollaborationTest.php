@@ -205,6 +205,12 @@ describe('Task Collaboration', function () {
                 ->getJson("/api/tasks/{$this->task->id}/comments?per_page=100")
                 ->assertOk()
                 ->assertJsonCount(50, 'data');
+
+            $this->actingAs($this->member)
+                ->getJson("/api/tasks/{$this->task->id}/comments?per_page=-5")
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('meta.per_page', 1);
         });
 
         it('paginates correctly with page parameter', function () {
@@ -245,6 +251,11 @@ describe('Task Collaboration', function () {
                 ->getJson("/api/tasks/{$this->task->id}/activities?limit=200")
                 ->assertOk()
                 ->assertJsonCount(100, 'data');
+
+            $this->actingAs($this->member)
+                ->getJson("/api/tasks/{$this->task->id}/activities?limit=-5")
+                ->assertOk()
+                ->assertJsonCount(1, 'data');
         });
 
         it('denies outsider accessing activities', function () {

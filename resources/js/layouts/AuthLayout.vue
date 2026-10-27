@@ -1,44 +1,25 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import { getIcon } from '@/components/sidebar/icons';
-
-const page = usePage();
+import ToastContainer from '@/components/ui/ToastContainer.vue';
 </script>
 
 <template>
     <div
-        class="flex min-h-screen items-center justify-center bg-surface-50 px-4 py-12 dark:bg-surface-950"
+        class="relative min-h-screen w-full overflow-x-hidden bg-[#101214] bg-cover bg-[center_left] bg-no-repeat select-none lg:bg-center"
+        style="background-image: url('/images/auth-bg.png')"
     >
-        <div class="w-full max-w-md">
-            <div class="glass-strong rounded-2xl p-8 shadow-xl">
-                <div class="mb-8 text-center">
-                    <div
-                        class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 shadow-lg"
-                    >
-                        <component
-                            :is="getIcon('CheckSquare')"
-                            class="h-7 w-7 text-white"
-                        />
-                    </div>
-                    <h1
-                        class="text-2xl font-bold text-surface-900 dark:text-surface-100"
-                    >
-                        {{ page.props.app.shortName }}
-                    </h1>
-                    <p
-                        class="mt-2 text-sm text-surface-600 dark:text-surface-400"
-                    >
-                        Masuk ke akun Anda
-                    </p>
-                </div>
-                <slot />
-            </div>
-            <p
-                class="mt-6 text-center text-sm text-surface-500 dark:text-surface-400"
-            >
-                &copy; {{ new Date().getFullYear() }} {{ page.props.app.name }}.
-                Hak cipta dilindungi.
-            </p>
+        <!-- Soft subtle dark vignette gradient: deepens the left wood area while keeping the right-hand laptop, coffee, and plant bright and visible -->
+        <div
+            class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/30 to-black/40 lg:to-transparent"
+            aria-hidden="true"
+        />
+
+        <!-- Content Area: Left-aligned on desktop screens, centered on mobile -->
+        <div
+            class="relative z-10 flex min-h-screen w-full items-center justify-center px-4 py-10 sm:px-8 lg:justify-start lg:pl-16 xl:pl-24 2xl:pl-32"
+        >
+            <slot />
         </div>
+
+        <ToastContainer />
     </div>
 </template>

@@ -150,6 +150,27 @@ export function useProjects(filters: ProjectFilters) {
         return response.data;
     }
 
+    async function fetchAvailableUsers(projectId: number): Promise<
+        Array<{
+            id: number;
+            name: string;
+            email: string;
+            avatar: string | null;
+            initials: string;
+        }>
+    > {
+        const { data: response } = await api.get<{
+            data: Array<{
+                id: number;
+                name: string;
+                email: string;
+                avatar: string | null;
+                initials: string;
+            }>;
+        }>(`/projects/${projectId}/available-users`);
+        return response.data;
+    }
+
     const queryString = computed(() => ({
         search: filters.search || undefined,
         status: filters.status || undefined,
@@ -173,6 +194,7 @@ export function useProjects(filters: ProjectFilters) {
         updateMember,
         removeMember,
         fetchManagers,
+        fetchAvailableUsers,
         queryString,
     };
 }

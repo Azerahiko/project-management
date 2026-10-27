@@ -48,7 +48,7 @@ class NotificationSender
     {
         $conflict = $this->getConflictTarget($type, $payload);
 
-        $inserted = DB::insert(
+        $affected = DB::affectingStatement(
             "INSERT INTO notifications (id, type, notifiable_type, notifiable_id, data, read_at, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?::jsonb, NULL, ?, ?)
              {$conflict}",
@@ -63,7 +63,7 @@ class NotificationSender
             ]
         );
 
-        return $inserted > 0;
+        return $affected > 0;
     }
 
     /**
