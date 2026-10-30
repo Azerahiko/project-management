@@ -120,6 +120,21 @@ describe('Task Management', function () {
             $this->assertDatabaseHas('tasks', ['title' => 'New Task']);
         });
 
+        it('returns a null assignee for an unassigned task', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $this->actingAs($admin)
+                ->postJson('/api/tasks', [
+                    'project_id' => $project->id,
+                    'title' => 'Unassigned Task',
+                    'status' => 'todo',
+                    'priority' => 'medium',
+                ])
+                ->assertCreated()
+                ->assertJsonPath('data.assignee', null);
+        });
+
         it('allows project manager to create task via API', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);

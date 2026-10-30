@@ -48,11 +48,13 @@ function selectTheme(theme: typeof currentTheme.value): void {
     <div class="mx-auto max-w-3xl space-y-6">
         <div>
             <h1
-                class="text-2xl font-bold text-surface-900 dark:text-surface-100"
+                class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-50"
             >
                 Pengaturan
             </h1>
-            <p class="mt-1 text-surface-600 dark:text-surface-400">
+            <p
+                class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
+            >
                 Kelola preferensi aplikasi Anda
             </p>
         </div>
@@ -115,7 +117,7 @@ function selectTheme(theme: typeof currentTheme.value): void {
                             :class="
                                 currentTheme === option.value
                                     ? 'text-primary-600 dark:text-primary-400'
-                                    : 'text-surface-400 dark:text-surface-500'
+                                    : 'text-surface-600 dark:text-surface-300'
                             "
                         />
                     </div>
@@ -136,8 +138,8 @@ function selectTheme(theme: typeof currentTheme.value): void {
                             class="absolute inset-y-0 left-0 h-full rounded-full transition-all duration-300"
                             :class="
                                 option.value === 'light'
-                                    ? 'w-full bg-yellow-400'
-                                    : 'w-full bg-slate-800'
+                                    ? 'w-full bg-accent-500'
+                                    : 'w-full bg-primary-800'
                             "
                         />
                     </div>
@@ -160,11 +162,11 @@ function selectTheme(theme: typeof currentTheme.value): void {
         <div class="card space-y-6">
             <div class="flex items-center gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30"
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30"
                 >
                     <component
                         :is="getIcon('User')"
-                        class="h-5 w-5 text-green-600 dark:text-green-400"
+                        class="h-5 w-5 text-primary-600 dark:text-primary-400"
                     />
                 </div>
                 <div>
@@ -244,11 +246,11 @@ function selectTheme(theme: typeof currentTheme.value): void {
         <div class="card space-y-6">
             <div class="flex items-center gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30"
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-950/30"
                 >
                     <component
                         :is="getIcon('Shield')"
-                        class="h-5 w-5 text-purple-600 dark:text-purple-400"
+                        class="h-5 w-5 text-primary-600 dark:text-primary-400"
                     />
                 </div>
                 <div>

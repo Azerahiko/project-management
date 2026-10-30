@@ -44,8 +44,8 @@ const form = reactive({
     status: task.status,
     priority: task.priority,
     assignee_id: task.assignee_id ? String(task.assignee_id) : '',
-    start_date: task.start_date || '',
-    due_date: task.due_date || '',
+    start_date: task.start_date ? task.start_date.split('T')[0] : '',
+    due_date: task.due_date ? task.due_date.split('T')[0] : '',
 });
 
 const errors = ref<Record<string, string[]>>({});
@@ -166,11 +166,13 @@ watch(
         <div class="flex items-center justify-between">
             <div>
                 <h1
-                    class="text-2xl font-bold text-surface-900 dark:text-surface-100"
+                    class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-50"
                 >
                     Edit Tugas
                 </h1>
-                <p class="mt-1 text-surface-600 dark:text-surface-400">
+                <p
+                    class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
+                >
                     Perbarui informasi tugas di bawah ini
                 </p>
             </div>
@@ -289,7 +291,7 @@ watch(
 
             <div
                 v-if="errors.form"
-                class="rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
             >
                 {{ errors.form[0] }}
             </div>

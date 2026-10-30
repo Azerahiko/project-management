@@ -23,9 +23,9 @@ enum TaskStatus: string
     {
         return match ($this) {
             self::TODO => 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
-            self::IN_PROGRESS => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-            self::REVIEW => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-            self::DONE => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            self::IN_PROGRESS => 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+            self::REVIEW => 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300',
+            self::DONE => 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
         };
     }
 

@@ -31,7 +31,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Project $project
- * @property-read User $assignee
+ * @property-read User|null $assignee
  * @property-read User $creator
  * @property-read Collection<int, TaskComment> $comments
  * @property-read Collection<int, TaskActivity> $activities

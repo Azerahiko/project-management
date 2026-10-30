@@ -17,17 +17,17 @@ function navigateToProject(projectId: number): void {
 }
 
 function getProgressColor(percent: number): string {
-    if (percent >= 80) return 'bg-green-500';
-    if (percent >= 50) return 'bg-blue-500';
-    if (percent >= 25) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (percent >= 80) return 'bg-primary-700';
+    if (percent >= 50) return 'bg-primary-600';
+    if (percent >= 25) return 'bg-accent-500';
+    return 'bg-accent-600';
 }
 
 function getProgressBgColor(percent: number): string {
-    if (percent >= 80) return 'bg-green-100 dark:bg-green-900/30';
-    if (percent >= 50) return 'bg-blue-100 dark:bg-blue-900/30';
-    if (percent >= 25) return 'bg-yellow-100 dark:bg-yellow-900/30';
-    return 'bg-red-100 dark:bg-red-900/30';
+    if (percent >= 80) return 'bg-primary-100 dark:bg-primary-900/30';
+    if (percent >= 50) return 'bg-primary-50 dark:bg-primary-900/30';
+    if (percent >= 25) return 'bg-accent-100 dark:bg-accent-900/30';
+    return 'bg-accent-50 dark:bg-accent-900/30';
 }
 </script>
 

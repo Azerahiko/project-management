@@ -42,3 +42,12 @@ it('allows project managers to access monitoring pages', function () {
     $this->actingAs($projectManager)->get('/activity-log')->assertOk();
     $this->actingAs($projectManager)->get('/teams')->assertOk();
 });
+
+it('allows every authenticated role to access personal settings', function () {
+    foreach (['member', 'reviewer', 'client', 'team_leader', 'project_manager'] as $role) {
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole($role);
+
+        $this->actingAs($user)->get('/settings')->assertOk();
+    }
+});

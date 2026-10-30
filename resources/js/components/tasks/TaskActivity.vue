@@ -84,10 +84,10 @@ function getFieldLabel(field: string | null): string {
 
 function getActivityColor(type: string): string {
     if (type.startsWith('comment.'))
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
     if (type === 'task.deleted')
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+        return 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300';
+    return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400';
 }
 
 function toggleExpand(activity: TaskActivity): void {
@@ -193,7 +193,7 @@ function toggleExpand(activity: TaskActivity): void {
                                 </span>
                                 <span
                                     v-if="activity.old_value"
-                                    class="text-red-600 line-through dark:text-red-400"
+                                    class="text-accent-700 line-through dark:text-accent-300"
                                 >
                                     {{ activity.old_value }}
                                 </span>
@@ -206,7 +206,7 @@ function toggleExpand(activity: TaskActivity): void {
                                 />
                                 <span
                                     v-if="activity.new_value"
-                                    class="font-medium text-green-600 dark:text-green-400"
+                                    class="font-medium text-primary-600 dark:text-primary-400"
                                 >
                                     {{ activity.new_value }}
                                 </span>

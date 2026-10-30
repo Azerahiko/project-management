@@ -59,29 +59,29 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="min-h-screen bg-white font-sans text-slate-900 transition-colors duration-300 dark:bg-[#0B0D17] dark:text-slate-100"
+        class="min-h-screen bg-surface-50 font-sans text-surface-900 transition-colors duration-300 dark:bg-surface-950 dark:text-surface-50"
     >
         <!-- Mobile Sidebar Backdrop -->
         <div
             v-if="sidebarOpen"
-            class="animate-fade-in fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs lg:hidden"
+            class="animate-fade-in fixed inset-0 z-40 bg-surface-950/50 backdrop-blur-xs lg:hidden"
             @click="closeSidebar"
             aria-hidden="true"
         />
 
         <div class="flex min-h-screen w-full">
-            <!-- Modern Frosted Sidebar (Matching Reference Image Exactly) -->
+            <!-- Modern Frosted Sidebar -->
             <Sidebar :open="sidebarOpen" @close="closeSidebar" />
 
-            <!-- Main Content Canvas (Pure White in Light Mode) -->
+            <!-- Main Content Canvas -->
             <div
-                class="flex min-w-0 flex-1 flex-col bg-white dark:bg-[#0B0D17]"
+                class="flex min-w-0 flex-1 flex-col bg-surface-50 dark:bg-surface-950"
             >
                 <TopBar
                     :sidebar-open="sidebarOpen"
                     @toggle-sidebar="toggleSidebar"
                 />
-                <main ref="main" class="flex-1 p-5 sm:p-6 lg:p-8">
+                <main ref="main" class="flex-1 p-4 sm:p-6 lg:p-8">
                     <slot />
                 </main>
             </div>

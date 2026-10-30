@@ -123,6 +123,7 @@ class Permissions
                 self::DOCUMENTS_VIEW,
                 self::REPORTS_VIEW,
                 self::ACTIVITY_LOG_VIEW,
+                self::SETTINGS_VIEW,
             ],
             Roles::TEAM_LEADER => [
                 self::DASHBOARD_VIEW,
@@ -136,6 +137,7 @@ class Permissions
                 self::CALENDAR_VIEW,
                 self::DOCUMENTS_VIEW,
                 self::REPORTS_VIEW,
+                self::SETTINGS_VIEW,
             ],
             Roles::MEMBER => [
                 self::DASHBOARD_VIEW,
@@ -145,6 +147,7 @@ class Permissions
                 self::TASK_COLLABORATION_VIEW,
                 self::CALENDAR_VIEW,
                 self::DOCUMENTS_VIEW,
+                self::SETTINGS_VIEW,
             ],
             Roles::REVIEWER => [
                 self::DASHBOARD_VIEW,
@@ -153,10 +156,12 @@ class Permissions
                 self::TASKS_VIEW,
                 self::TASK_COLLABORATION_VIEW,
                 self::DOCUMENTS_VIEW,
+                self::SETTINGS_VIEW,
             ],
             Roles::CLIENT => [
                 self::DASHBOARD_VIEW,
                 self::PROJECTS_VIEW,
+                self::SETTINGS_VIEW,
             ],
         ];
     }

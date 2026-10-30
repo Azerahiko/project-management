@@ -65,6 +65,9 @@ describe('Dashboard Controller', function () {
             // Admin is assignee of task4 (in otherProject, ON_HOLD, REVIEW)
             expect($stats['my_tasks_count'])->toBe(1);
 
+            // All accessible tasks that are not DONE (all 6 tasks minus 2 done)
+            expect($stats['active_tasks_count'])->toBe(4);
+
             // 1 overdue task (the one we added), task3 is DONE so not counted
             expect($stats['overdue_count'])->toBe(1);
 
@@ -378,6 +381,22 @@ describe('Dashboard Controller', function () {
         });
     });
 
+    describe('Tasks by status', function () {
+        it('includes done tasks in the status breakdown', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
+            createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject);
+
+            $response = $this->actingAs($admin)->get(route('dashboard'));
+            $tasksByStatus = $response->inertiaProps('tasks_by_status');
+
+            expect($tasksByStatus['todo'])->toBe(1);
+            expect($tasksByStatus['in_progress'])->toBe(1);
+            expect($tasksByStatus['review'])->toBe(1);
+            expect($tasksByStatus['done'])->toBe(1);
+        });
+    });
+
     describe('Project progress', function () {
         it('calculates progress percentage correctly', function () {
             [$admin] = createTestUsers();
@@ -431,6 +450,8 @@ describe('Dashboard Controller', function () {
             $progress = $response->inertiaProps('project_progress');
 
             expect($progress)->toHaveCount(1);
+            expect($progress[0]['tasks_count'])->toBe(4);
+            expect($progress[0]['completed_tasks_count'])->toBe(1);
             expect($progress[0]['progress_percent'])->toBe(25);
         });
 
@@ -452,6 +473,8 @@ describe('Dashboard Controller', function () {
             $progress = $response->inertiaProps('project_progress');
 
             expect($progress[0]['progress_percent'])->toBe(0);
+            expect($progress[0]['tasks_count'])->toBe(0);
+            expect($progress[0]['completed_tasks_count'])->toBe(0);
         });
     });
 

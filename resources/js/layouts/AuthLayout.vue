@@ -4,12 +4,12 @@ import ToastContainer from '@/components/ui/ToastContainer.vue';
 
 <template>
     <div
-        class="relative min-h-screen w-full overflow-x-hidden bg-[#101214] bg-cover bg-[center_left] bg-no-repeat select-none lg:bg-center"
+        class="relative min-h-screen w-full overflow-x-hidden bg-surface-950 bg-cover bg-[center_left] bg-no-repeat select-none lg:bg-center"
         style="background-image: url('/images/auth-bg.png')"
     >
-        <!-- Soft subtle dark vignette gradient: deepens the left wood area while keeping the right-hand laptop, coffee, and plant bright and visible -->
+        <!-- Keep the photo secondary to the form. -->
         <div
-            class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/30 to-black/40 lg:to-transparent"
+            class="pointer-events-none absolute inset-0 bg-gradient-to-r from-surface-950/85 via-surface-950/65 to-surface-950/40 lg:to-surface-950/20"
             aria-hidden="true"
         />
 

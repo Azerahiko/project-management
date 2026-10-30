@@ -34,8 +34,8 @@ class ProjectController extends Controller
         $this->authorize('viewAny', Project::class);
 
         $projects = Project::query()
-            ->with('owner')
-            ->withCount('members')
+            ->with(['owner', 'projectMembers.user'])
+            ->withCount(['members', 'tasks'])
             ->accessibleBy($request->user())
             ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
                 $query->search($request->string('search')->toString());

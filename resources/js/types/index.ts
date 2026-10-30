@@ -170,6 +170,7 @@ export type Project = {
     owner?: User;
     members_count?: number;
     members?: ProjectMember[];
+    tasks_count?: number;
     can_update?: boolean;
     can_delete?: boolean;
     can_manage_members?: boolean;
@@ -274,9 +275,18 @@ export type DeadlineUrgency = 'overdue' | 'critical' | 'warning' | 'normal';
 export type UpcomingDeadline = {
     id: number;
     title: string;
-    project?: { id: number; name: string };
+    project?: { id: number; name: string } | null;
     due_date: string | null;
     deadline_urgency: DeadlineUrgency;
+    priority_label?: string | null;
+    priority_color?: string | null;
+    status_label?: string | null;
+    assignee?: {
+        id: number;
+        name: string;
+        avatar?: string | null;
+        initials?: string;
+    } | null;
 };
 
 export type ProjectProgress = {
@@ -314,6 +324,7 @@ export type RecentActivity = {
 export type DashboardStats = {
     projects_count: number;
     my_tasks_count: number;
+    active_tasks_count: number;
     overdue_count: number;
     team_members_count: number;
     notifications_unread: number;

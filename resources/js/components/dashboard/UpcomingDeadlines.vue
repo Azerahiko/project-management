@@ -24,18 +24,18 @@ const urgencyColors: Record<
     { bg: string; text: string; icon: string }
 > = {
     overdue: {
-        bg: 'bg-red-100 dark:bg-red-900/30',
-        text: 'text-red-700 dark:text-red-400',
+        bg: 'bg-accent-100 dark:bg-accent-900/30',
+        text: 'text-accent-700 dark:text-accent-300',
         icon: 'AlertTriangle',
     },
     critical: {
-        bg: 'bg-red-100 dark:bg-red-900/30',
-        text: 'text-red-700 dark:text-red-400',
+        bg: 'bg-accent-100 dark:bg-accent-900/30',
+        text: 'text-accent-700 dark:text-accent-300',
         icon: 'AlertTriangle',
     },
     warning: {
-        bg: 'bg-yellow-100 dark:bg-yellow-900/30',
-        text: 'text-yellow-700 dark:text-yellow-400',
+        bg: 'bg-accent-100 dark:bg-accent-900/30',
+        text: 'text-accent-700 dark:text-accent-300',
         icon: 'Clock',
     },
     normal: {

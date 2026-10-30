@@ -29,19 +29,19 @@ const statusColors: Record<
         border: 'border-surface-200 dark:border-surface-700',
     },
     in_progress: {
-        bg: 'bg-blue-100 dark:bg-blue-900/30',
-        text: 'text-blue-700 dark:text-blue-400',
-        border: 'border-blue-200 dark:border-blue-800',
+        bg: 'bg-primary-100 dark:bg-primary-900/30',
+        text: 'text-primary-700 dark:text-primary-400',
+        border: 'border-primary-200 dark:border-primary-800',
     },
     review: {
-        bg: 'bg-yellow-100 dark:bg-yellow-900/30',
-        text: 'text-yellow-700 dark:text-yellow-400',
-        border: 'border-yellow-200 dark:border-yellow-800',
+        bg: 'bg-accent-100 dark:bg-accent-900/30',
+        text: 'text-accent-700 dark:text-accent-300',
+        border: 'border-accent-200 dark:border-accent-800',
     },
     done: {
-        bg: 'bg-green-100 dark:bg-green-900/30',
-        text: 'text-green-700 dark:text-green-400',
-        border: 'border-green-200 dark:border-green-800',
+        bg: 'bg-primary-100 dark:bg-primary-900/30',
+        text: 'text-primary-700 dark:text-primary-400',
+        border: 'border-primary-200 dark:border-primary-800',
     },
 };
 

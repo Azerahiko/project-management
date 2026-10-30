@@ -74,11 +74,13 @@ function goBack(): void {
         <div class="flex items-center justify-between">
             <div>
                 <h1
-                    class="text-2xl font-bold text-surface-900 dark:text-surface-100"
+                    class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-50"
                 >
                     Tambah Pengguna Baru
                 </h1>
-                <p class="mt-1 text-surface-600 dark:text-surface-400">
+                <p
+                    class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
+                >
                     Isi formulir di bawah untuk membuat pengguna baru
                 </p>
             </div>
@@ -180,7 +182,7 @@ function goBack(): void {
 
             <div
                 v-if="errors.form"
-                class="rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
             >
                 {{ errors.form[0] }}
             </div>

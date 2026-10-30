@@ -194,22 +194,34 @@ function formatDateShort(dateString: string | null): string {
                     Kembali ke Daftar
                 </Link>
                 <h1
-                    class="text-2xl font-bold text-surface-900 dark:text-surface-100"
+                    class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-50"
                 >
                     {{ task.title }}
                 </h1>
-                <p class="mt-1 text-surface-600 dark:text-surface-400">
+                <p
+                    class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
+                >
                     {{ task.description || 'Tidak ada deskripsi' }}
                 </p>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-                <span class="badge" :class="task.status_color">
-                    {{ task.status_label }}
-                </span>
-                <span class="badge" :class="task.priority_color">
-                    {{ task.priority_label }}
-                </span>
+            <!-- Clean Calm System status & priority indicators (NO pill badges) -->
+            <div
+                class="flex flex-wrap items-center gap-2.5 text-xs font-medium text-surface-600 dark:text-surface-300"
+            >
+                <div
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-surface-200/80 bg-surface-50 px-2.5 py-1 dark:border-surface-700 dark:bg-surface-800/60"
+                >
+                    <span
+                        class="h-1.5 w-1.5 rounded-full bg-primary-700 dark:bg-primary-300"
+                    />
+                    <span>{{ task.status_label }}</span>
+                </div>
+                <div
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-surface-200/80 bg-surface-50 px-2.5 py-1 text-surface-500 dark:border-surface-700 dark:bg-surface-800/60 dark:text-surface-400"
+                >
+                    <span>Prioritas: {{ task.priority_label }}</span>
+                </div>
             </div>
 
             <Dropdown
@@ -265,7 +277,7 @@ function formatDateShort(dateString: string | null): string {
 
                     <button
                         v-if="task.can_delete"
-                        class="dropdown-item text-red-600 dark:text-red-400"
+                        class="dropdown-item text-accent-700 dark:text-accent-300"
                         @click="confirmDeleteTask"
                     >
                         <component
@@ -358,14 +370,14 @@ function formatDateShort(dateString: string | null): string {
                     :class="[
                         'mt-2 font-medium',
                         task.is_overdue
-                            ? 'text-red-600 dark:text-red-400'
+                            ? 'text-accent-700 dark:text-accent-300'
                             : 'text-surface-900 dark:text-surface-100',
                     ]"
                 >
                     {{ formatDate(task.due_date) }}
                     <span
                         v-if="task.is_overdue"
-                        class="ml-2 text-xs text-red-600 dark:text-red-400"
+                        class="ml-2 text-xs text-accent-700 dark:text-accent-300"
                         >(Lewat tenggat)</span
                     >
                 </p>
@@ -421,7 +433,7 @@ function formatDateShort(dateString: string | null): string {
                 </dt>
                 <dd
                     v-if="task.completed_at"
-                    class="font-medium text-green-600 text-surface-900 dark:text-surface-100"
+                    class="font-medium text-primary-600 text-surface-900 dark:text-surface-100"
                 >
                     {{ formatDate(task.completed_at) }}
                 </dd>
@@ -434,7 +446,7 @@ function formatDateShort(dateString: string | null): string {
                 </dt>
                 <dd
                     v-if="task.deleted_at"
-                    class="font-medium text-red-600 text-surface-900 dark:text-surface-100"
+                    class="font-medium text-accent-700 text-surface-900 dark:text-surface-100"
                 >
                     {{ formatDate(task.deleted_at) }}
                 </dd>

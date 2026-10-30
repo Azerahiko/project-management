@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
 
 class TaskStatusChanged extends Notification
@@ -19,7 +18,7 @@ class TaskStatusChanged extends Notification
     /**
      * @return array<int, string>
      */
-    public function via(object|Notifiable $notifiable): array
+    public function via(object $notifiable): array
     {
         return ['database'];
     }
@@ -27,7 +26,7 @@ class TaskStatusChanged extends Notification
     /**
      * @return array<string, mixed>
      */
-    public function toArray(object|Notifiable $notifiable): array
+    public function toArray(object $notifiable): array
     {
         return [
             'task_id' => $this->taskId,

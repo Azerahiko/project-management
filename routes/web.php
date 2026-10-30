@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TimelineController;
+use App\Http\Controllers\WorkspaceOverviewController;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\UserResource;
@@ -102,22 +105,37 @@ Route::middleware(['auth'])->group(function () {
             ]);
         })->name('tasks.edit');
     });
-    Route::inertia('/collaboration', 'Collaboration/Index')
+    Route::get('/timeline', [TimelineController::class, 'index'])
+        ->name('timeline')
+        ->middleware('can:projects.view');
+    Route::get('/announcements', [AnnouncementController::class, 'index'])
+        ->name('announcements.index')
+        ->middleware('can:dashboard.view');
+    Route::post('/announcements', [AnnouncementController::class, 'store'])
+        ->name('announcements.store')
+        ->middleware('can:teams.view');
+    Route::patch('/announcements/{announcement}/pin', [AnnouncementController::class, 'togglePin'])
+        ->name('announcements.pin')
+        ->middleware('can:teams.view');
+    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])
+        ->name('announcements.destroy')
+        ->middleware('can:teams.view');
+    Route::get('/collaboration', [WorkspaceOverviewController::class, 'collaboration'])
         ->name('collaboration')
         ->middleware('can:task-collaboration.view');
-    Route::inertia('/teams', 'Teams/Index')
+    Route::get('/teams', [WorkspaceOverviewController::class, 'teams'])
         ->name('teams')
         ->middleware('can:teams.view');
-    Route::inertia('/calendar', 'Calendar/Index')
+    Route::get('/calendar', [WorkspaceOverviewController::class, 'calendar'])
         ->name('calendar')
         ->middleware('can:calendar.view');
-    Route::inertia('/documents', 'Documents/Index')
+    Route::get('/documents', [WorkspaceOverviewController::class, 'documents'])
         ->name('documents')
         ->middleware('can:documents.view');
-    Route::inertia('/reports', 'Reports/Index')
+    Route::get('/reports', [WorkspaceOverviewController::class, 'reports'])
         ->name('reports')
         ->middleware('can:reports.view');
-    Route::inertia('/activity-log', 'ActivityLog/Index')
+    Route::get('/activity-log', [WorkspaceOverviewController::class, 'activityLog'])
         ->name('activity-log')
         ->middleware('can:activity-log.view');
 

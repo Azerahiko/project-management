@@ -37,8 +37,12 @@ class TaskResource extends JsonResource
             'start_date' => $task->start_date?->toISOString(),
             'due_date' => $task->due_date?->toISOString(),
             'completed_at' => $task->completed_at?->toISOString(),
-            'assignee' => $task->relationLoaded('assignee') ? UserResource::make($task->assignee)->resolve() : null,
-            'creator' => $task->relationLoaded('creator') ? UserResource::make($task->creator)->resolve() : null,
+            'assignee' => $task->relationLoaded('assignee') && $task->assignee
+                ? UserResource::make($task->assignee)->resolve()
+                : null,
+            'creator' => $task->relationLoaded('creator')
+                ? UserResource::make($task->creator)->resolve()
+                : null,
             'project' => $task->relationLoaded('project') ? [
                 'id' => $task->project->id,
                 'name' => $task->project->name,

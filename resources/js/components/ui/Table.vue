@@ -56,7 +56,7 @@ function rowId(row: T): string | number {
                                 class="inline-flex"
                             >
                                 <svg
-                                    class="h-4 w-4 text-surface-400 dark:text-surface-500"
+                                    class="h-4 w-4 text-surface-600 dark:text-surface-300"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -80,8 +80,14 @@ function rowId(row: T): string | number {
                     </td>
                 </tr>
                 <tr v-else-if="data.length === 0">
-                    <td :colspan="columns.length" class="table-cell text-center text-surface-500 dark:text-surface-400 py-8">
-                        {{ emptyMessage }}
+                    <td :colspan="columns.length" class="table-cell !py-12 text-center">
+                        <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-surface-100 dark:bg-surface-800" aria-hidden="true">
+                            <svg class="h-5 w-5 text-primary-700 dark:text-primary-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="3" />
+                                <path d="M3 9h18M8 14h8M8 17h5" />
+                            </svg>
+                        </div>
+                        <p class="mt-3 text-sm font-medium text-surface-700 dark:text-surface-200">{{ emptyMessage }}</p>
                     </td>
                 </tr>
                 <tr

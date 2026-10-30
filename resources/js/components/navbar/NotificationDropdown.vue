@@ -145,7 +145,7 @@ onUnmounted(() => {
             <component :is="getIcon('Bell')" class="h-5 w-5" />
             <span
                 v-if="unreadCount > 0"
-                class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white"
+                class="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-md bg-accent-500 text-[10px] font-bold text-surface-950 shadow-2xs"
             >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
@@ -380,7 +380,7 @@ onUnmounted(() => {
                                 </div>
 
                                 <p
-                                    class="mt-1 text-[11px] text-surface-400 dark:text-surface-500"
+                                    class="mt-1 text-[11px] text-surface-600 dark:text-surface-300"
                                 >
                                     {{ formatTime(notification.created_at) }}
                                 </p>

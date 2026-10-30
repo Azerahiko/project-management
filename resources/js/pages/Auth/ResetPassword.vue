@@ -28,7 +28,7 @@ const titleRef = ref<HTMLElement | null>(null);
 const formFieldsRef = ref<HTMLElement | null>(null);
 const submitBtnRef = ref<HTMLElement | null>(null);
 
-let floatTween: gsap.core.Tween | null = null;
+let entranceTimeline: gsap.core.Timeline | null = null;
 
 function handleSubmit(): void {
     form.post(passwordRoutes.update.url(), {
@@ -46,14 +46,14 @@ const errorMessage = computed(() => {
 onMounted(() => {
     if (prefersReducedMotion()) return;
 
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+    entranceTimeline = tl;
 
     if (cardRef.value) {
         tl.from(cardRef.value, {
-            y: 35,
+            y: 12,
             opacity: 0,
-            scale: 0.98,
-            duration: 0.8,
+            duration: 0.35,
         });
     }
 
@@ -61,10 +61,9 @@ onMounted(() => {
         tl.from(
             logoRef.value,
             {
-                y: -16,
+                y: -6,
                 opacity: 0,
-                duration: 0.6,
-                ease: 'back.out(1.8)',
+                duration: 0.3,
             },
             '-=0.45',
         );
@@ -80,29 +79,18 @@ onMounted(() => {
         tl.from(
             elementsToStagger,
             {
-                y: 18,
+                y: 6,
                 opacity: 0,
-                stagger: 0.09,
-                duration: 0.55,
+                stagger: 0.05,
+                duration: 0.3,
             },
             '-=0.3',
         );
     }
-
-    if (cardRef.value) {
-        floatTween = gsap.to(cardRef.value, {
-            y: -6,
-            duration: 3.2,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-            delay: 1,
-        });
-    }
 });
 
 onUnmounted(() => {
-    floatTween?.kill();
+    entranceTimeline?.kill();
 });
 </script>
 
@@ -112,13 +100,13 @@ onUnmounted(() => {
     <div class="relative w-full max-w-[420px]">
         <!-- Subtle Ambient Brand Aura Glow behind card -->
         <div
-            class="pointer-events-none absolute -inset-2.5 -z-10 rounded-[36px] bg-gradient-to-tr from-[#008289]/30 via-transparent to-[#F6B828]/25 opacity-75 blur-2xl"
+            class="pointer-events-none absolute -inset-2 -z-10 rounded-3xl border border-primary-300/40 bg-primary-500/10 blur-lg"
             aria-hidden="true"
         />
 
         <div
             ref="cardRef"
-            class="relative w-full rounded-[28px] bg-white/95 p-8 shadow-[0_24px_55px_-12px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.8)_inset,0_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04] backdrop-blur-xl sm:p-10"
+            class="relative w-full rounded-2xl border border-surface-200 bg-white p-8 shadow-lg sm:p-10"
         >
             <!-- Logo -->
             <div ref="logoRef" class="flex flex-col items-center">
@@ -132,24 +120,24 @@ onUnmounted(() => {
             <!-- Title & Subtitle Header -->
             <div ref="titleRef" class="mt-5 text-center">
                 <h1
-                    class="font-sans text-[23px] font-bold tracking-tight text-[#0F1E26] sm:text-[25px]"
+                    class="font-sans text-[23px] font-bold tracking-tight text-surface-950 sm:text-[25px]"
                 >
                     Reset password
                 </h1>
-                <p class="mt-1 text-xs font-normal text-[#64748B]">
+                <p class="mt-1 text-xs font-normal text-surface-700">
                     Enter your new password below.
                 </p>
 
                 <!-- Brand Color Decorative Bar -->
                 <div class="mt-3 flex items-center justify-center gap-1">
-                    <span class="h-1 w-7 rounded-full bg-[#008289]" />
-                    <span class="h-1 w-2.5 rounded-full bg-[#F6B828]" />
+                    <span class="h-1 w-7 rounded-full bg-[#008081]" />
+                    <span class="h-1 w-2.5 rounded-full bg-[#F2C32D]" />
                 </div>
             </div>
 
             <div
                 v-if="errorMessage"
-                class="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-center text-xs font-semibold text-rose-600 shadow-xs"
+                class="mt-5 rounded-xl border border-accent-200 bg-accent-50 px-4 py-2.5 text-center text-xs font-semibold text-accent-700 shadow-xs"
                 role="alert"
             >
                 {{ errorMessage }}
@@ -163,15 +151,15 @@ onUnmounted(() => {
                     <div>
                         <label
                             for="reset-email"
-                            class="mb-1.5 block text-xs font-semibold text-[#334155]"
+                            class="mb-1.5 block text-xs font-semibold text-surface-800"
                         >
                             Email address
                         </label>
                         <div
-                            class="flex h-12 items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 opacity-80 shadow-2xs"
+                            class="flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 opacity-80 shadow-2xs"
                         >
                             <svg
-                                class="h-5 w-5 shrink-0 text-[#94A3B8]"
+                                class="h-5 w-5 shrink-0 text-surface-600"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -198,7 +186,7 @@ onUnmounted(() => {
                                 required
                                 autocomplete="email"
                                 readonly
-                                class="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-normal text-[#0F1E26] outline-none"
+                                class="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-normal text-surface-950 outline-none"
                             />
                         </div>
                     </div>
@@ -206,19 +194,19 @@ onUnmounted(() => {
                     <div>
                         <label
                             for="reset-password"
-                            class="mb-1.5 block text-xs font-semibold text-[#334155]"
+                            class="mb-1.5 block text-xs font-semibold text-surface-800"
                         >
                             New password
                         </label>
                         <div
-                            class="group flex h-12 items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008289] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008289]/12"
+                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008081] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008081]/12"
                             :class="{
-                                'border-rose-400 bg-rose-50/30 ring-2 ring-rose-400/20':
+                                'border-accent-400 bg-accent-50/30 ring-2 ring-accent-400/20':
                                     form.errors.password,
                             }"
                         >
                             <svg
-                                class="h-5 w-5 shrink-0 text-[#94A3B8] transition-colors group-focus-within:text-[#008289]"
+                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-[#008081]"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -244,11 +232,11 @@ onUnmounted(() => {
                                 placeholder="Enter new password"
                                 required
                                 autocomplete="new-password"
-                                class="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-normal text-[#0F1E26] outline-none placeholder:text-[#94A3B8]"
+                                class="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-normal text-surface-950 outline-none placeholder:text-surface-600"
                             />
                             <button
                                 type="button"
-                                class="rounded-md p-1 text-[#94A3B8] transition-colors hover:text-[#008289]"
+                                class="rounded-md p-1 text-surface-600 transition-colors hover:text-[#008081]"
                                 :aria-label="
                                     showPassword
                                         ? 'Hide password'
@@ -297,15 +285,15 @@ onUnmounted(() => {
                     <div>
                         <label
                             for="reset-password-confirmation"
-                            class="mb-1.5 block text-xs font-semibold text-[#334155]"
+                            class="mb-1.5 block text-xs font-semibold text-surface-800"
                         >
                             Confirm password
                         </label>
                         <div
-                            class="group flex h-12 items-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008289] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008289]/12"
+                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008081] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008081]/12"
                         >
                             <svg
-                                class="h-5 w-5 shrink-0 text-[#94A3B8] transition-colors group-focus-within:text-[#008289]"
+                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-[#008081]"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -331,7 +319,7 @@ onUnmounted(() => {
                                 placeholder="Confirm new password"
                                 required
                                 autocomplete="new-password"
-                                class="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-normal text-[#0F1E26] outline-none placeholder:text-[#94A3B8]"
+                                class="min-w-0 flex-1 bg-transparent px-3 text-[14px] font-normal text-surface-950 outline-none placeholder:text-surface-600"
                             />
                         </div>
                     </div>
@@ -341,12 +329,8 @@ onUnmounted(() => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="group relative flex h-12 w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#008289] via-[#009199] to-[#008289] bg-[length:200%_auto] text-[15px] font-bold text-white shadow-[0_8px_20px_-4px_rgba(0,130,137,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-right hover:shadow-[0_12px_24px_-4px_rgba(0,130,137,0.55)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                        class="group relative flex h-12 w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-primary-700 text-[15px] font-semibold text-white transition-colors hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        <span
-                            class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
-                        />
-
                         <svg
                             v-if="form.processing"
                             class="h-5 w-5 animate-spin text-white"
@@ -378,7 +362,7 @@ onUnmounted(() => {
             <div class="mt-6 text-center">
                 <Link
                     :href="login.url()"
-                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] transition-colors hover:text-[#008289]"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-700 transition-colors hover:text-[#008081]"
                 >
                     <svg
                         class="h-3.5 w-3.5"

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { getIcon } from '@/components/sidebar/icons';
 import AppLayout from '@/layouts/AppLayout.vue';
-import EmptyState from '@/components/ui/EmptyState.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import { useNotifications } from '@/composables/useNotifications';
 import type { Notification } from '@/types';
@@ -20,11 +19,29 @@ const {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    refresh,
 } = useNotifications();
+
+const activeTab = ref<'all' | 'unread' | 'tasks' | 'projects'>('all');
 
 onMounted(() => {
     fetchNotifications(1);
+});
+
+const filteredNotifications = computed(() => {
+    let list = notifications.value;
+    if (activeTab.value === 'unread') {
+        list = list.filter((n) => !n.read_at);
+    } else if (activeTab.value === 'tasks') {
+        list = list.filter(
+            (n) =>
+                n.data.action === 'assigned' ||
+                n.data.action === 'comment' ||
+                n.data.action === 'status_changed',
+        );
+    } else if (activeTab.value === 'projects') {
+        list = list.filter((n) => n.data.action === 'project_member_added');
+    }
+    return list;
 });
 
 function handleNotificationClick(notification: Notification): void {
@@ -34,6 +51,11 @@ function handleNotificationClick(notification: Notification): void {
     if (notification.data.url) {
         router.visit(notification.data.url);
     }
+}
+
+function handleMarkSingleRead(notification: Notification, e: Event): void {
+    e.stopPropagation();
+    markAsRead(notification.id);
 }
 
 function handleMarkAllRead(): void {
@@ -51,6 +73,7 @@ function formatTime(dateString: string): string {
     if (diffMins < 1) return 'Baru saja';
     if (diffMins < 60) return `${diffMins} menit lalu`;
     if (diffHours < 24) return `${diffHours} jam lalu`;
+    if (diffDays === 1) return 'Kemarin';
     if (diffDays < 7) return `${diffDays} hari lalu`;
     return date.toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -59,339 +82,325 @@ function formatTime(dateString: string): string {
     });
 }
 
-function getNotificationIcon(action: Notification['data']['action']): string {
+function getNotificationHeadline(notification: Notification): {
+    title: string;
+    description: string;
+    icon: string;
+    category: string;
+} {
+    const action = notification.data.action;
     switch (action) {
         case 'assigned':
-            return 'UserPlus';
+            return {
+                title: 'Tugas Baru Ditugaskan',
+                description: `Tugas "${notification.data.task_title || 'Tugas'}" dalam proyek ${notification.data.project_name || 'Tim'} ditugaskan kepada Anda.`,
+                icon: 'CheckSquare',
+                category: 'Tugas Tim',
+            };
         case 'comment':
-            return 'MessageSquare';
+            return {
+                title: 'Komentar Baru pada Tugas',
+                description: `${notification.data.author_name || 'Rekan'} menambahkan komentar pada "${notification.data.task_title || 'Tugas'}"${notification.data.comment_preview ? `: "${notification.data.comment_preview}"` : ''}`,
+                icon: 'MessageSquare',
+                category: 'Kolaborasi',
+            };
         case 'status_changed':
-            return 'RefreshCw';
+            return {
+                title: 'Perubahan Status Alur Kerja',
+                description: `Status tugas "${notification.data.task_title || 'Tugas'}" telah diperbarui.`,
+                icon: 'RefreshCw',
+                category: 'Alur Tugas',
+            };
         case 'project_member_added':
-            return 'Users';
+            return {
+                title: 'Ditambahkan ke Proyek Baru',
+                description: `Anda resmi ditambahkan sebagai anggota dalam proyek "${notification.data.project_name || 'Proyek'}".`,
+                icon: 'FolderKanban',
+                category: 'Proyek Tim',
+            };
         default:
-            return 'Bell';
+            return {
+                title: 'Pemberitahuan Sistem',
+                description:
+                    'Aktivitas terbaru tercatat pada akun workspace Anda.',
+                icon: 'Bell',
+                category: 'Sistem',
+            };
     }
 }
 
-function loadMore(): void {
-    if (meta.value.current_page < meta.value.last_page && !loading.value) {
-        fetchNotifications(meta.value.current_page + 1);
-    }
+function handlePageChange(pageNum: number): void {
+    fetchNotifications(pageNum);
 }
 </script>
 
 <template>
     <div class="space-y-6">
-        <!-- Header -->
+        <!-- 1. Header Section: Calm System Style -->
         <div
             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <h1
-                    class="text-2xl font-bold text-surface-900 dark:text-surface-100"
+                <div
+                    class="flex items-center gap-2 text-xs font-medium text-surface-500"
                 >
-                    Notifikasi
+                    <span
+                        class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
+                    />
+                    <span>Pusat Notifikasi</span>
+                    <span class="text-surface-300 dark:text-surface-700"
+                        >·</span
+                    >
+                    <span>Tasks Flow Workspace</span>
+                </div>
+                <h1
+                    class="mt-1 font-serif text-2xl font-normal tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
+                >
+                    Pemberitahuan & Aktivitas
                 </h1>
-                <p class="mt-1 text-surface-600 dark:text-surface-400">
-                    Kelola notifikasi Anda
+                <p
+                    class="mt-1 max-w-xl text-xs text-surface-600 sm:text-sm dark:text-surface-400"
+                >
+                    Pantau pembaruan tugas, penugasan baru, dan umpan balik tim
+                    secara terpusat.
                 </p>
             </div>
 
+            <!-- Actions Header (NO pill badges!) -->
             <div class="flex items-center gap-3">
-                <span
+                <div
                     v-if="unreadCount > 0"
-                    class="rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                    class="flex items-center gap-2 text-xs font-medium text-surface-700 dark:text-surface-300"
                 >
-                    {{ unreadCount }} belum dibaca
-                </span>
+                    <span
+                        class="h-2 w-2 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
+                    />
+                    <span>{{ unreadCount }} belum dibaca</span>
+                </div>
                 <button
                     v-if="unreadCount > 0"
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-full bg-[#0F5132] px-4 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
                     @click="handleMarkAllRead"
-                    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
                 >
-                    Tandai semua dibaca
+                    <component
+                        :is="getIcon('CheckCheck')"
+                        class="h-3.5 w-3.5"
+                    />
+                    <span>Tandai Semua Dibaca</span>
                 </button>
             </div>
         </div>
 
-        <!-- Notification list -->
-        <div class="card overflow-hidden">
+        <!-- 2. Segmented Filter Tabs (Calm 07 TABS & SLIDER Style) -->
+        <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-surface-200/80 bg-white p-2.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+        >
             <div
-                v-if="loading && notifications.length === 0"
-                class="flex items-center justify-center py-12"
+                class="flex items-center rounded-full border border-surface-200 bg-surface-100 p-1 dark:border-surface-800 dark:bg-surface-800"
             >
-                <div
-                    class="h-8 w-8 animate-spin rounded-full border-3 border-primary-500 border-t-transparent"
-                />
-            </div>
-
-            <div v-else-if="notifications.length === 0" class="py-16">
-                <EmptyState
-                    icon="Bell"
-                    title="Tidak ada notifikasi"
-                    description="Semua tertangkap. Notifikasi baru akan muncul di sini."
-                />
-            </div>
-
-            <div
-                v-else
-                class="divide-y divide-surface-200 dark:divide-surface-700"
-            >
-                <div
-                    v-for="notification in notifications"
-                    :key="notification.id"
-                    @click="handleNotificationClick(notification)"
-                    :class="[
-                        'cursor-pointer px-6 py-4 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/50',
-                        {
-                            'bg-surface-50/50 dark:bg-surface-800/50':
-                                !notification.read_at,
-                        },
-                    ]"
+                <button
+                    type="button"
+                    class="rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
+                    :class="
+                        activeTab === 'all'
+                            ? 'bg-[#0F5132] text-white shadow-2xs'
+                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
+                    "
+                    @click="activeTab = 'all'"
                 >
-                    <div class="flex items-start gap-4">
-                        <div
-                            :class="[
-                                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
-                                !notification.read_at
-                                    ? 'bg-primary-100 dark:bg-primary-900/30'
-                                    : 'bg-surface-100 dark:bg-surface-800',
-                            ]"
-                        >
-                            <component
-                                :is="
-                                    getIcon(
-                                        getNotificationIcon(
-                                            notification.data.action,
-                                        ),
-                                    )
-                                "
-                                :class="[
-                                    'h-5 w-5',
-                                    !notification.read_at
-                                        ? 'text-primary-600 dark:text-primary-400'
-                                        : 'text-surface-500 dark:text-surface-400',
-                                ]"
-                            />
-                        </div>
+                    Semua
+                </button>
+                <button
+                    type="button"
+                    class="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
+                    :class="
+                        activeTab === 'unread'
+                            ? 'bg-[#0F5132] text-white shadow-2xs'
+                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
+                    "
+                    @click="activeTab = 'unread'"
+                >
+                    <span>Belum Dibaca</span>
+                    <span
+                        v-if="unreadCount > 0"
+                        class="py-0.2 rounded-md bg-white/20 px-1.5 text-[10px] font-bold"
+                    >
+                        {{ unreadCount }}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
+                    :class="
+                        activeTab === 'tasks'
+                            ? 'bg-[#0F5132] text-white shadow-2xs'
+                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
+                    "
+                    @click="activeTab = 'tasks'"
+                >
+                    Tugas
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
+                    :class="
+                        activeTab === 'projects'
+                            ? 'bg-[#0F5132] text-white shadow-2xs'
+                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
+                    "
+                    @click="activeTab = 'projects'"
+                >
+                    Proyek
+                </button>
+            </div>
 
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-start justify-between gap-4">
-                                <p
-                                    class="text-sm text-surface-900 dark:text-surface-100"
-                                >
-                                    <template v-if="!notification.read_at">
-                                        <span
-                                            v-if="
-                                                notification.data.action ===
-                                                'assigned'
-                                            "
-                                            class="font-medium"
-                                        >
-                                            Tugas "{{
-                                                notification.data.task_title
-                                            }}" ditugaskan ke Anda
-                                        </span>
-                                        <span
-                                            v-else-if="
-                                                notification.data.action ===
-                                                'comment'
-                                            "
-                                            class="font-medium"
-                                        >
-                                            {{ notification.data.author_name }}
-                                            mengomentari "{{
-                                                notification.data.task_title
-                                            }}"
-                                        </span>
-                                        <span
-                                            v-else-if="
-                                                notification.data.action ===
-                                                'status_changed'
-                                            "
-                                            class="font-medium"
-                                        >
-                                            Status tugas "{{
-                                                notification.data.task_title
-                                            }}" berubah
-                                        </span>
-                                        <span
-                                            v-else-if="
-                                                notification.data.action ===
-                                                'project_member_added'
-                                            "
-                                            class="font-medium"
-                                        >
-                                            Anda ditambahkan ke proyek "{{
-                                                notification.data.project_name
-                                            }}"
-                                        </span>
-                                    </template>
-                                    <template v-else>
-                                        <span
-                                            v-if="
-                                                notification.data.action ===
-                                                'assigned'
-                                            "
-                                            class="text-surface-600 dark:text-surface-400"
-                                        >
-                                            Tugas "{{
-                                                notification.data.task_title
-                                            }}" ditugaskan ke Anda
-                                        </span>
-                                        <span
-                                            v-else-if="
-                                                notification.data.action ===
-                                                'comment'
-                                            "
-                                            class="text-surface-600 dark:text-surface-400"
-                                        >
-                                            {{ notification.data.author_name }}
-                                            mengomentari "{{
-                                                notification.data.task_title
-                                            }}"
-                                        </span>
-                                        <span
-                                            v-else-if="
-                                                notification.data.action ===
-                                                'status_changed'
-                                            "
-                                            class="text-surface-600 dark:text-surface-400"
-                                        >
-                                            Status tugas "{{
-                                                notification.data.task_title
-                                            }}" berubah
-                                        </span>
-                                        <span
-                                            v-else-if="
-                                                notification.data.action ===
-                                                'project_member_added'
-                                            "
-                                            class="text-surface-600 dark:text-surface-400"
-                                        >
-                                            Anda ditambahkan ke proyek "{{
-                                                notification.data.project_name
-                                            }}"
-                                        </span>
-                                    </template>
-                                </p>
+            <div class="px-3 text-xs text-surface-400">
+                Menampilkan {{ filteredNotifications.length }} pemberitahuan
+            </div>
+        </div>
 
-                                <p
-                                    class="shrink-0 text-xs whitespace-nowrap text-surface-400 dark:text-surface-500"
-                                >
-                                    {{ formatTime(notification.created_at) }}
-                                </p>
-                            </div>
+        <!-- 3. Notification List (Calm 08 NOTIFICATION Style) -->
+        <div
+            v-if="loading && notifications.length === 0"
+            class="flex justify-center py-20"
+        >
+            <div
+                class="h-8 w-8 animate-spin rounded-full border-3 border-[#0F5132] border-t-transparent dark:border-[#b7d9c1]"
+            />
+        </div>
 
-                            <div
-                                v-if="
-                                    notification.data.action === 'comment' &&
-                                    notification.data.comment_preview
-                                "
-                                class="mt-2 line-clamp-2 text-sm text-surface-500 dark:text-surface-400"
-                            >
-                                {{ notification.data.comment_preview }}
-                            </div>
+        <!-- Empty State (Calm Style) -->
+        <div
+            v-else-if="filteredNotifications.length === 0"
+            class="flex flex-col items-center justify-center rounded-3xl border border-surface-200/80 bg-white p-16 text-center shadow-xs dark:border-surface-800 dark:bg-surface-900"
+        >
+            <div
+                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B7D9C1]/30 text-[#0F5132] dark:bg-[#0F5132]/30 dark:text-[#B7D9C1]"
+            >
+                <component :is="getIcon('CheckCheck')" class="h-7 w-7" />
+            </div>
+            <h3
+                class="mt-4 font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+            >
+                Semua Sudah Selesai.
+            </h3>
+            <p
+                class="mt-1 max-w-sm text-xs text-surface-500 dark:text-surface-400"
+            >
+                Tidak ada pemberitahuan baru yang memerlukan perhatian Anda saat
+                ini.
+            </p>
+        </div>
 
-                            <div
-                                v-if="
-                                    notification.data.action ===
-                                    'status_changed'
-                                "
-                                class="mt-2 flex items-center gap-2 text-sm"
-                            >
-                                <span
-                                    class="rounded-full px-2 py-0.5 text-xs font-medium"
-                                    :class="[
-                                        notification.data.new_status === 'done'
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                            : notification.data.new_status ===
-                                                'in_progress'
-                                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                              : notification.data.new_status ===
-                                                  'review'
-                                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                : 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
-                                    ]"
-                                >
-                                    {{ notification.data.new_status }}
-                                </span>
-                                <span
-                                    class="text-surface-400 dark:text-surface-500"
-                                    >dari</span
-                                >
-                                <span
-                                    class="rounded-full px-2 py-0.5 text-xs font-medium"
-                                    :class="[
-                                        notification.data.old_status === 'done'
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                            : notification.data.old_status ===
-                                                'in_progress'
-                                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                              : notification.data.old_status ===
-                                                  'review'
-                                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                : 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
-                                    ]"
-                                >
-                                    {{ notification.data.old_status }}
-                                </span>
-                            </div>
-
-                            <div
-                                v-if="
-                                    notification.data.action ===
-                                    'project_member_added'
-                                "
-                                class="mt-2 text-sm text-surface-500 dark:text-surface-400"
-                            >
-                                Peran: {{ notification.data.role }} ·
-                                Ditambahkan oleh
-                                {{ notification.data.added_by_name }}
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="!notification.read_at"
-                            class="mt-1 flex h-3 w-3 shrink-0 rounded-full bg-primary-500"
+        <!-- Notification Cards (Calm 08 NOTIFICATION Style) -->
+        <div v-else class="space-y-3">
+            <article
+                v-for="notification in filteredNotifications"
+                :key="notification.id"
+                class="group relative flex cursor-pointer flex-col justify-between gap-4 rounded-3xl border p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center"
+                :class="
+                    !notification.read_at
+                        ? 'border-[#0F5132]/30 bg-white dark:border-[#0F5132]/40 dark:bg-surface-900'
+                        : 'border-surface-200/80 bg-[#FAF9F4]/60 hover:bg-white dark:border-surface-800 dark:bg-surface-900/40 dark:hover:bg-surface-900'
+                "
+                @click="handleNotificationClick(notification)"
+            >
+                <div class="flex min-w-0 flex-1 items-start gap-4">
+                    <!-- Calm 08 Reference Mint Circle Badge -->
+                    <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition"
+                        :class="
+                            !notification.read_at
+                                ? 'bg-[#B7D9C1]/50 text-[#0F5132] dark:bg-[#0F5132]/40 dark:text-[#b7d9c1]'
+                                : 'bg-surface-200/70 text-surface-500 dark:bg-surface-800 dark:text-surface-400'
+                        "
+                    >
+                        <component
+                            :is="
+                                getIcon(
+                                    getNotificationHeadline(notification).icon,
+                                )
+                            "
+                            class="h-5 w-5"
                         />
+                    </div>
+
+                    <!-- Notification Content -->
+                    <div class="min-w-0 flex-1">
+                        <div
+                            class="flex items-center gap-2 text-xs font-medium text-surface-400"
+                        >
+                            <span>{{
+                                getNotificationHeadline(notification).category
+                            }}</span>
+                            <span class="text-surface-300 dark:text-surface-700"
+                                >·</span
+                            >
+                            <span>{{
+                                formatTime(notification.created_at)
+                            }}</span>
+                            <!-- Unread Indicator Dot (NO pill badge) -->
+                            <span
+                                v-if="!notification.read_at"
+                                class="inline-flex items-center gap-1 font-semibold text-[#0F5132] dark:text-[#b7d9c1]"
+                            >
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
+                                />
+                                <span>Baru</span>
+                            </span>
+                        </div>
+
+                        <!-- Serif Headline (Calm Reference "All set.") -->
+                        <h2
+                            class="mt-1 font-serif text-base font-normal tracking-tight text-surface-950 transition group-hover:text-[#0F5132] dark:text-surface-50 dark:group-hover:text-[#b7d9c1]"
+                        >
+                            {{ getNotificationHeadline(notification).title }}
+                        </h2>
+
+                        <p
+                            class="mt-1 text-xs leading-relaxed text-surface-600 dark:text-surface-300"
+                        >
+                            {{
+                                getNotificationHeadline(notification)
+                                    .description
+                            }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- Load more / Pagination -->
-                <div
-                    class="border-t border-surface-200 px-6 py-4 dark:border-surface-700"
-                >
-                    <Pagination
-                        v-if="meta.last_page > 1"
-                        :current-page="meta.current_page"
-                        :last-page="meta.last_page"
-                        :from="meta.from"
-                        :to="meta.to"
-                        :total="meta.total"
-                        @change="fetchNotifications"
-                    />
-
+                <!-- Right Action / Link -->
+                <div class="flex shrink-0 items-center gap-2 sm:self-center">
                     <button
-                        v-else-if="meta.current_page < meta.last_page"
-                        @click="loadMore"
-                        :disabled="loading"
-                        class="w-full rounded-lg px-4 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-primary-900/20"
+                        v-if="!notification.read_at"
+                        type="button"
+                        class="rounded-full border border-surface-300 bg-white px-3 py-1 text-xs font-medium text-surface-700 shadow-2xs hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                        title="Tandai sudah dibaca"
+                        @click="handleMarkSingleRead(notification, $event)"
                     >
-                        <span
-                            v-if="loading"
-                            class="flex items-center justify-center gap-2"
-                        >
-                            <span
-                                class="h-4 w-4 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"
-                            />
-                            Memuat...
-                        </span>
-                        <span v-else>Muat lebih banyak</span>
+                        Tandai Dibaca
                     </button>
+                    <span
+                        v-if="notification.data.url"
+                        class="inline-flex items-center gap-1 text-xs font-medium text-[#0F5132] transition group-hover:underline dark:text-[#b7d9c1]"
+                    >
+                        <span>Buka</span>
+                        <span>→</span>
+                    </span>
                 </div>
-            </div>
+            </article>
         </div>
+
+        <!-- 4. Pagination -->
+        <Pagination
+            v-if="meta.last_page > 1"
+            :current-page="meta.current_page"
+            :last-page="meta.last_page"
+            :from="meta.from"
+            :to="meta.to"
+            :total="meta.total"
+            @change="handlePageChange"
+        />
     </div>
 </template>

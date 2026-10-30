@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import { gsap } from 'gsap';
 import { useToast, type Toast } from '@/composables/useToast';
+import { getIcon } from '@/components/sidebar/icons';
 
 const { toasts, dismiss } = useToast();
 
@@ -12,14 +13,14 @@ function checkMobile(): void {
     isMobile.value = window.innerWidth < 640;
 }
 
-function getIcon(type: Toast['type']): string {
+function getIconName(type: Toast['type']): string {
     switch (type) {
         case 'success':
-            return 'CheckSquare';
+            return 'CheckCircle2';
         case 'error':
             return 'X';
         case 'warning':
-            return 'Activity';
+            return 'AlertTriangle';
         default:
             return 'FileText';
     }
@@ -103,13 +104,11 @@ onUnmounted(() => {
             >
                 <div class="flex items-start gap-3">
                     <component
-                        :is="getIcon(toast.type)"
+                        :is="getIcon(getIconName(toast.type))"
                         class="h-5 w-5 flex-shrink-0 mt-0.5"
                         :class="{
-                            'text-green-500': toast.type === 'success',
-                            'text-red-500': toast.type === 'error',
-                            'text-yellow-500': toast.type === 'warning',
-                            'text-primary-500': toast.type === 'info',
+                            'text-primary-500': toast.type === 'success' || toast.type === 'info',
+                            'text-accent-700 dark:text-accent-300': toast.type === 'error' || toast.type === 'warning',
                         }"
                     />
                     <div class="flex-1 min-w-0">

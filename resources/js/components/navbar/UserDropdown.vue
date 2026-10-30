@@ -100,7 +100,7 @@ onUnmounted(() => {
     <div ref="root" class="relative">
         <button
             type="button"
-            class="flex items-center gap-2 rounded-full p-1 pr-2 transition-colors duration-150 hover:bg-surface-100 dark:hover:bg-surface-800"
+            class="flex items-center gap-2 rounded-xl p-1 pr-2 transition-colors duration-150 hover:bg-surface-100 dark:hover:bg-surface-800"
             :aria-expanded="open"
             aria-haspopup="menu"
             @click="toggle"
@@ -155,7 +155,7 @@ onUnmounted(() => {
                     <span
                         v-for="role in props.user.roles"
                         :key="role"
-                        class="badge-primary"
+                        class="inline-flex items-center rounded-md border border-surface-200/80 bg-surface-50 px-2 py-0.5 text-[11px] font-medium text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
                     >
                         {{ role }}
                     </span>
@@ -177,7 +177,7 @@ onUnmounted(() => {
             <button
                 type="button"
                 role="menuitem"
-                class="dropdown-item w-full justify-start text-red-600 dark:text-red-400"
+                class="dropdown-item w-full justify-start text-accent-700 dark:text-accent-300"
                 @click="handleLogout"
             >
                 <component :is="getIcon('LogOut')" class="h-4 w-4" />

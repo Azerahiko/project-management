@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import { getIcon } from './icons';
-import { LogOut, PanelLeft, X } from '@lucide/vue';
+import { LogOut, X, Sparkles } from '@lucide/vue';
 import { gsap } from 'gsap';
 import { prefersReducedMotion } from '@/lib/motion';
 import { logout } from '@/routes';
@@ -20,12 +20,13 @@ interface Emits {
 
 interface SidebarItem {
     label: string;
-    href: string;
+    href?: string;
     icon: string;
     permission?: string;
-    shortcut?: string;
     badge?: number;
-    isBlackBadge?: boolean;
+    badgeLabel?: string;
+    isComingSoon?: boolean;
+    comingSoonDesc?: string;
     isSupport?: boolean;
 }
 
@@ -46,7 +47,8 @@ const currentPath = computed(() => {
     return rawUrl.split('?')[0].split('#')[0];
 });
 
-function isActive(href: string): boolean {
+function isActive(href?: string): boolean {
+    if (!href) return false;
     const path = currentPath.value;
     const cleanHref = href.split('?')[0].split('#')[0];
 
@@ -68,101 +70,162 @@ function can(perm?: string): boolean {
 
 const stats = computed(() => (page.props.stats as any) || {});
 
-// Grouped sections matching reference layout with all user features included
+// Organized categories with useful features (active features + upcoming placeholder features)
 const menuSections = computed<MenuSection[]>(() => [
     {
-        title: 'Main menu',
+        title: 'MANAJEMEN & ALUR KERJA',
         items: [
             {
                 label: 'Overview',
                 href: '/dashboard',
                 icon: 'Home',
                 permission: 'dashboard.view',
-                shortcut: '⌘ M',
             },
             {
-                label: 'Tasks',
+                label: 'Tugas Saya',
                 href: tasks.index.url(),
                 icon: 'CheckSquare',
                 permission: 'tasks.view',
                 badge: stats.value.my_tasks_count,
             },
             {
-                label: 'Projects',
+                label: 'Proyek Tim',
                 href: projects.index.url(),
                 icon: 'FolderKanban',
                 permission: 'projects.view',
                 badge: stats.value.projects_count,
             },
             {
-                label: 'Schedule',
+                label: 'Jadwal & Kalender',
                 href: '/calendar',
                 icon: 'Calendar',
                 permission: 'calendar.view',
             },
             {
-                label: 'Team Members',
+                label: 'Timeline Gantt',
+                href: '/timeline',
+                icon: 'TrendingUp',
+                permission: 'projects.view',
+            },
+        ],
+    },
+    {
+        title: 'KOLABORASI & ANGGOTA',
+        items: [
+            {
+                label: 'Anggota Tim',
                 href: can('users.view') ? users.index.url() : '/teams',
                 icon: 'Users',
                 permission: can('users.view') ? 'users.view' : 'teams.view',
                 badge: stats.value.team_members_count,
             },
             {
-                label: 'Messages',
+                label: 'Pesan & Notifikasi',
                 href: '/notifications',
                 icon: 'Bell',
                 permission: 'notifications.view',
                 badge: stats.value.notifications_unread,
-                isBlackBadge: true,
             },
             {
-                label: 'Analytics',
+                label: 'Papan Kolaborasi',
+                href: '/collaboration',
+                icon: 'Activity',
+                permission: 'task-collaboration.view',
+            },
+            {
+                label: 'Pengumuman Tim',
+                href: '/announcements',
+                icon: 'Radio',
+                permission: 'dashboard.view',
+            },
+        ],
+    },
+    {
+        title: 'LAPORAN & DOKUMEN',
+        items: [
+            {
+                label: 'Laporan & KPI',
                 href: '/reports',
                 icon: 'BarChart3',
                 permission: 'reports.view',
             },
             {
-                label: 'Documents',
+                label: 'Berkas Dokumen',
                 href: '/documents',
                 icon: 'FileText',
                 permission: 'documents.view',
             },
-        ],
-    },
-    {
-        title: 'Settings and news',
-        items: [
             {
-                label: 'Project Activities',
+                label: 'Log Aktivitas',
                 href: '/activity-log',
                 icon: 'Sparkles',
                 permission: 'activity-log.view',
             },
+        ],
+    },
+    {
+        title: 'SISTEM & BANTUAN',
+        items: [
             {
-                label: "What's New & Help",
-                href: '#support',
-                icon: 'Radio',
-                isSupport: true,
-            },
-            {
-                label: 'Settings',
+                label: 'Pengaturan Akun',
                 href: '/settings',
                 icon: 'Settings',
                 permission: 'settings.view',
+            },
+            {
+                label: 'Integrasi API',
+                icon: 'Shield',
+                isComingSoon: true,
+                badgeLabel: 'Segera',
+                comingSoonDesc:
+                    'Koneksi webhook dan integrasi dengan Slack, GitHub, dan Google Workspace akan hadir segera.',
+            },
+            {
+                label: 'Bantuan & Support',
+                icon: 'HelpCircle',
+                isSupport: true,
             },
         ],
     },
 ]);
 
+// Modal states for upcoming features and support
+const comingSoonModal = ref<{
+    isOpen: boolean;
+    title: string;
+    desc: string;
+}>({
+    isOpen: false,
+    title: '',
+    desc: '',
+});
+
+function openComingSoon(item: SidebarItem): void {
+    comingSoonModal.value = {
+        isOpen: true,
+        title: item.label,
+        desc:
+            item.comingSoonDesc ||
+            'Fitur ini sedang dalam tahap pengembangan dan akan segera siap digunakan.',
+    };
+}
+
+function closeComingSoon(): void {
+    comingSoonModal.value.isOpen = false;
+}
+
 const showSupportModal = ref(false);
 
-function handleSupportClick(): void {
+function openSupport(): void {
     showSupportModal.value = true;
 }
 
-function closeSupportModal(): void {
+function closeSupport(): void {
     showSupportModal.value = false;
 }
+
+const openSupportModal = openSupport;
+const closeSupportModal = closeSupport;
 
 function handleLogout(): void {
     router.post(logout.url(), {}, { preserveScroll: true });
@@ -184,17 +247,30 @@ function isMobile(): boolean {
 }
 
 onMounted(() => {
-    drawerCtx = gsap.context(() => {
-        if (isMobile()) {
-            gsap.set(drawer(), { x: -SIDEBAR_WIDTH });
-        }
-    });
+    syncDrawerPosition();
+    window.addEventListener('resize', syncDrawerPosition);
 });
 
 onBeforeUnmount(() => {
+    window.removeEventListener('resize', syncDrawerPosition);
     drawerCtx?.revert();
     drawerCtx = null;
 });
+
+function syncDrawerPosition(): void {
+    drawerCtx?.revert();
+    drawerCtx = null;
+
+    const element = drawer();
+    if (!element) return;
+
+    if (!isMobile()) {
+        gsap.set(element, { clearProps: 'transform' });
+        return;
+    }
+
+    gsap.set(element, { x: props.open ? 0 : -SIDEBAR_WIDTH });
+}
 
 watch(
     () => props.open,
@@ -222,139 +298,154 @@ watch(
 <template>
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between overflow-y-auto border-r border-slate-200/60 bg-[#F6F8F9] px-3.5 py-5 transition-transform duration-300 select-none lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-white/5 dark:bg-[#10121D]"
+        class="fixed inset-y-0 left-0 z-50 flex h-full w-[265px] shrink-0 flex-col justify-between overflow-y-auto border-r border-surface-200 bg-white px-3.5 py-5 transition-transform duration-300 select-none lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-surface-700 dark:bg-surface-950"
         aria-label="Navigasi Utama"
     >
-        <!-- Top Section: Brand Logo & Navigation Groups -->
-        <div class="flex flex-col gap-6">
-            <!-- Brand Squircle Logo + Collapse Toggle Header (Exact Reference Match) -->
-            <div class="flex items-center justify-between px-1.5 pt-1">
+        <!-- Top Section: Natural Brand Logo & Categorized Menus -->
+        <div class="flex flex-col gap-5">
+            <!-- Brand Logo with Tasks Flow branding -->
+            <div class="flex items-center justify-between px-2 pt-1 pb-2">
                 <Link
                     href="/dashboard"
                     class="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
                 >
-                    <!-- Rounded Dark Squircle Badge with Logo Mark -->
                     <div
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0E1017] p-2 shadow-xs transition-transform duration-150 group-hover:scale-105 dark:bg-white"
+                        class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-700/10 p-1 ring-1 ring-primary-700/20 dark:bg-primary-300/10 dark:ring-primary-300/20"
                     >
                         <img
                             src="/images/logo-mark.png"
-                            alt="DigitalCode"
-                            class="h-full w-full object-contain"
+                            alt="Tasks Flow"
+                            class="h-7 w-7 object-contain transition-transform duration-200 group-hover:scale-105"
                         />
                     </div>
-                    <span
-                        class="text-base font-black tracking-tight text-slate-900 dark:text-white"
-                    >
-                        DigitalCode
-                    </span>
+                    <div class="flex flex-col">
+                        <span
+                            class="font-serif text-lg font-normal tracking-tight text-surface-950 dark:text-surface-50"
+                        >
+                            Tasks Flow
+                        </span>
+                        <span
+                            class="text-[10px] font-medium tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                        >
+                            Workspace
+                        </span>
+                    </div>
                 </Link>
 
-                <div class="flex items-center gap-1">
-                    <!-- Subtle Sidebar Toggle Icon (Matching Reference Header Icon) -->
-                    <button
-                        type="button"
-                        class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-white"
-                        aria-label="Toggle sidebar"
-                    >
-                        <PanelLeft class="h-4 w-4 stroke-[2]" />
-                    </button>
-
-                    <!-- Mobile Drawer Close Button -->
-                    <button
-                        type="button"
-                        class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 lg:hidden dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-white"
-                        @click="$emit('close')"
-                        aria-label="Tutup menu"
-                    >
-                        <X class="h-4 w-4 stroke-[2]" />
-                    </button>
-                </div>
+                <!-- Mobile Close Button (Only visible on small mobile screens) -->
+                <button
+                    type="button"
+                    class="rounded-lg p-1.5 text-surface-400 hover:bg-surface-200/60 hover:text-surface-700 lg:hidden dark:text-surface-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    @click="$emit('close')"
+                    aria-label="Tutup menu"
+                >
+                    <X class="h-4 w-4 stroke-[2]" />
+                </button>
             </div>
 
-            <!-- Navigation Sections -->
-            <div class="flex flex-col gap-5">
+            <!-- Categorized Navigation Groups -->
+            <div class="flex flex-col gap-4">
                 <div
                     v-for="section in menuSections"
                     :key="section.title"
                     class="flex flex-col gap-1"
                 >
-                    <!-- Section Title Label (e.g. "Main menu", "Settings and news") -->
+                    <!-- Category Title Header -->
                     <div
-                        class="px-3 pb-1 text-[11px] font-medium tracking-tight text-slate-400 dark:text-slate-500"
+                        class="px-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-600 uppercase dark:text-surface-300"
                     >
                         {{ section.title }}
                     </div>
 
-                    <!-- Menu Items -->
+                    <!-- Items inside this Category -->
                     <template v-for="item in section.items" :key="item.label">
-                        <!-- Support Modal Trigger Item -->
+                        <!-- 1. Support Action Item -->
                         <button
                             v-if="item.isSupport"
                             type="button"
-                            class="group flex w-full items-center justify-between rounded-full px-3 py-2 text-[13px] font-medium text-slate-600 transition-colors hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-                            @click="handleSupportClick"
+                            class="group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white"
+                            @click="openSupport"
                         >
                             <div class="flex items-center gap-3">
                                 <component
                                     :is="getIcon(item.icon)"
-                                    class="h-4.5 w-4.5 stroke-[2] text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200"
+                                    class="h-4.5 w-4.5 stroke-[2] text-surface-400 group-hover:text-surface-700 dark:text-surface-300 dark:group-hover:text-surface-200"
                                 />
                                 <span>{{ item.label }}</span>
                             </div>
                         </button>
 
-                        <!-- Standard Route Navigation Link -->
+                        <!-- 2. Upcoming Feature (Placeholder with informative popup) -->
+                        <button
+                            v-else-if="item.isComingSoon"
+                            type="button"
+                            class="group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white"
+                            @click="openComingSoon(item)"
+                        >
+                            <div class="flex items-center gap-3">
+                                <component
+                                    :is="getIcon(item.icon)"
+                                    class="h-4.5 w-4.5 stroke-[2] text-surface-400 group-hover:text-surface-700 dark:text-surface-300 dark:group-hover:text-surface-200"
+                                />
+                                <span>{{ item.label }}</span>
+                            </div>
+                            <!-- "Segera" Badge (Sleek rounded-md, no pill) -->
+                            <span
+                                class="rounded-md bg-surface-200/70 px-1.5 py-0.5 text-[9.5px] font-bold text-surface-600 dark:bg-white/10 dark:text-surface-300"
+                            >
+                                {{ item.badgeLabel || 'Segera' }}
+                            </span>
+                        </button>
+
+                        <!-- 3. Active Real Routes -->
                         <Link
                             v-else-if="can(item.permission)"
-                            :href="item.href"
-                            class="group flex items-center justify-between rounded-full px-3 py-2 text-[13px] transition-all duration-150"
+                            :href="item.href!"
+                            class="group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-all duration-150"
                             :class="
                                 isActive(item.href)
-                                    ? 'bg-white font-semibold text-slate-900 shadow-xs ring-1 shadow-slate-950/5 ring-slate-900/5 dark:bg-white/10 dark:text-white dark:ring-white/10'
-                                    : 'font-medium text-slate-600 hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
+                                    ? 'bg-primary-50/90 font-semibold text-primary-900 shadow-2xs ring-1 ring-primary-200/80 dark:bg-primary-950/40 dark:text-primary-100 dark:ring-primary-700/40'
+                                    : 'font-medium text-surface-700 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white'
                             "
                             @click="isMobile() ? $emit('close') : undefined"
                         >
+                            <!-- Active Accent Bar -->
+                            <span
+                                v-if="isActive(item.href)"
+                                class="absolute top-2 bottom-2 left-0 w-1 rounded-r-full bg-primary-600 dark:bg-primary-400"
+                            />
+
                             <div class="flex items-center gap-3">
                                 <component
                                     :is="getIcon(item.icon)"
                                     class="h-4.5 w-4.5 stroke-[2] transition-colors"
                                     :class="
                                         isActive(item.href)
-                                            ? 'text-slate-900 dark:text-white'
-                                            : 'text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-200'
+                                            ? 'text-primary-700 dark:text-primary-300'
+                                            : 'text-surface-400 group-hover:text-surface-700 dark:text-surface-400 dark:group-hover:text-surface-200'
                                     "
                                 />
-                                <span>{{ item.label }}</span>
+                                <span class="tracking-tight">{{
+                                    item.label
+                                }}</span>
                             </div>
 
-                            <!-- Right Extras: Keyboard Shortcut Pill or Count Badge -->
-                            <div class="flex items-center">
-                                <!-- Keyboard shortcut badge (e.g. ⌘ M) -->
+                            <!-- Real Item Count Badge (Sleek rounded-md, no pill) -->
+                            <div
+                                v-if="
+                                    item.badge !== undefined &&
+                                    item.badge !== null &&
+                                    item.badge > 0
+                                "
+                                class="flex items-center"
+                            >
                                 <span
-                                    v-if="item.shortcut"
-                                    class="rounded bg-slate-200/60 px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-slate-500 dark:bg-white/10 dark:text-slate-400"
-                                >
-                                    {{ item.shortcut }}
-                                </span>
-
-                                <!-- Solid Black Circle Count Badge (Matching screenshot's "2" badge) -->
-                                <span
-                                    v-else-if="item.isBlackBadge && item.badge"
-                                    class="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#0E1017] px-1 text-[10px] font-bold text-white shadow-2xs dark:bg-white dark:text-slate-900"
-                                >
-                                    {{ item.badge }}
-                                </span>
-
-                                <!-- Soft Count Badge (for tasks/projects) -->
-                                <span
-                                    v-else-if="
-                                        item.badge !== undefined &&
-                                        item.badge !== null &&
-                                        item.badge > 0
+                                    class="rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors"
+                                    :class="
+                                        isActive(item.href)
+                                            ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-500 dark:text-surface-950'
+                                            : 'bg-surface-200/80 text-surface-700 dark:bg-white/10 dark:text-surface-300'
                                     "
-                                    class="py-0.2 rounded-full bg-slate-200/60 px-1.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-slate-400"
                                 >
                                     {{ item.badge }}
                                 </span>
@@ -365,56 +456,63 @@ watch(
             </div>
         </div>
 
-        <!-- Bottom: Account Section (Exact Reference Match) -->
+        <!-- Bottom: User Account Footer -->
         <div
-            class="mt-6 border-t border-slate-200/50 pt-3.5 dark:border-white/5"
+            class="mt-6 border-t border-surface-200/70 pt-3 dark:border-surface-800/10"
         >
             <div
-                class="px-3 pb-1.5 text-[11px] font-medium tracking-tight text-slate-400 dark:text-slate-500"
+                class="px-3 pb-1.5 text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
             >
-                Account
+                AKUN
             </div>
 
             <div
                 v-if="user"
-                class="flex items-center justify-between gap-2 rounded-xl p-1.5 transition-colors hover:bg-white/60 dark:hover:bg-white/5"
+                class="flex items-center justify-between gap-2 rounded-2xl border border-surface-200/70 bg-surface-50/70 p-2 transition-all hover:border-surface-300 hover:bg-surface-100/70 dark:border-surface-800/20 dark:bg-surface-900/40 dark:hover:border-surface-700 dark:hover:bg-surface-900/80"
             >
                 <div class="flex min-w-0 items-center gap-2.5">
-                    <!-- Circular Avatar -->
-                    <img
-                        v-if="user.avatar"
-                        :src="user.avatar"
-                        :alt="user.name"
-                        class="h-8 w-8 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/20"
-                    />
-                    <div
-                        v-else
-                        class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold text-white shadow-2xs dark:bg-white dark:text-slate-900"
-                    >
-                        {{
-                            user.initials || user.name.slice(0, 2).toUpperCase()
-                        }}
+                    <!-- Circular Avatar with Online Dot -->
+                    <div class="relative shrink-0">
+                        <img
+                            v-if="user.avatar"
+                            :src="user.avatar"
+                            :alt="user.name"
+                            class="h-8.5 w-8.5 rounded-full object-cover ring-1 ring-surface-200 dark:ring-surface-800"
+                        />
+                        <div
+                            v-else
+                            class="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-primary-700 text-[11px] font-bold text-white shadow-2xs"
+                        >
+                            {{
+                                user.initials ||
+                                user.name.slice(0, 2).toUpperCase()
+                            }}
+                        </div>
+                        <span
+                            class="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-950"
+                            title="Aktif"
+                        />
                     </div>
 
-                    <!-- Name & Role Stack -->
+                    <!-- Name & Role -->
                     <div class="flex min-w-0 flex-col leading-tight">
                         <span
-                            class="truncate text-xs font-bold text-slate-900 dark:text-white"
+                            class="truncate text-xs font-bold text-surface-900 dark:text-white"
                         >
                             {{ user.name }}
                         </span>
                         <span
-                            class="truncate text-[10.5px] font-medium text-slate-400 dark:text-slate-500"
+                            class="truncate text-[10.5px] font-medium text-surface-500 dark:text-surface-400"
                         >
                             {{ user.roles?.[0] || 'Team Member' }}
                         </span>
                     </div>
                 </div>
 
-                <!-- Clean Logout Action Button -->
+                <!-- Clean Logout Action -->
                 <button
                     type="button"
-                    class="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                    class="rounded-xl p-1.5 text-surface-400 transition hover:bg-white hover:text-rose-600 hover:shadow-2xs dark:hover:bg-white/10 dark:hover:text-rose-400"
                     title="Keluar"
                     @click="handleLogout"
                 >
@@ -423,36 +521,78 @@ watch(
             </div>
         </div>
 
-        <!-- What's New & Support Modal Popup -->
+        <!-- Upcoming Feature Information Modal -->
+        <div
+            v-if="comingSoonModal.isOpen"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/50 p-4 backdrop-blur-xs"
+            @click.self="closeComingSoon"
+        >
+            <div
+                class="w-full max-w-sm rounded-3xl bg-white p-6 text-surface-900 shadow-2xl dark:bg-surface-900 dark:text-white"
+            >
+                <div class="flex items-center justify-between pb-3">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400"
+                        >
+                            <Sparkles class="h-4 w-4" />
+                        </span>
+                        <h3 class="text-base font-bold">
+                            {{ comingSoonModal.title }}
+                        </h3>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-xl p-1.5 text-surface-400 hover:bg-surface-100 dark:hover:bg-white/10"
+                        @click="closeComingSoon"
+                    >
+                        <X class="h-4 w-4" />
+                    </button>
+                </div>
+                <p
+                    class="text-xs leading-relaxed text-surface-600 dark:text-surface-300"
+                >
+                    {{ comingSoonModal.desc }}
+                </p>
+                <div class="mt-5 flex justify-end">
+                    <button
+                        type="button"
+                        class="rounded-xl bg-surface-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black dark:bg-white dark:text-surface-900"
+                        @click="closeComingSoon"
+                    >
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Modal Popup -->
         <div
             v-if="showSupportModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/50 p-4 backdrop-blur-xs"
             @click.self="closeSupportModal"
         >
             <div
-                class="w-full max-w-md rounded-3xl bg-white p-6 text-slate-900 shadow-2xl dark:bg-[#1A1D30] dark:text-white"
+                class="w-full max-w-sm rounded-3xl bg-white p-6 text-surface-900 shadow-2xl dark:bg-surface-900 dark:text-white"
             >
                 <div class="flex items-center justify-between pb-3">
-                    <h3 class="text-base font-bold">
-                        Pusat Bantuan & Pembaruan DigitalCode
-                    </h3>
+                    <h3 class="text-base font-bold">Pusat Bantuan & Support</h3>
                     <button
                         type="button"
-                        class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                        class="rounded-xl p-1.5 text-surface-400 hover:bg-surface-100 dark:hover:bg-white/10"
                         @click="closeSupportModal"
                     >
                         <X class="h-4 w-4" />
                     </button>
                 </div>
                 <p
-                    class="text-xs leading-relaxed text-slate-600 dark:text-slate-300"
+                    class="text-xs leading-relaxed text-surface-600 dark:text-surface-300"
                 >
-                    Selamat datang di DigitalCode Project Management! Untuk
-                    informasi fitur baru atau kendala akun, silakan hubungi tim
-                    kami di:
+                    Butuh panduan atau mengalami kendala? Hubungi tim support
+                    DigitalCode melalui email resmi:
                     <a
                         href="mailto:support@project.local"
-                        class="font-semibold text-indigo-600 underline dark:text-indigo-400"
+                        class="font-semibold text-primary-600 underline dark:text-primary-400"
                     >
                         support@project.local </a
                     >.
@@ -460,7 +600,7 @@ watch(
                 <div class="mt-5 flex justify-end">
                     <button
                         type="button"
-                        class="rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black dark:bg-white dark:text-slate-900"
+                        class="rounded-xl bg-surface-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black dark:bg-white dark:text-surface-900"
                         @click="closeSupportModal"
                     >
                         Tutup

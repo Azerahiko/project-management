@@ -19,6 +19,15 @@ let initPromise: Promise<void> | null = null;
 
 // --- Internal helpers ---
 
+function isUnauthorized(error: unknown): boolean {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as { response?: { status?: number } }).response?.status === 401
+    );
+}
+
 async function doFetchNotifications(page = 1): Promise<void> {
     loading.value = true;
     try {
@@ -34,6 +43,10 @@ async function doFetchNotifications(page = 1): Promise<void> {
         }
         meta.value = response.meta;
     } catch (e) {
+        if (isUnauthorized(e)) {
+            stopPolling();
+            return;
+        }
         console.error('[Notifications] Fetch failed:', e);
     } finally {
         loading.value = false;
@@ -47,6 +60,10 @@ async function doFetchUnreadCount(): Promise<void> {
         );
         unreadCount.value = data.count ?? 0;
     } catch (e) {
+        if (isUnauthorized(e)) {
+            stopPolling();
+            return;
+        }
         console.error('[Notifications] Unread count fetch failed:', e);
     }
 }

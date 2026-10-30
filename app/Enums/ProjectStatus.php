@@ -25,9 +25,9 @@ enum ProjectStatus: string
     {
         return match ($this) {
             self::DRAFT => 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
-            self::ACTIVE => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-            self::ON_HOLD => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-            self::COMPLETED => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+            self::ACTIVE => 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+            self::ON_HOLD => 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400',
+            self::COMPLETED => 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
             self::ARCHIVED => 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400',
         };
     }

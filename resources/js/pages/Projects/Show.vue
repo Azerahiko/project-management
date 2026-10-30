@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { usePage, Link } from '@inertiajs/vue3';
 import projects from '@/routes/projects';
@@ -80,8 +80,6 @@ async function loadAvailableUsers(): Promise<void> {
         loadingAvailableUsers.value = false;
     }
 }
-
-onMounted(loadAvailableUsers);
 
 function openAddMemberModal(): void {
     newMemberForm.user_id = '';
@@ -226,22 +224,34 @@ function formatDateShort(dateString: string | null): string {
                     Kembali ke Daftar
                 </Link>
                 <h1
-                    class="text-2xl font-bold text-surface-900 dark:text-surface-100"
+                    class="text-2xl font-semibold tracking-tight text-surface-950 dark:text-surface-50"
                 >
                     {{ project.name }}
                 </h1>
-                <p class="mt-1 text-surface-600 dark:text-surface-400">
+                <p
+                    class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
+                >
                     {{ project.description || 'Tidak ada deskripsi' }}
                 </p>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-                <span class="badge" :class="project.status_color">
-                    {{ project.status_label }}
-                </span>
-                <span class="badge" :class="project.priority_color">
-                    {{ project.priority_label }}
-                </span>
+            <!-- Clean Calm System status & priority indicators (NO pill badges) -->
+            <div
+                class="flex flex-wrap items-center gap-2.5 text-xs font-medium text-surface-600 dark:text-surface-300"
+            >
+                <div
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-surface-200/80 bg-surface-50 px-2.5 py-1 dark:border-surface-700 dark:bg-surface-800/60"
+                >
+                    <span
+                        class="h-1.5 w-1.5 rounded-full bg-primary-700 dark:bg-primary-300"
+                    />
+                    <span>{{ project.status_label }}</span>
+                </div>
+                <div
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-surface-200/80 bg-surface-50 px-2.5 py-1 text-surface-500 dark:border-surface-700 dark:bg-surface-800/60 dark:text-surface-400"
+                >
+                    <span>Prioritas: {{ project.priority_label }}</span>
+                </div>
             </div>
 
             <Dropdown
@@ -288,7 +298,7 @@ function formatDateShort(dateString: string | null): string {
 
                     <button
                         v-if="project.can_delete"
-                        class="dropdown-item text-red-600 dark:text-red-400"
+                        class="dropdown-item text-accent-700 dark:text-accent-300"
                         @click="confirmDeleteProject"
                     >
                         <component
@@ -399,7 +409,7 @@ function formatDateShort(dateString: string | null): string {
                 </dt>
                 <dd
                     v-if="project.deleted_at"
-                    class="font-medium text-red-600 text-surface-900 dark:text-surface-100"
+                    class="font-medium text-accent-700 text-surface-900 dark:text-surface-100"
                 >
                     {{ formatDate(project.deleted_at) }}
                 </dd>
@@ -470,14 +480,14 @@ function formatDateShort(dateString: string | null): string {
                     </div>
                     <div v-else class="flex items-center gap-2">
                         <span
-                            class="badge"
+                            class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium"
                             :class="[
                                 row.role === 'owner'
-                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/30 dark:text-primary-300'
                                     : row.role === 'manager'
-                                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                                       : row.role === 'member'
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                                         : 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
                             ]"
                         >
@@ -506,7 +516,7 @@ function formatDateShort(dateString: string | null): string {
                 <template #actions="{ row }">
                     <button
                         v-if="project.can_manage_members && !row.is_owner"
-                        class="btn-ghost btn-icon text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        class="btn-ghost btn-icon text-accent-700 hover:bg-accent-50 dark:hover:bg-accent-900/20"
                         @click="confirmRemoveMember(row)"
                         title="Hapus Anggota"
                     >
@@ -514,7 +524,7 @@ function formatDateShort(dateString: string | null): string {
                     </button>
                     <span
                         v-else-if="row.is_owner"
-                        class="text-xs text-surface-400 dark:text-surface-500"
+                        class="text-xs text-surface-600 dark:text-surface-300"
                     >
                         Pemilik
                     </span>

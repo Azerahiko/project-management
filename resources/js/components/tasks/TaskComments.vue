@@ -191,7 +191,7 @@ async function loadMoreComments(): Promise<void> {
             <!-- Error -->
             <div
                 v-if="commentsError"
-                class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                class="mb-4 rounded-lg bg-accent-50 p-3 text-sm text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
             >
                 {{ commentsError }}
             </div>
@@ -212,7 +212,7 @@ async function loadMoreComments(): Promise<void> {
                 <p class="text-surface-500 dark:text-surface-400">
                     Belum ada komentar
                 </p>
-                <p class="mt-1 text-sm text-surface-400 dark:text-surface-500">
+                <p class="mt-1 text-sm text-surface-600 dark:text-surface-300">
                     Jadilah yang pertama berkomentar
                 </p>
             </div>
@@ -249,7 +249,7 @@ async function loadMoreComments(): Promise<void> {
                                         comment.updated_at !==
                                         comment.created_at
                                     "
-                                    class="text-xs text-surface-400 dark:text-surface-500"
+                                    class="text-xs text-surface-600 dark:text-surface-300"
                                 >
                                     (diedit)
                                 </span>
@@ -310,7 +310,7 @@ async function loadMoreComments(): Promise<void> {
                                     v-if="comment.can_delete"
                                     variant="ghost"
                                     size="sm"
-                                    class="text-red-600 dark:text-red-400"
+                                    class="text-accent-700 dark:text-accent-300"
                                     @click="confirmDelete(comment)"
                                 >
                                     <component

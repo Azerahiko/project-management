@@ -26,7 +26,7 @@ const filteredItems = computed(() =>
 <template>
     <div v-if="filteredItems.length > 0" class="space-y-1">
         <h3
-            class="px-3 py-1 text-[11px] font-semibold tracking-wider text-surface-400 uppercase dark:text-surface-500"
+            class="px-3 py-1 text-[11px] font-semibold tracking-wider text-surface-400 uppercase dark:text-surface-300"
         >
             {{ section.label }}
         </h3>

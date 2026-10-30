@@ -31,6 +31,8 @@ class DashboardController extends Controller
             'my_tasks_count' => (clone $accessibleTasks)
                 ->where('assignee_id', $user->id)
                 ->whereNotIn('status', [TaskStatus::DONE])->count(),
+            'active_tasks_count' => (clone $accessibleTasks)
+                ->whereNotIn('status', [TaskStatus::DONE])->count(),
             'overdue_count' => (clone $accessibleTasks)
                 ->where('status', '!=', TaskStatus::DONE)
                 ->whereNotNull('due_date')
@@ -43,7 +45,6 @@ class DashboardController extends Controller
 
         // Tasks by status (SQL aggregation)
         $tasksByStatus = (clone $accessibleTasks)
-            ->whereNotIn('status', [TaskStatus::DONE])
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
@@ -86,9 +87,13 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($p) => array_merge(
                 ProjectResource::make($p)->resolve($request),
-                ['progress_percent' => $p->tasks_count > 0
-                    ? round(($p->completed_tasks_count / $p->tasks_count) * 100)
-                    : 0]
+                [
+                    'tasks_count' => $p->tasks_count,
+                    'completed_tasks_count' => $p->completed_tasks_count,
+                    'progress_percent' => $p->tasks_count > 0
+                        ? round(($p->completed_tasks_count / $p->tasks_count) * 100)
+                        : 0,
+                ]
             ));
 
         return Inertia::render('Dashboard', [
