@@ -13,6 +13,9 @@ class RolePermissionRequest extends FormRequest
         return $this->user()?->can('roles.manage') ?? false;
     }
 
+    /**
+     * @return array<string, list<string>>
+     */
     public function rules(): array
     {
         return [
@@ -21,6 +24,9 @@ class RolePermissionRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return [
