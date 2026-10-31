@@ -2,7 +2,7 @@ import { ref, type Ref } from 'vue';
 
 export type Theme = 'light' | 'dark';
 
-const THEME_KEY = 'projex-theme';
+const THEME_KEY = 'project-theme';
 
 function applyTheme(theme: Theme): void {
     const root = document.documentElement;

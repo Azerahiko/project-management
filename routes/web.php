@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\WorkspaceOverviewController;
 use App\Http\Resources\ProjectResource;
@@ -149,6 +150,14 @@ Route::middleware(['auth'])->group(function () {
                 'user' => UserResource::make($user)->toArray($request),
             ]);
         })->name('users.edit');
+    });
+
+    // Role & Permission Management (system administrator only)
+    Route::middleware('can:roles.manage')->group(function () {
+        Route::get('/roles/permissions', [RolePermissionController::class, 'index'])
+            ->name('roles.permissions');
+        Route::put('/roles/permissions/{role}', [RolePermissionController::class, 'update'])
+            ->name('roles.permissions.update');
     });
 
     // Settings route (accessible to all authenticated users)

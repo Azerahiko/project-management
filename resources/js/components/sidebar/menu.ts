@@ -8,6 +8,7 @@ import {
     reports,
     teams,
 } from '@/routes';
+import roles from '@/routes/roles';
 import tasks from '@/routes/tasks';
 import projects from '@/routes/projects';
 import users from '@/routes/users';
@@ -108,6 +109,12 @@ export const menuSections: MenuSection[] = [
                 href: users.index.url(),
                 icon: 'Users',
                 permission: 'users.view',
+            },
+            {
+                label: 'Role & Permissions',
+                href: roles.permissions.url(),
+                icon: 'Shield',
+                permission: 'roles.manage',
             },
             {
                 label: 'Settings',

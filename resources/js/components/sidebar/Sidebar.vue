@@ -173,6 +173,12 @@ const menuSections = computed<MenuSection[]>(() => [
                 permission: 'settings.view',
             },
             {
+                label: 'Role & Permissions',
+                href: '/roles/permissions',
+                icon: 'Shield',
+                permission: 'roles.manage',
+            },
+            {
                 label: 'Integrasi API',
                 icon: 'Shield',
                 isComingSoon: true,
