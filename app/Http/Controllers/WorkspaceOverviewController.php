@@ -184,7 +184,7 @@ class WorkspaceOverviewController extends Controller
                 'activity_type' => $activity->activity_type,
                 'description' => $activity->description,
                 'created_at' => $activity->created_at?->toISOString(),
-                'user_name' => $activity->user?->name ?? 'Pengguna tidak tersedia',
+                'user_name' => $activity->user ? $activity->user->name : 'Pengguna tidak tersedia',
                 'user_avatar' => $activity->user?->avatar,
                 'user_initials' => $activity->user?->initials,
                 'task_id' => $activity->task->id,
