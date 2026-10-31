@@ -36,10 +36,14 @@ const pageTitle = computed(() => {
     if (p.startsWith('/tasks')) return 'Tugas Tim';
     if (p.startsWith('/projects')) return 'Proyek Tim';
     if (p.startsWith('/calendar')) return 'Jadwal & Kalender';
+    if (p.startsWith('/timeline')) return 'Timeline Proyek';
+    if (p.startsWith('/documents')) return 'Berkas Dokumen';
+    if (p.startsWith('/reports')) return 'Laporan & KPI';
+    if (p.startsWith('/activity-log')) return 'Log Aktivitas';
     if (p.startsWith('/notifications')) return 'Notifikasi';
     if (p.startsWith('/teams') || p.startsWith('/users')) return 'Anggota Tim';
     if (p.startsWith('/collaboration')) return 'Papan Kolaborasi';
-    if (p.startsWith('/settings')) return 'Pengaturan';
+    if (p.startsWith('/settings')) return 'Pengaturan Akun';
     return 'Ruang Kerja';
 });
 

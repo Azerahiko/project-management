@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Laravel\Passkeys\Passkey;
 
 // Public login page (Inertia)
 Route::inertia('/login', 'Auth/Login')->name('login')->middleware('guest');
@@ -152,7 +153,21 @@ Route::middleware(['auth'])->group(function () {
 
     // Settings route (accessible to all authenticated users)
     Route::middleware('can:settings.view')->group(function () {
-        Route::inertia('/settings', 'Settings/Index')->name('settings');
+        Route::get('/settings', function (Request $request) {
+            $user = $request->user();
+
+            return Inertia::render('Settings/Index', [
+                'account' => [
+                    'is_active' => (bool) $user->is_active,
+                    'email_verified' => $user->email_verified_at !== null,
+                    'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
+                    'passkeys_count' => Passkey::query()
+                        ->where('user_id', $user->id)
+                        ->count(),
+                    'member_since' => $user->created_at?->toISOString(),
+                ],
+            ]);
+        })->name('settings');
     });
 });
 

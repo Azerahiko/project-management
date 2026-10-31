@@ -90,14 +90,19 @@ class WorkspaceOverviewController extends Controller
         $projects = Project::accessibleBy($request->user())
             ->whereNotNull('description')
             ->where('description', '!=', '')
+            ->withCount('tasks')
             ->orderBy('name')
-            ->get(['id', 'name', 'description', 'owner_id']);
+            ->get(['id', 'name', 'description', 'owner_id', 'status', 'updated_at']);
 
         return Inertia::render('Documents/Index', [
             'project_notes' => $projects->map(fn (Project $project): array => [
                 'id' => $project->id,
                 'name' => $project->name,
                 'description' => $project->description,
+                'status' => $project->status->value,
+                'status_label' => $project->status->label(),
+                'tasks_count' => $project->tasks_count,
+                'updated_at' => $project->updated_at?->toISOString(),
             ]),
             'can_view_projects' => $request->user()->can('projects.view'),
         ]);
@@ -138,8 +143,36 @@ class WorkspaceOverviewController extends Controller
     {
         Gate::authorize(Permissions::ACTIVITY_LOG_VIEW);
 
-        $activities = TaskActivity::whereHas('task.project', fn ($query) => $query->accessibleBy($request->user()))
-            ->with(['user:id,name', 'task:id,project_id,title'])
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'in:task,comment'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
+        $type = $validated['type'] ?? null;
+
+        $baseQuery = TaskActivity::query()
+            ->whereHas('task.project', fn ($query) => $query->accessibleBy($request->user()))
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->whereLike('description', "%{$search}%", caseSensitive: false)
+                        ->orWhereHas('user', fn ($userQuery) => $userQuery->whereLike('name', "%{$search}%", caseSensitive: false))
+                        ->orWhereHas('task', fn ($taskQuery) => $taskQuery->whereLike('title', "%{$search}%", caseSensitive: false));
+                });
+            });
+
+        $stats = [
+            'total' => (clone $baseQuery)->count(),
+            'today' => (clone $baseQuery)->whereDate('created_at', today())->count(),
+            'contributors' => (clone $baseQuery)->whereNotNull('user_id')->distinct()->count('user_id'),
+            'tasks' => (clone $baseQuery)->distinct()->count('task_id'),
+            'task_activities' => (clone $baseQuery)->where('activity_type', 'like', 'task.%')->count(),
+            'comment_activities' => (clone $baseQuery)->where('activity_type', 'like', 'comment.%')->count(),
+        ];
+
+        $activities = $baseQuery
+            ->when($type !== null, fn ($query) => $query->where('activity_type', 'like', "{$type}.%"))
+            ->with(['user:id,name,avatar', 'task:id,project_id,title'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(15)
@@ -148,12 +181,20 @@ class WorkspaceOverviewController extends Controller
         return Inertia::render('ActivityLog/Index', [
             'activities' => $activities->through(fn (TaskActivity $activity): array => [
                 'id' => $activity->id,
+                'activity_type' => $activity->activity_type,
                 'description' => $activity->description,
                 'created_at' => $activity->created_at?->toISOString(),
-                'user_name' => $activity->user->name ?? 'Pengguna tidak tersedia',
+                'user_name' => $activity->user?->name ?? 'Pengguna tidak tersedia',
+                'user_avatar' => $activity->user?->avatar,
+                'user_initials' => $activity->user?->initials,
                 'task_id' => $activity->task->id,
                 'task_title' => $activity->task->title,
             ]),
+            'filters' => [
+                'search' => $search,
+                'type' => $type,
+            ],
+            'stats' => $stats,
             'can_view_tasks' => $request->user()->can('tasks.view'),
         ]);
     }

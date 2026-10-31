@@ -102,7 +102,7 @@ const menuSections = computed<MenuSection[]>(() => [
                 permission: 'calendar.view',
             },
             {
-                label: 'Timeline Gantt',
+                label: 'Timeline Proyek',
                 href: '/timeline',
                 icon: 'TrendingUp',
                 permission: 'projects.view',
