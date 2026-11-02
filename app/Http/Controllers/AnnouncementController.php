@@ -20,15 +20,46 @@ class AnnouncementController extends Controller
     {
         Gate::authorize(Permissions::DASHBOARD_VIEW);
 
+        $search = trim((string) $request->query('search', ''));
+        $filter = (string) $request->query('filter', 'all');
+        $filter = in_array($filter, ['all', 'pinned', 'recent', 'month'], true)
+            ? $filter
+            : 'all';
+
         $announcements = Announcement::query()
             ->with('user:id,name,avatar')
+            ->when($search !== '', function ($query) use ($search): void {
+                $like = '%'.mb_strtolower($search).'%';
+
+                $query->where(function ($query) use ($like): void {
+                    $query->whereRaw('LOWER(title) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(body) LIKE ?', [$like])
+                        ->orWhereHas('user', fn ($query) => $query->whereRaw('LOWER(name) LIKE ?', [$like]));
+                });
+            })
+            ->when($filter === 'pinned', fn ($query) => $query->where('is_pinned', true))
+            ->when($filter === 'recent', fn ($query) => $query->whereRaw('COALESCE(published_at, created_at) >= ?', [now()->subDays(7)]))
+            ->when($filter === 'month', fn ($query) => $query->whereRaw('COALESCE(published_at, created_at) >= ?', [now()->startOfMonth()]))
             ->orderByDesc('is_pinned')
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->paginate(8)
+            ->paginate(9)
             ->withQueryString();
 
+        $summary = [
+            'total' => Announcement::count(),
+            'pinned' => Announcement::where('is_pinned', true)->count(),
+            'recent' => Announcement::whereRaw('COALESCE(published_at, created_at) >= ?', [now()->subDays(7)])->count(),
+            'this_month' => Announcement::whereRaw('COALESCE(published_at, created_at) >= ?', [now()->startOfMonth()])->count(),
+            'contributors' => Announcement::distinct()->count('user_id'),
+        ];
+
         return Inertia::render('Announcements/Index', [
+            'filters' => [
+                'search' => $search,
+                'filter' => $filter,
+            ],
+            'summary' => $summary,
             'announcements' => $announcements->through(fn (Announcement $announcement): array => [
                 'id' => $announcement->id,
                 'title' => $announcement->title,
