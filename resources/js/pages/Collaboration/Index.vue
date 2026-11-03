@@ -106,6 +106,21 @@ interface DiscussionTaskItem {
     status_label: string;
 }
 
+interface TopCommenterItem {
+    id: number;
+    name: string;
+    avatar?: string | null;
+    initials: string;
+    comments_count: number;
+}
+
+interface MostDiscussedTaskItem {
+    id: number;
+    title: string;
+    project_name: string;
+    comments_count: number;
+}
+
 const page = usePage();
 const { success, error } = useToast();
 
@@ -142,6 +157,12 @@ const reviewTasks = computed(
 );
 const discussionTasks = computed(
     () => (page.props.discussion_tasks as DiscussionTaskItem[]) ?? [],
+);
+const topCommenters = computed(
+    () => (page.props.top_commenters as TopCommenterItem[]) ?? [],
+);
+const mostDiscussedTasks = computed(
+    () => (page.props.most_discussed_tasks as MostDiscussedTaskItem[]) ?? [],
 );
 const stats = computed(
     () =>
@@ -388,24 +409,22 @@ function projectInitials(name: string): string {
     <div class="space-y-6">
         <!-- Editorial header -->
         <div
-            class="flex flex-col gap-5 border-b border-surface-200/80 pb-6 lg:flex-row lg:items-end lg:justify-between dark:border-surface-800"
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <div class="flex items-center gap-3">
-                    <span class="h-px w-8 bg-accent-500" />
-                    <span
-                        class="text-[10px] font-bold tracking-[0.22em] text-surface-500 uppercase dark:text-surface-400"
-                    >
-                        Ruang kolaborasi
-                    </span>
-                </div>
+                <span
+                    class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-700 uppercase dark:border-primary-700/40 dark:bg-primary-900/25 dark:text-primary-200"
+                >
+                    <Users class="h-3 w-3" />
+                    Ruang Kolaborasi
+                </span>
                 <h1
-                    class="mt-3 font-serif text-3xl font-normal tracking-tight text-surface-950 sm:text-4xl dark:text-surface-50"
+                    class="mt-2 text-2xl font-semibold tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
                 >
                     Kolaborasi Tim
                 </h1>
                 <p
-                    class="mt-2 max-w-xl text-sm leading-6 text-surface-600 dark:text-surface-300"
+                    class="mt-1 max-w-xl text-sm leading-6 text-surface-600 dark:text-surface-300"
                 >
                     Satu ruang untuk diskusi tugas, keputusan proyek, dan
                     koordinasi harian. Semua percakapan tetap menempel pada
@@ -414,19 +433,13 @@ function projectInitials(name: string): string {
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <Link
-                    :href="taskRoutes.index.url()"
-                    class="inline-flex items-center gap-1.5 rounded-full border border-surface-200 bg-white px-3.5 py-2 text-xs font-semibold text-surface-700 shadow-2xs transition hover:border-surface-300 hover:bg-surface-50 active:scale-95 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-200 dark:hover:bg-surface-800"
-                >
-                    <ListChecks class="h-3.5 w-3.5" />
-                    Daftar tugas
+                <Link :href="taskRoutes.index.url()" class="btn btn-secondary">
+                    <ListChecks class="h-4 w-4" />
+                    Daftar Tugas
                 </Link>
-                <Link
-                    :href="projectRoutes.index.url()"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-primary-950 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-primary-900 active:scale-95 dark:bg-white dark:text-surface-950 dark:hover:bg-surface-100"
-                >
-                    <FolderKanban class="h-3.5 w-3.5" />
-                    Semua proyek
+                <Link :href="projectRoutes.index.url()" class="btn btn-primary">
+                    <FolderKanban class="h-4 w-4" />
+                    Semua Proyek
                 </Link>
             </div>
         </div>
@@ -454,7 +467,7 @@ function projectInitials(name: string): string {
                     </span>
                 </div>
                 <p
-                    class="mt-2 font-serif text-2xl leading-none text-surface-950 dark:text-surface-50"
+                    class="mt-2 text-2xl leading-none font-bold text-surface-950 dark:text-surface-50"
                 >
                     {{ card.value }}
                 </p>
@@ -466,12 +479,12 @@ function projectInitials(name: string): string {
             </div>
         </section>
 
-        <div class="grid gap-6 lg:grid-cols-12">
+        <div class="grid items-start gap-6 lg:grid-cols-12">
             <!-- Main column -->
-            <div class="space-y-5 lg:col-span-8">
+            <div class="min-w-0 space-y-5 lg:col-span-8">
                 <!-- Composer -->
                 <section
-                    class="overflow-hidden rounded-[28px] border border-surface-200/80 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                    class="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
                 >
                     <div
                         class="flex flex-col gap-2 border-b border-surface-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
@@ -484,7 +497,7 @@ function projectInitials(name: string): string {
                             </span>
                             <div>
                                 <p
-                                    class="font-serif text-base text-surface-950 dark:text-surface-50"
+                                    class="text-base font-bold text-surface-950 dark:text-surface-50"
                                 >
                                     Mulai diskusi
                                 </p>
@@ -542,10 +555,9 @@ function projectInitials(name: string): string {
                             </div>
                             <div
                                 v-else
-                                class="hidden rounded-2xl border border-dashed border-surface-200 px-3 py-2 text-[11px] text-surface-400 sm:block dark:border-surface-700 dark:text-surface-500"
+                                class="rounded-2xl border border-surface-100 bg-surface-50/60 px-3 py-2 text-[11px] text-surface-500 dark:border-surface-800 dark:bg-surface-800/40 dark:text-surface-400"
                             >
-                                Pilih tugas agar diskusi punya konteks yang
-                                jelas.
+                                Pilih tugas tujuan untuk mengaitkan percakapan.
                             </div>
                         </div>
 
@@ -587,7 +599,7 @@ function projectInitials(name: string): string {
                                     !composerTaskId ||
                                     !composerContent.trim()
                                 "
-                                class="inline-flex items-center gap-1.5 rounded-full bg-primary-950 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-primary-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-surface-950 dark:hover:bg-surface-100"
+                                class="btn btn-primary btn-sm"
                             >
                                 <Send class="h-3.5 w-3.5" />
                                 {{
@@ -635,7 +647,7 @@ function projectInitials(name: string): string {
                             </span>
                             <div>
                                 <p
-                                    class="font-serif text-base text-surface-950 dark:text-surface-50"
+                                    class="text-base font-bold text-surface-950 dark:text-surface-50"
                                 >
                                     Ruang diskusi
                                 </p>
@@ -685,7 +697,7 @@ function projectInitials(name: string): string {
 
                             <div
                                 v-if="activeFeed === 'discussions'"
-                                class="relative w-full sm:w-56"
+                                class="relative w-full min-w-0 sm:w-56"
                             >
                                 <Search
                                     class="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-surface-400"
@@ -845,7 +857,7 @@ function projectInitials(name: string): string {
                                 <Inbox class="h-5 w-5" />
                             </span>
                             <p
-                                class="mt-3 font-serif text-lg text-surface-900 dark:text-surface-100"
+                                class="mt-3 text-lg font-bold text-surface-900 dark:text-surface-100"
                             >
                                 {{
                                     searchQuery
@@ -881,6 +893,58 @@ function projectInitials(name: string): string {
                             :total="meta.total"
                             @change="changePage"
                         />
+
+                        <!-- Topik Diskusi Alur Kerja Terkait -->
+                        <div
+                            v-if="mostDiscussedTasks.length > 0"
+                            class="border-t border-surface-100 bg-surface-50/60 p-5 dark:border-surface-800 dark:bg-surface-800/40"
+                        >
+                            <div class="flex items-center justify-between gap-2 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="grid h-6 w-6 place-items-center rounded-lg bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
+                                    >
+                                        <Hash class="h-3.5 w-3.5" />
+                                    </span>
+                                    <p
+                                        class="text-xs font-bold text-surface-900 dark:text-surface-100"
+                                    >
+                                        Thread Tugas Sedang Aktif
+                                    </p>
+                                </div>
+                                <span class="text-[10px] text-surface-400">
+                                    Diskusi terbanyak di proyek
+                                </span>
+                            </div>
+
+                            <div class="grid gap-2.5 sm:grid-cols-2">
+                                <Link
+                                    v-for="task in mostDiscussedTasks"
+                                    :key="task.id"
+                                    :href="taskRoutes.show.url(task.id)"
+                                    class="group flex items-center justify-between rounded-xl border border-surface-200/80 bg-white p-3 shadow-xs transition hover:border-primary-300 hover:shadow-xs dark:border-surface-700 dark:bg-surface-900 dark:hover:border-primary-600"
+                                >
+                                    <div class="min-w-0 flex-1 pr-2">
+                                        <p
+                                            class="truncate text-xs font-semibold text-surface-800 transition group-hover:text-primary-700 dark:text-surface-200 dark:group-hover:text-primary-300"
+                                        >
+                                            {{ task.title }}
+                                        </p>
+                                        <p
+                                            class="mt-0.5 truncate text-[10px] text-surface-400"
+                                        >
+                                            {{ task.project_name }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                                    >
+                                        <MessageSquare class="h-2.5 w-2.5" />
+                                        {{ task.comments_count }}
+                                    </span>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Activity -->
@@ -982,7 +1046,7 @@ function projectInitials(name: string): string {
                                 <Activity class="h-5 w-5" />
                             </span>
                             <p
-                                class="mt-3 font-serif text-lg text-surface-900 dark:text-surface-100"
+                                class="mt-3 text-lg font-bold text-surface-900 dark:text-surface-100"
                             >
                                 Belum ada aktivitas
                             </p>
@@ -998,7 +1062,7 @@ function projectInitials(name: string): string {
             </div>
 
             <!-- Sidebar -->
-            <aside class="space-y-5 lg:col-span-4">
+            <aside class="min-w-0 space-y-4 lg:col-span-4 sticky top-6 self-start">
                 <!-- Review queue -->
                 <section
                     class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
@@ -1011,7 +1075,7 @@ function projectInitials(name: string): string {
                                 <ClipboardCheck class="h-3.5 w-3.5" />
                             </span>
                             <h2
-                                class="font-serif text-base text-surface-950 dark:text-surface-50"
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
                             >
                                 Antrean review
                             </h2>
@@ -1075,6 +1139,62 @@ function projectInitials(name: string): string {
                     </p>
                 </section>
 
+                <!-- Kontributor Teraktif -->
+                <section
+                    v-if="topCommenters.length > 0"
+                    class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                >
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="grid h-7 w-7 place-items-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                            >
+                                <Users class="h-3.5 w-3.5" />
+                            </span>
+                            <h2
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
+                            >
+                                Kontributor Teraktif
+                            </h2>
+                        </div>
+                        <span class="text-[10px] text-surface-400">
+                            Aktivitas Diskusi
+                        </span>
+                    </div>
+
+                    <div class="mt-3 space-y-1.5">
+                        <div
+                            v-for="commenter in topCommenters"
+                            :key="commenter.id"
+                            class="flex items-center justify-between rounded-xl px-2 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                        >
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <Avatar
+                                    :initials="commenter.initials"
+                                    :src="commenter.avatar"
+                                    :alt="commenter.name"
+                                    size="sm"
+                                />
+                                <div class="min-w-0 flex-1">
+                                    <p
+                                        class="truncate text-xs font-semibold text-surface-800 dark:text-surface-100"
+                                    >
+                                        {{ commenter.name }}
+                                    </p>
+                                    <p class="text-[10px] text-surface-400">
+                                        Anggota aktif
+                                    </p>
+                                </div>
+                            </div>
+                            <span
+                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                            >
+                                {{ commenter.comments_count }} pesan
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Active projects -->
                 <section
                     class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
@@ -1087,7 +1207,7 @@ function projectInitials(name: string): string {
                                 <FolderKanban class="h-3.5 w-3.5" />
                             </span>
                             <h2
-                                class="font-serif text-base text-surface-950 dark:text-surface-50"
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
                             >
                                 Proyek terhubung
                             </h2>
@@ -1117,7 +1237,7 @@ function projectInitials(name: string): string {
                             class="group flex items-center gap-3 py-3 transition"
                         >
                             <span
-                                class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-100 font-serif text-xs text-surface-700 transition group-hover:bg-primary-50 group-hover:text-primary-700 dark:bg-surface-800 dark:text-surface-200 dark:group-hover:bg-primary-900/30 dark:group-hover:text-primary-300"
+                                class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-100 text-xs font-bold text-surface-700 transition group-hover:bg-primary-50 group-hover:text-primary-700 dark:bg-surface-800 dark:text-surface-200 dark:group-hover:bg-primary-900/30 dark:group-hover:text-primary-300"
                             >
                                 {{ projectInitials(project.name) }}
                             </span>
@@ -1136,10 +1256,13 @@ function projectInitials(name: string): string {
                             </div>
                             <div
                                 v-if="project.members.length > 0"
-                                class="flex shrink-0 -space-x-2"
+                                class="flex shrink-0 items-center -space-x-2"
                             >
                                 <Avatar
-                                    v-for="member in project.members"
+                                    v-for="member in project.members.slice(
+                                        0,
+                                        3,
+                                    )"
                                     :key="member.id"
                                     :initials="member.initials"
                                     :src="member.avatar"
@@ -1147,6 +1270,12 @@ function projectInitials(name: string): string {
                                     size="xs"
                                     class="ring-2 ring-white dark:ring-surface-900"
                                 />
+                                <span
+                                    v-if="project.members.length > 3"
+                                    class="ml-2 text-[10px] font-semibold text-surface-400 dark:text-surface-500"
+                                >
+                                    +{{ project.members.length - 3 }}
+                                </span>
                             </div>
                         </component>
                     </div>
@@ -1171,7 +1300,7 @@ function projectInitials(name: string): string {
                                 <Users class="h-3.5 w-3.5" />
                             </span>
                             <h2
-                                class="font-serif text-base text-surface-950 dark:text-surface-50"
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
                             >
                                 Rekan kerja
                             </h2>
@@ -1190,12 +1319,14 @@ function projectInitials(name: string): string {
                             :key="member.id"
                             class="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
                         >
-                            <Avatar
-                                :initials="member.initials"
-                                :src="member.avatar"
-                                :alt="member.name"
-                                size="sm"
-                            />
+                            <div class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900">
+                                <Avatar
+                                    :initials="member.initials"
+                                    :src="member.avatar"
+                                    :alt="member.name"
+                                    size="sm"
+                                />
+                            </div>
                             <div class="min-w-0 flex-1">
                                 <p
                                     class="truncate text-xs font-medium text-surface-800 dark:text-surface-100"
@@ -1237,10 +1368,10 @@ function projectInitials(name: string): string {
                     class="relative overflow-hidden rounded-[28px] bg-primary-950 p-5 text-white shadow-sm dark:bg-primary-950"
                 >
                     <div
-                        class="pointer-events-none absolute -top-16 -right-12 h-40 w-40 rounded-full bg-white/10 blur-2xl"
+                        class="pointer-events-none absolute -top-8 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl lg:-top-16 lg:-right-12 lg:h-40 lg:w-40"
                     />
                     <div
-                        class="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-accent-400/20 blur-2xl"
+                        class="pointer-events-none absolute -bottom-8 -left-6 h-28 w-28 rounded-full bg-accent-400/20 blur-2xl lg:-bottom-16 lg:-left-10 lg:h-36 lg:w-36"
                     />
 
                     <div class="relative">
@@ -1250,7 +1381,7 @@ function projectInitials(name: string): string {
                             <Sparkles class="h-4 w-4" />
                         </span>
                         <p
-                            class="mt-4 font-serif text-xl leading-snug text-white"
+                            class="mt-4 text-base leading-snug font-bold text-white"
                         >
                             Ritme kolaborasi yang sehat.
                         </p>

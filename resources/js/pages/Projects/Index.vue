@@ -59,6 +59,16 @@ const canCreate = computed(() =>
     Boolean(page.props.auth.user?.permissions.includes('projects.create')),
 );
 
+const canCreateTask = computed(() => {
+    const perms = page.props.auth.user?.permissions ?? [];
+    return Boolean(
+        perms.includes('tasks.view') ||
+        perms.includes('tasks.create') ||
+        perms.includes('projects.create') ||
+        perms.includes('projects.update'),
+    );
+});
+
 const priorityOptions = [
     { value: '', label: 'Semua Prioritas' },
     { value: 'low', label: 'Rendah' },
@@ -110,10 +120,6 @@ const projectCovers = [
 
 function getProjectCover(id: number): string {
     return projectCovers[id % projectCovers.length];
-}
-
-function isDarkFolderVariant(id: number): boolean {
-    return id % 3 === 1;
 }
 
 function formatRelativeTime(dateString: string | null): string {
@@ -322,7 +328,9 @@ watch(
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
+            <div
+                class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end"
+            >
                 <span
                     v-if="!loading"
                     class="hidden items-center gap-2 rounded-xl border border-surface-200 bg-white px-3 py-2 text-xs font-semibold text-surface-600 sm:inline-flex dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
@@ -333,7 +341,7 @@ watch(
                 <Link
                     v-if="canCreate"
                     :href="projectsRoute.create.url()"
-                    class="btn btn-primary"
+                    class="btn btn-primary w-full sm:w-auto"
                 >
                     <component :is="getIcon('Plus')" class="h-4 w-4" />
                     Tambah Proyek
@@ -356,8 +364,7 @@ watch(
                         v-model="search"
                         type="search"
                         placeholder="Cari proyek berdasarkan nama atau deskripsi..."
-                        class="input"
-                        style="padding-left: 2.5rem"
+                        class="input pl-10"
                     />
                 </div>
 
@@ -387,7 +394,7 @@ watch(
 
             <!-- Status tabs -->
             <div
-                class="mt-3 flex flex-wrap items-center gap-2 border-t border-surface-100 pt-3 dark:border-surface-800/80"
+                class="no-scrollbar mt-3 flex items-center gap-2 overflow-x-auto border-t border-surface-100 pt-3 pb-1 dark:border-surface-800/80"
             >
                 <button
                     v-for="tab in statusTabs"
@@ -542,7 +549,7 @@ watch(
             <article
                 v-for="project in projectList"
                 :key="project.id"
-                class="group relative flex min-h-[350px] flex-col p-1.5 transition-all duration-300 select-none hover:-translate-y-2"
+                class="group relative z-0 flex min-h-[350px] flex-col p-1.5 transition-all duration-300 focus-within:z-30 hover:z-30 hover:-translate-y-2"
             >
                 <!-- Outer Ambient Soft 3D Shadow -->
                 <div
@@ -566,7 +573,7 @@ watch(
 
                 <!-- 2. DOCUMENT / PROJECT SHEET (Tucked inside folder, lifts up on hover!) -->
                 <div
-                    class="pointer-events-none absolute inset-x-6 top-5 z-10 flex h-44 flex-col justify-between rounded-t-[22px] border border-surface-200/90 bg-white p-4 shadow-md transition-transform duration-300 ease-out group-hover:-translate-y-5 dark:border-surface-700 dark:bg-surface-800"
+                    class="pointer-events-none absolute inset-x-6 top-5 z-5 flex h-44 flex-col justify-between rounded-t-[22px] border border-surface-200/90 bg-white p-4 shadow-md transition-transform duration-300 ease-out group-hover:-translate-y-5 dark:border-surface-700 dark:bg-surface-800"
                 >
                     <div
                         class="flex items-center justify-between border-b border-surface-100 pb-2 dark:border-surface-700"
@@ -614,12 +621,7 @@ watch(
 
                 <!-- 3. FRONT FLAP (Frosted Glass Acrylic or Sleek Dark Matte) -->
                 <div
-                    class="relative z-20 -mt-16 flex flex-1 flex-col justify-between rounded-[26px] p-5 shadow-xl transition-all duration-300"
-                    :class="
-                        isDarkFolderVariant(project.id)
-                            ? 'border border-white/10 bg-[#121316]/92 text-white shadow-[0_20px_40px_rgba(0,0,0,0.45)] backdrop-blur-2xl'
-                            : 'border border-white/70 bg-white/80 text-surface-900 shadow-[0_16px_36px_rgba(0,0,0,0.1)] backdrop-blur-2xl dark:border-white/10 dark:bg-surface-900/85 dark:text-white'
-                    "
+                    class="pointer-events-auto relative z-30 -mt-16 flex flex-1 flex-col justify-between rounded-[26px] border border-white/70 bg-white/88 p-5 text-surface-900 shadow-[0_16px_36px_rgba(15,81,50,0.12)] backdrop-blur-2xl transition-all duration-300 dark:border-white/10 dark:bg-surface-900/90 dark:text-white"
                 >
                     <!-- Specular Top Rim Refraction Edge -->
                     <div
@@ -630,36 +632,21 @@ watch(
                         <!-- Folder Tab Header: Date / Status & Priority Badge -->
                         <div class="flex items-center justify-between">
                             <div
-                                class="text-xs font-medium tracking-tight"
-                                :class="
-                                    isDarkFolderVariant(project.id)
-                                        ? 'text-surface-400'
-                                        : 'text-surface-500 dark:text-surface-400'
-                                "
+                                class="text-xs font-medium tracking-tight text-surface-500 dark:text-surface-400"
                             >
                                 <span>{{
                                     formatRelativeTime(project.created_at)
                                 }}</span>
                                 <span class="mx-1.5 opacity-60">•</span>
                                 <span
-                                    class="font-semibold"
-                                    :class="
-                                        isDarkFolderVariant(project.id)
-                                            ? 'text-white'
-                                            : 'text-surface-800 dark:text-surface-200'
-                                    "
+                                    class="font-semibold text-surface-800 dark:text-surface-200"
                                 >
                                     {{ project.status_label }}
                                 </span>
                             </div>
 
                             <span
-                                class="rounded-full px-2.5 py-0.5 text-[11px] font-medium"
-                                :class="
-                                    isDarkFolderVariant(project.id)
-                                        ? 'bg-white/10 text-surface-200'
-                                        : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
-                                "
+                                class="rounded-full bg-surface-100 px-2.5 py-0.5 text-[11px] font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                             >
                                 {{ project.priority_label }}
                             </span>
@@ -673,12 +660,7 @@ watch(
                             class="group/title mt-3 block"
                         >
                             <h2
-                                class="line-clamp-1 font-sans text-lg font-bold tracking-tight transition group-hover/title:text-[#0F5132] dark:group-hover/title:text-[#b7d9c1]"
-                                :class="
-                                    isDarkFolderVariant(project.id)
-                                        ? 'text-white'
-                                        : 'text-surface-950 dark:text-surface-50'
-                                "
+                                class="line-clamp-1 font-sans text-lg font-bold tracking-tight text-surface-950 transition group-hover/title:text-primary-700 dark:text-surface-50 dark:group-hover/title:text-primary-300"
                             >
                                 {{ project.name }}
                             </h2>
@@ -686,12 +668,7 @@ watch(
 
                         <!-- Project Description preview -->
                         <p
-                            class="mt-1 line-clamp-2 text-xs leading-relaxed"
-                            :class="
-                                isDarkFolderVariant(project.id)
-                                    ? 'text-surface-300'
-                                    : 'text-surface-500 dark:text-surface-400'
-                            "
+                            class="mt-1 line-clamp-2 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
                         >
                             {{
                                 project.description ||
@@ -702,12 +679,7 @@ watch(
 
                     <!-- Bottom Flap Row: Avatar Stack on Left & Functional Squircle Button on Right -->
                     <div
-                        class="mt-5 flex items-center justify-between border-t pt-3.5"
-                        :class="
-                            isDarkFolderVariant(project.id)
-                                ? 'border-white/10'
-                                : 'border-surface-200/60 dark:border-surface-800'
-                        "
+                        class="mt-5 flex items-center justify-between gap-2 border-t border-surface-200/60 pt-3.5 dark:border-surface-800"
                     >
                         <!-- Left: Circular Avatar Stack with +N count -->
                         <div class="flex items-center -space-x-2">
@@ -723,12 +695,7 @@ watch(
                                         3,
                                     )"
                                     :key="member.id"
-                                    class="relative inline-block rounded-full ring-2"
-                                    :class="
-                                        isDarkFolderVariant(project.id)
-                                            ? 'ring-surface-950'
-                                            : 'ring-white dark:ring-surface-900'
-                                    "
+                                    class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900"
                                     :title="member.user?.name"
                                 >
                                     <Avatar
@@ -741,12 +708,7 @@ watch(
                             </template>
                             <div
                                 v-else-if="project.owner"
-                                class="relative inline-block rounded-full ring-2"
-                                :class="
-                                    isDarkFolderVariant(project.id)
-                                        ? 'ring-surface-950'
-                                        : 'ring-white dark:ring-surface-900'
-                                "
+                                class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900"
                                 :title="project.owner.name"
                             >
                                 <Avatar
@@ -761,130 +723,89 @@ watch(
                                     project.members &&
                                     project.members.length > 3
                                 "
-                                class="ml-2.5 text-xs font-semibold"
-                                :class="
-                                    isDarkFolderVariant(project.id)
-                                        ? 'text-surface-300'
-                                        : 'text-surface-500 dark:text-surface-400'
-                                "
+                                class="ml-2.5 text-xs font-semibold text-surface-500 dark:text-surface-400"
                             >
                                 +{{ project.members.length - 3 }}
                             </span>
                         </div>
 
-                        <!-- Right: Fully Functional Squircle Action Button (Matching '+' and 'ooo') -->
-                        <Dropdown align="right">
-                            <template #trigger>
-                                <button
-                                    type="button"
-                                    class="flex h-10 w-10 items-center justify-center rounded-2xl shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                                    :class="
-                                        isDarkFolderVariant(project.id)
-                                            ? 'bg-white text-surface-950 shadow-black/40 hover:bg-surface-100'
-                                            : 'bg-black text-white shadow-black/25 hover:bg-surface-800 dark:bg-white dark:text-surface-950 dark:hover:bg-surface-100'
-                                    "
-                                    title="Menu Opsi Proyek"
-                                >
-                                    <!-- In Top-Left variant: Plus icon; in Right variant: 3 rounded square dots -->
-                                    <template v-if="project.id % 2 === 0">
+                        <!-- Right: unified action menu -->
+                        <div class="relative z-40">
+                            <Dropdown align="right" bare>
+                                <template #trigger="{ open }">
+                                    <button
+                                        type="button"
+                                        class="grid h-9 w-9 place-items-center rounded-xl border border-surface-200 bg-white/90 text-surface-600 shadow-2xs transition hover:border-surface-300 hover:bg-surface-50 hover:text-surface-900 active:scale-95 dark:border-white/10 dark:bg-white/10 dark:text-surface-200 dark:hover:bg-white/15 dark:hover:text-white"
+                                        :aria-expanded="open"
+                                        aria-haspopup="menu"
+                                        :aria-label="`Menu proyek ${project.name}`"
+                                        title="Menu proyek"
+                                    >
                                         <component
-                                            :is="getIcon('Plus')"
-                                            class="h-5 w-5 stroke-[2.5]"
+                                            :is="getIcon('MoreHorizontal')"
+                                            class="h-4 w-4"
                                         />
-                                    </template>
-                                    <template v-else>
-                                        <div class="flex items-center gap-0.5">
-                                            <span
-                                                class="h-1.5 w-1.5 rounded-xs"
-                                                :class="
-                                                    isDarkFolderVariant(
-                                                        project.id,
-                                                    )
-                                                        ? 'bg-surface-950'
-                                                        : 'bg-white dark:bg-surface-950'
-                                                "
-                                            />
-                                            <span
-                                                class="h-1.5 w-1.5 rounded-xs"
-                                                :class="
-                                                    isDarkFolderVariant(
-                                                        project.id,
-                                                    )
-                                                        ? 'bg-surface-950'
-                                                        : 'bg-white dark:bg-surface-950'
-                                                "
-                                            />
-                                            <span
-                                                class="h-1.5 w-1.5 rounded-xs"
-                                                :class="
-                                                    isDarkFolderVariant(
-                                                        project.id,
-                                                    )
-                                                        ? 'bg-surface-950'
-                                                        : 'bg-white dark:bg-surface-950'
-                                                "
-                                            />
-                                        </div>
-                                    </template>
-                                </button>
-                            </template>
-                            <div class="w-48 py-1.5">
-                                <Link
-                                    :href="
-                                        projectsRoute.show.url({
-                                            project: project.id,
-                                        })
-                                    "
-                                    class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
-                                >
-                                    <component
-                                        :is="getIcon('FolderOpen')"
-                                        class="h-4 w-4 text-primary-600 dark:text-primary-400"
+                                    </button>
+                                </template>
+                                <div class="w-48 py-1.5">
+                                    <Link
+                                        :href="
+                                            projectsRoute.show.url({
+                                                project: project.id,
+                                            })
+                                        "
+                                        class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
+                                    >
+                                        <component
+                                            :is="getIcon('FolderOpen')"
+                                            class="h-4 w-4 text-primary-600 dark:text-primary-400"
+                                        />
+                                        <span>Buka Rincian Proyek</span>
+                                    </Link>
+                                    <Link
+                                        v-if="canCreateTask"
+                                        :href="`/tasks/create?project_id=${project.id}`"
+                                        class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
+                                    >
+                                        <component
+                                            :is="getIcon('PlusCircle')"
+                                            class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                                        />
+                                        <span>Tambah Tugas Baru</span>
+                                    </Link>
+                                    <Link
+                                        v-if="canUpdateProject(project)"
+                                        :href="
+                                            projectsRoute.edit.url({
+                                                project: project.id,
+                                            })
+                                        "
+                                        class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
+                                    >
+                                        <component
+                                            :is="getIcon('Pencil')"
+                                            class="h-4 w-4 text-surface-500"
+                                        />
+                                        <span>Edit Proyek</span>
+                                    </Link>
+                                    <div
+                                        class="my-1 border-t border-surface-100 dark:border-surface-800"
                                     />
-                                    <span>Buka Rincian Proyek</span>
-                                </Link>
-                                <Link
-                                    v-if="canUpdateProject(project)"
-                                    :href="
-                                        projectsRoute.edit.url({
-                                            project: project.id,
-                                        })
-                                    "
-                                    class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
-                                >
-                                    <component
-                                        :is="getIcon('Pencil')"
-                                        class="h-4 w-4 text-surface-500"
-                                    />
-                                    <span>Edit Proyek</span>
-                                </Link>
-                                <Link
-                                    :href="`/tasks/create?project_id=${project.id}`"
-                                    class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
-                                >
-                                    <component
-                                        :is="getIcon('PlusCircle')"
-                                        class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
-                                    />
-                                    <span>Tambah Tugas Baru</span>
-                                </Link>
-                                <div
-                                    class="my-1 border-t border-surface-100 dark:border-surface-800"
-                                />
-                                <button
-                                    v-if="canDeleteProject(project)"
-                                    type="button"
-                                    class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/20"
-                                    @click="confirmDelete(project)"
-                                >
-                                    <component
-                                        :is="getIcon('Trash2')"
-                                        class="h-4 w-4 text-rose-500"
-                                    />
-                                    <span>Hapus Proyek</span>
-                                </button>
-                            </div>
-                        </Dropdown>
+                                    <button
+                                        v-if="canDeleteProject(project)"
+                                        type="button"
+                                        class="flex w-full items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/20"
+                                        @click="confirmDelete(project)"
+                                    >
+                                        <component
+                                            :is="getIcon('Trash2')"
+                                            class="h-4 w-4 text-rose-500"
+                                        />
+                                        <span>Hapus Proyek</span>
+                                    </button>
+                                </div>
+                            </Dropdown>
+                        </div>
                     </div>
                 </div>
             </article>

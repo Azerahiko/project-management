@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Avatar from '@/components/ui/Avatar.vue';
@@ -21,8 +21,13 @@ interface AccountProps {
     member_since: string | null;
 }
 
-type PanelKey = 'profile' | 'settings' | 'appearance' | 'help';
-type SettingsTabKey = 'account' | 'preferences' | 'interface' | 'security';
+type PanelKey =
+    | 'profile'
+    | 'appearance'
+    | 'notifications'
+    | 'security'
+    | 'help';
+
 type NotificationKey =
     | 'taskUpdates'
     | 'dailyDigest'
@@ -35,11 +40,7 @@ interface NavItem {
     key: PanelKey;
     label: string;
     icon: string;
-}
-
-interface SettingsNavItem {
-    key: SettingsTabKey;
-    label: string;
+    description: string;
 }
 
 interface NotificationOption {
@@ -55,11 +56,10 @@ interface NotificationGroup {
 }
 
 const page = usePage();
-const { currentTheme, setTheme, toggleTheme } = useTheme();
-const { success, info } = useToast();
+const { currentTheme, resolvedTheme, setTheme } = useTheme();
+const { success } = useToast();
 
 const user = computed(() => page.props.auth?.user);
-const appName = computed(() => page.props.app?.shortName ?? 'DigitalCode');
 const appFullName = computed(
     () => page.props.app?.name ?? 'DigitalCode Tasks Flow',
 );
@@ -77,92 +77,82 @@ const account = computed<AccountProps>(() => {
     };
 });
 
-const activePanel = ref<PanelKey>('settings');
-const settingsTab = ref<SettingsTabKey>('preferences');
+const activePanel = ref<PanelKey>('profile');
 const search = ref('');
 
-const navSections: { label: string; items: NavItem[] }[] = [
+const navItems: NavItem[] = [
     {
-        label: 'Kustomisasi',
-        items: [
-            { key: 'profile', label: 'Profil', icon: 'User' },
-            { key: 'settings', label: 'Pengaturan', icon: 'Settings' },
-        ],
+        key: 'profile',
+        label: 'Profil Akun',
+        icon: 'User',
+        description: 'Informasi identitas dan status akun',
     },
     {
-        label: 'Alat',
-        items: [
-            { key: 'appearance', label: 'Tampilan', icon: 'Palette' },
-            { key: 'help', label: 'Bantuan', icon: 'HelpCircle' },
-        ],
+        key: 'appearance',
+        label: 'Tampilan',
+        icon: 'Palette',
+        description: 'Pilihan mode terang dan gelap',
+    },
+    {
+        key: 'notifications',
+        label: 'Notifikasi',
+        icon: 'Bell',
+        description: 'Preferensi pemberitahuan & pengingat',
+    },
+    {
+        key: 'security',
+        label: 'Keamanan',
+        icon: 'Shield',
+        description: 'Lapisan perlindungan dan autentikasi',
+    },
+    {
+        key: 'help',
+        label: 'Bantuan & Pintasan',
+        icon: 'HelpCircle',
+        description: 'Pintasan keyboard dan panduan sistem',
     },
 ];
 
-const settingsNav: { label: string; items: SettingsNavItem[] }[] = [
-    {
-        label: 'Akun',
-        items: [
-            { key: 'account', label: 'Ringkasan akun' },
-            { key: 'security', label: 'Keamanan' },
-        ],
-    },
-    {
-        label: 'Preferensi',
-        items: [
-            { key: 'preferences', label: 'Notifikasi' },
-            { key: 'interface', label: 'Antarmuka' },
-        ],
-    },
-];
-
-const themeOptions = [
-    {
-        value: 'light',
-        label: 'Terang',
-        icon: 'Sun',
-        description: 'Selalu gunakan tema terang',
-    },
-    {
-        value: 'dark',
-        label: 'Gelap',
-        icon: 'Moon',
-        description: 'Selalu gunakan tema gelap',
-    },
-] as const;
-
-const currentThemeOption = computed(() =>
-    themeOptions.find((option) => option.value === currentTheme.value),
+const activeTheme = computed<'light' | 'dark'>(() =>
+    currentTheme.value === 'system' ? resolvedTheme.value : currentTheme.value,
 );
 
 const panelMeta = computed(() => {
     switch (activePanel.value) {
         case 'profile':
             return {
-                eyebrow: 'Kustomisasi',
-                title: 'Profil',
+                eyebrow: 'Pengaturan Akun',
+                title: 'Profil Pengguna',
                 description:
-                    'Informasi akun dan identitas Anda di ruang kerja ini.',
+                    'Informasi akun dan status peran Anda di ruang kerja ini.',
             };
         case 'appearance':
             return {
-                eyebrow: 'Alat',
-                title: 'Tampilan',
+                eyebrow: 'Preferensi Visual',
+                title: 'Tampilan Aplikasi',
                 description:
-                    'Sesuaikan tema dan kenyamanan visual saat menggunakan aplikasi.',
+                    'Pilih tema terang atau gelap yang paling nyaman untuk Anda.',
             };
-        case 'help':
+        case 'notifications':
             return {
-                eyebrow: 'Alat',
-                title: 'Bantuan',
+                eyebrow: 'Preferensi Pemberitahuan',
+                title: 'Pusat Notifikasi',
                 description:
-                    'Panduan singkat dan informasi seputar ruang kerja Anda.',
+                    'Atur notifikasi mana yang ingin Anda terima agar tetap fokus.',
+            };
+        case 'security':
+            return {
+                eyebrow: 'Perlindungan Akun',
+                title: 'Keamanan & Autentikasi',
+                description:
+                    'Ringkasan status keamanan dan kredensial akun Anda.',
             };
         default:
             return {
-                eyebrow: 'Kustomisasi',
-                title: 'Pengaturan',
+                eyebrow: 'Pusat Dukungan',
+                title: 'Bantuan & Pintasan Keyboard',
                 description:
-                    'Kelola preferensi akun, notifikasi, dan keamanan Anda.',
+                    'Pintasan tombol cepat dan informasi panduan penggunaan.',
             };
     }
 });
@@ -184,53 +174,53 @@ const preferences = ref<Record<NotificationKey, boolean>>({
 
 const notificationGroups: NotificationGroup[] = [
     {
-        label: 'Pengaturan utama',
+        label: 'Aktivitas Utama',
         items: [
             {
                 key: 'taskUpdates',
                 title: 'Pembaruan tugas',
                 description:
-                    'Dapatkan kabar saat status atau detail tugas di proyek Anda berubah.',
+                    'Kabar saat status, tenggat, atau detail tugas dalam proyek berubah.',
                 icon: 'Bell',
+            },
+            {
+                key: 'deadlineReminders',
+                title: 'Pengingat tenggat waktu',
+                description:
+                    'Peringatan otomatis saat tugas mendekati batas akhir pengerjaan.',
+                icon: 'Clock',
             },
             {
                 key: 'dailyDigest',
                 title: 'Ringkasan harian',
                 description:
-                    'Terima rangkuman progres proyek dan tugas setiap pagi.',
+                    'Rangkuman singkat progres pekerjaan harian di ruang kerja.',
                 icon: 'FileText',
-            },
-            {
-                key: 'deadlineReminders',
-                title: 'Pengingat tenggat',
-                description:
-                    'Ingatkan saya sebelum tugas atau proyek mendekati tenggat.',
-                icon: 'Clock',
             },
         ],
     },
     {
-        label: 'Opsi sekunder',
+        label: 'Interaksi & Suara',
         items: [
             {
                 key: 'mentions',
-                title: 'Sebutan dan komentar',
+                title: 'Sebutan (@mention) & Komentar',
                 description:
-                    'Beri tahu saya ketika rekan tim menyebut atau membalas diskusi saya.',
+                    'Pemberitahuan ketika rekan tim menandai Anda atau membalas pesan.',
                 icon: 'MessageSquare',
             },
             {
                 key: 'comments',
-                title: 'Aktivitas kolaborasi',
+                title: 'Aktivitas kolaborasi tim',
                 description:
-                    'Ikuti perkembangan diskusi terbaru di proyek yang saya ikuti.',
+                    'Diskusi dan aktivitas terbaru pada proyek yang Anda ikuti.',
                 icon: 'Users',
             },
             {
                 key: 'sound',
-                title: 'Suara notifikasi',
+                title: 'Bunyi notifikasi audio',
                 description:
-                    'Mainkan bunyi singkat saat notifikasi baru masuk.',
+                    'Mainkan suara lembut saat pemberitahuan baru diterima.',
                 icon: 'Radio',
             },
         ],
@@ -264,29 +254,30 @@ const roleLabel = computed(
     () => user.value?.roles?.join(', ') || 'Anggota ruang kerja',
 );
 
-const accountRows = computed(() => [
+const accountDetails = computed(() => [
     {
-        label: 'Nama lengkap',
+        label: 'Nama Lengkap',
         value: user.value?.name ?? '—',
         icon: 'User',
     },
     {
-        label: 'Alamat email',
+        label: 'Email Akun',
         value: user.value?.email ?? '—',
-        icon: 'Inbox',
+        icon: 'Mail',
     },
     {
-        label: 'Peran',
+        label: 'Peran Ruang Kerja',
         value: roleLabel.value,
         icon: 'Shield',
     },
     {
-        label: 'Status akun',
+        label: 'Status Akun',
         value: account.value.is_active ? 'Aktif' : 'Nonaktif',
         icon: 'CheckCircle2',
+        highlight: account.value.is_active ? 'active' : 'inactive',
     },
     {
-        label: 'Bergabung sejak',
+        label: 'Terdaftar Sejak',
         value: formatDate(account.value.member_since),
         icon: 'Calendar',
     },
@@ -295,48 +286,66 @@ const accountRows = computed(() => [
 const securityItems = computed(() => [
     {
         icon: 'Lock',
-        title: 'Kata sandi',
+        title: 'Kata Sandi Akun',
         description:
-            'Kata sandi akun aktif dan dapat digunakan untuk masuk ke ruang kerja.',
-        status: 'Aktif',
-        badgeClass:
-            'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+            'Kata sandi aktif digunakan untuk autentikasi masuk ke ruang kerja.',
+        status: 'Terproteksi',
+        tone: 'emerald',
     },
     {
         icon: 'Shield',
-        title: 'Verifikasi dua faktor',
+        title: 'Verifikasi Dua Faktor (2FA)',
         description:
-            'Lapisan keamanan tambahan saat masuk menggunakan kode autentikasi.',
-        status: account.value.two_factor_enabled ? 'Aktif' : 'Nonaktif',
-        badgeClass: account.value.two_factor_enabled
-            ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-            : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300',
+            'Lapisan perlindungan tambahan dengan kode autentikasi sekali pakai.',
+        status: account.value.two_factor_enabled ? 'Aktif' : 'Belum Aktif',
+        tone: account.value.two_factor_enabled ? 'emerald' : 'surface',
     },
     {
         icon: 'CheckCircle2',
-        title: 'Verifikasi email',
+        title: 'Verifikasi Email',
         description:
-            'Pastikan alamat email Anda terverifikasi agar notifikasi penting tidak terlewat.',
-        status: account.value.email_verified ? 'Terverifikasi' : 'Belum',
-        badgeClass: account.value.email_verified
-            ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-            : 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300',
+            'Email terverifikasi memastikan Anda menerima pemulihan akun & notifikasi resmi.',
+        status: account.value.email_verified ? 'Terverifikasi' : 'Belum Terverifikasi',
+        tone: account.value.email_verified ? 'emerald' : 'amber',
     },
     {
         icon: 'UserCheck',
-        title: 'Passkey',
+        title: 'Kunci Masuk (Passkey)',
         description:
-            'Masuk lebih cepat dan aman menggunakan perangkat yang Anda percayai.',
+            'Masuk lebih aman dan cepat menggunakan biometrik perangkat Anda.',
         status:
             account.value.passkeys_count > 0
-                ? `${account.value.passkeys_count} terdaftar`
-                : 'Belum ada',
-        badgeClass:
-            account.value.passkeys_count > 0
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300',
+                ? `${account.value.passkeys_count} Terdaftar`
+                : 'Belum Ada',
+        tone: account.value.passkeys_count > 0 ? 'emerald' : 'surface',
     },
 ]);
+
+// FAQ item accordion state
+const openedFaq = ref<number | null>(null);
+
+function toggleFaq(index: number): void {
+    openedFaq.value = openedFaq.value === index ? null : index;
+}
+
+const faqs = [
+    {
+        question: 'Bagaimana cara mengubah tema aplikasi ke mode gelap atau terang?',
+        answer: 'Buka menu Pengaturan → Tampilan, lalu cukup klik pada pilihan Mode Terang atau Mode Gelap. Pilihan Anda akan langsung aktif dan tersimpan otomatis di perangkat ini.',
+    },
+    {
+        question: 'Bagaimana cara mengubah profil dan nama pengguna?',
+        answer: 'Data identitas dasar akun dikelola terpusat oleh administrator sistem. Jika terdapat kesalahan penulisan nama atau email, silakan hubungi admin tim Anda.',
+    },
+    {
+        question: 'Apakah preferensi notifikasi disimpan di server?',
+        answer: 'Preferensi notifikasi Anda saat ini disimpan di penyimpanan lokal browser perangkat ini, sehingga Anda dapat menyesuaikan preferensi berbeda antar perangkat.',
+    },
+    {
+        question: 'Bagaimana cara mengaktifkan verifikasi 2 faktor (2FA)?',
+        answer: 'Konfigurasi autentikasi lanjutan dikontrol oleh kebijakan administrator ruang kerja Anda. Hubungi administrator jika fitur 2FA ingin diaktifkan.',
+    },
+];
 
 function formatDate(value: string | null): string {
     if (!value) {
@@ -355,17 +364,11 @@ function openPanel(panel: PanelKey): void {
     search.value = '';
 }
 
-function openSettingsTab(tab: SettingsTabKey): void {
-    activePanel.value = 'settings';
-    settingsTab.value = tab;
-    search.value = '';
-}
-
 function selectTheme(theme: 'light' | 'dark'): void {
     setTheme(theme);
     success(
-        'Tema diperbarui',
-        `Tema diubah ke ${themeOptions.find((option) => option.value === theme)?.label}.`,
+        'Tema Diperbarui',
+        `Tampilan berhasil dialihkan ke mode ${theme === 'dark' ? 'Gelap' : 'Terang'}.`,
     );
 }
 
@@ -376,19 +379,12 @@ function savePreferences(): void {
             JSON.stringify(preferences.value),
         );
     } catch {
-        // localStorage may be unavailable; the UI still reflects the choice.
+        // localStorage may be unavailable
     }
 
     success(
-        'Preferensi disimpan',
-        'Pengaturan notifikasi Anda berhasil diperbarui.',
-    );
-}
-
-function showCustomSectionInfo(): void {
-    info(
-        'Bagian baru',
-        'Bagian pengaturan kustom akan tersedia pada pembaruan berikutnya.',
+        'Preferensi Disimpan',
+        'Pengaturan notifikasi berhasil diperbarui.',
     );
 }
 
@@ -403,137 +399,77 @@ onMounted(() => {
             preferences.value = { ...defaultPreferences, ...parsed };
         }
     } catch {
-        // Keep defaults when the stored value cannot be read.
-    }
-});
-
-watch(search, (value) => {
-    if (
-        value.trim() &&
-        !(
-            activePanel.value === 'settings' &&
-            settingsTab.value === 'preferences'
-        )
-    ) {
-        activePanel.value = 'settings';
-        settingsTab.value = 'preferences';
+        // Keep defaults
     }
 });
 </script>
 
 <template>
-    <div class="mx-auto max-w-[1180px]">
-        <div
-            class="overflow-hidden rounded-[28px] border border-surface-200/80 bg-white shadow-sm dark:border-surface-800 dark:bg-surface-900"
+    <div class="space-y-6 pb-12">
+        <!-- Page Header -->
+        <header
+            class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
-            <div class="grid lg:grid-cols-[248px_minmax(0,1fr)]">
-                <!-- Sidebar -->
-                <aside
-                    class="border-b border-surface-200/80 bg-surface-50/60 p-4 sm:p-5 lg:border-r lg:border-b-0 dark:border-surface-800 dark:bg-surface-950/30"
+            <div>
+                <span
+                    class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-800 uppercase dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300"
                 >
-                    <div class="flex items-center gap-2.5 px-2 pb-6">
-                        <span
-                            class="grid h-9 w-9 place-items-center rounded-xl bg-surface-950 text-sm font-bold text-white dark:bg-white dark:text-surface-950"
-                        >
-                            {{ appName.charAt(0).toUpperCase() }}
-                        </span>
-                        <div class="min-w-0">
-                            <p
-                                class="truncate text-sm font-semibold text-surface-950 dark:text-surface-50"
-                            >
-                                {{ appName }}
-                            </p>
-                            <p
-                                class="text-[11px] text-surface-500 dark:text-surface-400"
-                            >
-                                Ruang kerja
-                            </p>
-                        </div>
-                    </div>
+                    <component :is="getIcon('Settings')" class="h-3 w-3" />
+                    Pusat Pengaturan
+                </span>
+                <h1
+                    class="mt-2 text-2xl font-semibold tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
+                >
+                    Pengaturan
+                </h1>
+                <p
+                    class="mt-1 max-w-2xl text-sm leading-relaxed text-surface-600 dark:text-surface-300"
+                >
+                    Kelola profil, tampilan aplikasi, notifikasi, dan preferensi akun Anda.
+                </p>
+            </div>
 
-                    <nav class="space-y-6">
-                        <div
-                            v-for="section in navSections"
-                            :key="section.label"
-                        >
-                            <p
-                                class="px-3 text-[10px] font-bold tracking-[0.18em] text-surface-400 uppercase dark:text-surface-500"
-                            >
-                                {{ section.label }}
-                            </p>
-                            <div class="mt-2 space-y-1">
-                                <button
-                                    v-for="item in section.items"
-                                    :key="item.key"
-                                    type="button"
-                                    class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors"
-                                    :class="
-                                        activePanel === item.key
-                                            ? 'bg-white text-surface-950 shadow-sm ring-1 ring-surface-200/80 dark:bg-surface-800 dark:text-white dark:ring-surface-700'
-                                            : 'text-surface-600 hover:bg-white/70 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800/60 dark:hover:text-white'
-                                    "
-                                    :aria-current="
-                                        activePanel === item.key
-                                            ? 'page'
-                                            : undefined
-                                    "
-                                    @click="openPanel(item.key)"
-                                >
-                                    <component
-                                        :is="getIcon(item.icon)"
-                                        class="h-4 w-4"
-                                        :class="
-                                            activePanel === item.key
-                                                ? 'text-primary-700 dark:text-primary-300'
-                                                : 'text-surface-400 dark:text-surface-500'
-                                        "
-                                    />
-                                    {{ item.label }}
-                                    <span
-                                        v-if="item.key === 'settings'"
-                                        class="ml-auto h-1.5 w-1.5 rounded-full bg-primary-500"
-                                    />
-                                </button>
-                            </div>
-                        </div>
+            <div class="flex items-center gap-2">
+                <span
+                    class="inline-flex items-center gap-2 rounded-xl border border-surface-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-surface-700 shadow-2xs dark:border-surface-800 dark:bg-surface-900 dark:text-surface-200"
+                >
+                    <span
+                        class="h-2 w-2 rounded-full"
+                        :class="account.is_active ? 'bg-emerald-500' : 'bg-surface-400'"
+                    />
+                    {{ account.is_active ? 'Akun Aktif' : 'Akun Nonaktif' }}
+                </span>
+            </div>
+        </header>
 
-                        <button
-                            type="button"
-                            class="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-surface-500 transition-colors hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
-                            @click="showCustomSectionInfo"
-                        >
-                            <component :is="getIcon('Plus')" class="h-4 w-4" />
-                            Bagian baru
-                        </button>
-                    </nav>
+        <!-- Mobile Horizontal Tab Switcher -->
+        <div class="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-1 lg:hidden">
+            <button
+                v-for="item in navItems"
+                :key="`mobile-${item.key}`"
+                type="button"
+                class="inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition"
+                :class="
+                    activePanel === item.key
+                        ? 'border-primary-600 bg-primary-700 text-white shadow-xs dark:bg-primary-600'
+                        : 'border-surface-200 bg-white text-surface-700 hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300'
+                "
+                @click="openPanel(item.key)"
+            >
+                <component :is="getIcon(item.icon)" class="h-3.5 w-3.5" />
+                <span>{{ item.label }}</span>
+            </button>
+        </div>
 
-                    <div
-                        class="mt-8 rounded-2xl border border-surface-200/80 bg-white/70 p-3.5 dark:border-surface-700/70 dark:bg-surface-900/60"
-                    >
-                        <div
-                            class="flex items-center gap-2 text-xs font-semibold text-surface-800 dark:text-surface-100"
-                        >
-                            <component
-                                :is="getIcon('Shield')"
-                                class="h-4 w-4 text-primary-700 dark:text-primary-300"
-                            />
-                            Akun terlindungi
-                        </div>
-                        <p
-                            class="mt-1.5 text-[11px] leading-5 text-surface-500 dark:text-surface-400"
-                        >
-                            Kelola preferensi dan keamanan akun Anda dari satu
-                            tempat.
-                        </p>
-                    </div>
-                </aside>
-
-                <!-- Main panel -->
-                <section class="min-w-0">
-                    <!-- Account strip -->
-                    <div
-                        class="flex items-center gap-3 border-b border-surface-200/80 px-4 py-4 sm:px-6 lg:px-8 dark:border-surface-800"
-                    >
+        <!-- Main Layout: Sidebar + Panel -->
+        <div class="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+            <!-- Left Navigation Sidebar -->
+            <aside class="hidden space-y-4 lg:sticky lg:top-24 lg:block">
+                <!-- User Compact Card -->
+                <div
+                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                >
+                    <div class="flex items-center gap-3.5">
                         <Avatar
                             :src="user?.avatar"
                             :initials="user?.initials"
@@ -549,870 +485,583 @@ watch(search, (value) => {
                             <p
                                 class="truncate text-xs text-surface-500 dark:text-surface-400"
                             >
-                                Bergabung sejak
-                                {{ formatDate(account.member_since) }}
+                                {{ user?.email }}
                             </p>
                         </div>
-
-                        <div class="flex items-center gap-1.5">
-                            <button
-                                type="button"
-                                class="grid h-9 w-9 place-items-center rounded-full bg-primary-700 text-white shadow-sm transition hover:bg-primary-800 active:scale-95 dark:bg-primary-500 dark:text-primary-950 dark:hover:bg-primary-400"
-                                title="Buka profil"
-                                aria-label="Buka profil"
-                                @click="openPanel('profile')"
-                            >
-                                <component
-                                    :is="getIcon('Pencil')"
-                                    class="h-4 w-4"
-                                />
-                            </button>
-                            <button
-                                type="button"
-                                class="grid h-9 w-9 place-items-center rounded-full border border-surface-200 bg-white text-surface-600 transition hover:border-surface-300 hover:text-surface-900 active:scale-95 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:text-white"
-                                title="Preferensi notifikasi"
-                                aria-label="Preferensi notifikasi"
-                                @click="openSettingsTab('preferences')"
-                            >
-                                <component
-                                    :is="getIcon('Bell')"
-                                    class="h-4 w-4"
-                                />
-                            </button>
-                            <button
-                                type="button"
-                                class="grid h-9 w-9 place-items-center rounded-full border border-surface-200 bg-white text-surface-600 transition hover:border-surface-300 hover:text-surface-900 active:scale-95 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:text-white"
-                                title="Keamanan akun"
-                                aria-label="Keamanan akun"
-                                @click="openSettingsTab('security')"
-                            >
-                                <component
-                                    :is="getIcon('User')"
-                                    class="h-4 w-4"
-                                />
-                            </button>
-                            <button
-                                type="button"
-                                class="grid h-9 w-9 place-items-center rounded-full border border-surface-200 bg-white text-surface-600 transition hover:border-surface-300 hover:text-surface-900 active:scale-95 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:text-white"
-                                :title="
-                                    currentTheme === 'dark'
-                                        ? 'Gunakan tema terang'
-                                        : 'Gunakan tema gelap'
-                                "
-                                :aria-label="
-                                    currentTheme === 'dark'
-                                        ? 'Gunakan tema terang'
-                                        : 'Gunakan tema gelap'
-                                "
-                                @click="toggleTheme"
-                            >
-                                <component
-                                    :is="
-                                        getIcon(
-                                            currentTheme === 'dark'
-                                                ? 'Sun'
-                                                : 'Moon',
-                                        )
-                                    "
-                                    class="h-4 w-4"
-                                />
-                            </button>
-                        </div>
                     </div>
 
-                    <!-- Header -->
-                    <div class="px-4 pt-6 sm:px-6 lg:px-8">
-                        <div
-                            class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+                    <div class="mt-4 flex flex-wrap items-center gap-1.5">
+                        <span
+                            class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold text-primary-800 uppercase dark:bg-primary-950/50 dark:text-primary-300"
                         >
-                            <div>
-                                <p
-                                    class="text-[10px] font-bold tracking-[0.18em] text-primary-700 uppercase dark:text-primary-300"
-                                >
-                                    {{ panelMeta.eyebrow }}
-                                </p>
-                                <h1
-                                    class="mt-1 text-3xl font-bold tracking-tight text-surface-950 dark:text-surface-50"
-                                >
-                                    {{ panelMeta.title }}
-                                </h1>
-                                <p
-                                    class="mt-1 max-w-xl text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                >
-                                    {{ panelMeta.description }}
-                                </p>
-                            </div>
-
-                            <div class="relative w-full sm:w-64">
-                                <span
-                                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-surface-400 dark:text-surface-500"
-                                >
-                                    <component
-                                        :is="getIcon('Search')"
-                                        class="h-4 w-4"
-                                    />
-                                </span>
-                                <input
-                                    v-model="search"
-                                    type="search"
-                                    class="input"
-                                    style="padding-left: 2.5rem"
-                                    placeholder="Cari pengaturan..."
-                                    aria-label="Cari pengaturan"
-                                />
-                            </div>
-                        </div>
+                            {{ roleLabel }}
+                        </span>
+                        <span
+                            class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+                            :class="
+                                account.is_active
+                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                    : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
+                            "
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+                                :class="account.is_active ? 'bg-emerald-500' : 'bg-surface-400'"
+                            />
+                            {{ account.is_active ? 'Aktif' : 'Nonaktif' }}
+                        </span>
                     </div>
+                </div>
 
-                    <!-- Content -->
-                    <div class="px-4 pt-6 pb-7 sm:px-6 lg:px-8">
-                        <!-- Settings with inner navigation -->
-                        <div
-                            v-if="activePanel === 'settings'"
-                            class="grid gap-7 lg:grid-cols-[170px_minmax(0,1fr)]"
+                <!-- Vertical Tabs Menu -->
+                <nav
+                    class="rounded-3xl border border-surface-200/80 bg-white p-2 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                >
+                    <div class="space-y-1">
+                        <button
+                            v-for="item in navItems"
+                            :key="item.key"
+                            type="button"
+                            class="group flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left text-xs font-semibold transition"
+                            :class="
+                                activePanel === item.key
+                                    ? 'bg-[#0F5132] text-white shadow-xs dark:bg-primary-600'
+                                    : 'text-surface-700 hover:bg-surface-100/70 hover:text-surface-950 dark:text-surface-300 dark:hover:bg-surface-800/60 dark:hover:text-surface-50'
+                            "
+                            @click="openPanel(item.key)"
                         >
-                            <nav class="space-y-5">
-                                <div
-                                    v-for="group in settingsNav"
-                                    :key="group.label"
+                            <component
+                                :is="getIcon(item.icon)"
+                                class="h-4 w-4 shrink-0"
+                                :class="
+                                    activePanel === item.key
+                                        ? 'text-white'
+                                        : 'text-surface-400 group-hover:text-surface-600 dark:text-surface-500 dark:group-hover:text-surface-300'
+                                "
+                            />
+                            <span class="flex-1 truncate">{{ item.label }}</span>
+                            <component
+                                :is="getIcon('ChevronRight')"
+                                class="h-3.5 w-3.5 transition-transform"
+                                :class="
+                                    activePanel === item.key
+                                        ? 'text-white/80 translate-x-0.5'
+                                        : 'text-surface-300 dark:text-surface-600'
+                                "
+                            />
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Quick Help / Note Box -->
+                <div
+                    class="rounded-3xl border border-surface-200/80 bg-surface-50/70 p-4.5 text-xs text-surface-600 dark:border-surface-800 dark:bg-surface-900/50 dark:text-surface-400"
+                >
+                    <div class="flex items-center gap-2 font-semibold text-surface-800 dark:text-surface-200">
+                        <component :is="getIcon('HelpCircle')" class="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                        <span>Pusat Bantuan</span>
+                    </div>
+                    <p class="mt-1.5 text-[11px] leading-relaxed text-surface-500 dark:text-surface-400">
+                        Tekan <kbd class="rounded border border-surface-300 bg-white px-1 py-0.5 text-[10px] font-semibold dark:border-surface-700 dark:bg-surface-800">?</kbd> kapan saja untuk melihat seluruh pintasan tombol aplikasi.
+                    </p>
+                </div>
+            </aside>
+
+            <!-- Main Panel Content -->
+            <main
+                class="min-w-0 overflow-hidden rounded-3xl border border-surface-200/80 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
+            >
+                <!-- Panel Header -->
+                <div
+                    class="border-b border-surface-200/80 px-5 py-5 sm:px-7 sm:py-6 dark:border-surface-800"
+                >
+                    <p
+                        class="text-[10px] font-bold tracking-[0.16em] text-primary-700 uppercase dark:text-primary-400"
+                    >
+                        {{ panelMeta.eyebrow }}
+                    </p>
+                    <h2
+                        class="mt-1 text-xl font-semibold tracking-tight text-surface-950 sm:text-2xl dark:text-surface-50"
+                    >
+                        {{ panelMeta.title }}
+                    </h2>
+                    <p
+                        class="mt-1 text-xs leading-relaxed text-surface-500 sm:text-sm dark:text-surface-400"
+                    >
+                        {{ panelMeta.description }}
+                    </p>
+                </div>
+
+                <div class="p-5 sm:p-7">
+                    <!-- ============================================== -->
+                    <!-- 1. PROFILE PANEL                               -->
+                    <!-- ============================================== -->
+                    <div v-if="activePanel === 'profile'" class="space-y-6">
+                        <!-- User Card -->
+                        <div
+                            class="flex flex-col gap-4 rounded-2xl border border-surface-200/80 bg-surface-50/50 p-5 sm:flex-row sm:items-center sm:gap-6 dark:border-surface-800 dark:bg-surface-950/30"
+                        >
+                            <Avatar
+                                :src="user?.avatar"
+                                :initials="user?.initials"
+                                :alt="user?.name"
+                                size="lg"
+                            />
+                            <div class="min-w-0 flex-1">
+                                <h3
+                                    class="truncate text-lg font-semibold text-surface-950 sm:text-xl dark:text-surface-50"
                                 >
-                                    <p
-                                        class="px-3 text-[10px] font-bold tracking-[0.16em] text-surface-400 uppercase dark:text-surface-500"
-                                    >
-                                        {{ group.label }}
-                                    </p>
-                                    <div class="mt-1.5 space-y-0.5">
-                                        <button
-                                            v-for="item in group.items"
-                                            :key="item.key"
-                                            type="button"
-                                            class="relative flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors"
-                                            :class="
-                                                settingsTab === item.key
-                                                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/25 dark:text-primary-200'
-                                                    : 'text-surface-500 hover:bg-surface-50 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800/60 dark:hover:text-surface-100'
-                                            "
-                                            :aria-current="
-                                                settingsTab === item.key
-                                                    ? 'page'
-                                                    : undefined
-                                            "
-                                            @click="openSettingsTab(item.key)"
-                                        >
-                                            <span
-                                                v-if="settingsTab === item.key"
-                                                class="absolute left-0 h-3.5 w-0.5 rounded-full bg-primary-600 dark:bg-primary-300"
-                                            />
-                                            {{ item.label }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </nav>
-
-                            <div class="min-w-0">
-                                <!-- Preferences -->
-                                <div
-                                    v-if="settingsTab === 'preferences'"
-                                    class="space-y-6"
+                                    {{ user?.name }}
+                                </h3>
+                                <p
+                                    class="truncate text-xs text-surface-600 sm:text-sm dark:text-surface-400"
                                 >
-                                    <div>
-                                        <h2
-                                            class="text-lg font-semibold text-surface-950 dark:text-surface-50"
-                                        >
-                                            Preferensi notifikasi
-                                        </h2>
-                                        <p
-                                            class="mt-1 text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                        >
-                                            Secara bawaan, Anda akan diberi tahu
-                                            melalui pola pilihan ruang kerja.
-                                            Anda juga dapat menyesuaikan
-                                            preferensi notifikasi di bawah ini.
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        v-for="group in filteredNotificationGroups"
-                                        :key="group.label"
-                                        class="space-y-3"
+                                    {{ user?.email }}
+                                </p>
+                                <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-surface-700 ring-1 ring-surface-200 dark:bg-surface-800 dark:text-surface-200 dark:ring-surface-700"
                                     >
-                                        <p
-                                            class="text-[10px] font-bold tracking-[0.16em] text-surface-400 uppercase dark:text-surface-500"
-                                        >
-                                            {{ group.label }}
-                                        </p>
-
-                                        <div
-                                            v-for="item in group.items"
-                                            :key="item.key"
-                                            class="flex items-center gap-3 rounded-2xl border p-3.5 transition-colors"
-                                            :class="
-                                                preferences[item.key]
-                                                    ? 'border-primary-200 bg-primary-50/60 dark:border-primary-700/40 dark:bg-primary-900/20'
-                                                    : 'border-surface-200 bg-white dark:border-surface-700 dark:bg-surface-900'
-                                            "
-                                        >
-                                            <span
-                                                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors"
-                                                :class="
-                                                    preferences[item.key]
-                                                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-800/50 dark:text-primary-200'
-                                                        : 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-300'
-                                                "
-                                            >
-                                                <component
-                                                    :is="getIcon(item.icon)"
-                                                    class="h-4 w-4"
-                                                />
-                                            </span>
-                                            <div class="min-w-0 flex-1">
-                                                <p
-                                                    class="text-sm font-semibold text-surface-900 dark:text-surface-100"
-                                                >
-                                                    {{ item.title }}
-                                                </p>
-                                                <p
-                                                    class="mt-0.5 text-xs leading-5 text-surface-500 dark:text-surface-400"
-                                                >
-                                                    {{ item.description }}
-                                                </p>
-                                            </div>
-                                            <Toggle
-                                                v-model="preferences[item.key]"
-                                                :label="item.title"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        v-if="!hasNotificationResults"
-                                        class="rounded-2xl border border-dashed border-surface-300 p-8 text-center dark:border-surface-700"
-                                    >
-                                        <component
-                                            :is="getIcon('Search')"
-                                            class="mx-auto h-5 w-5 text-surface-400"
-                                        />
-                                        <p
-                                            class="mt-2 text-sm font-semibold text-surface-800 dark:text-surface-100"
-                                        >
-                                            Tidak ada preferensi yang cocok
-                                        </p>
-                                        <p
-                                            class="mt-1 text-xs text-surface-500 dark:text-surface-400"
-                                        >
-                                            Coba gunakan kata kunci lain.
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        class="space-y-3 border-t border-surface-200 pt-5 dark:border-surface-800"
-                                    >
-                                        <p
-                                            class="text-xs text-surface-500 dark:text-surface-400"
-                                        >
-                                            Perubahan preferensi disimpan pada
-                                            perangkat ini.
-                                        </p>
-                                        <Button
-                                            variant="primary"
-                                            class="w-full"
-                                            @click="savePreferences"
-                                        >
-                                            Simpan perubahan
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <!-- Interface -->
-                                <div
-                                    v-else-if="settingsTab === 'interface'"
-                                    class="space-y-6"
-                                >
-                                    <div>
-                                        <h2
-                                            class="text-lg font-semibold text-surface-950 dark:text-surface-50"
-                                        >
-                                            Antarmuka
-                                        </h2>
-                                        <p
-                                            class="mt-1 text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                        >
-                                            Pilih tema yang paling nyaman untuk
-                                            mata Anda. Perubahan langsung
-                                            diterapkan.
-                                        </p>
-                                    </div>
-
-                                    <div class="grid gap-3 sm:grid-cols-2">
-                                        <button
-                                            v-for="option in themeOptions"
-                                            :key="option.value"
-                                            type="button"
-                                            class="relative rounded-2xl border p-4 text-left transition-all"
-                                            :class="
-                                                currentTheme === option.value
-                                                    ? 'border-primary-500 bg-primary-50/60 dark:border-primary-500/70 dark:bg-primary-900/20'
-                                                    : 'border-surface-200 bg-white hover:border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:hover:border-surface-600'
-                                            "
-                                            :aria-pressed="
-                                                currentTheme === option.value
-                                            "
-                                            @click="selectTheme(option.value)"
-                                        >
-                                            <div
-                                                class="flex items-center justify-between"
-                                            >
-                                                <span
-                                                    class="grid h-10 w-10 place-items-center rounded-xl"
-                                                    :class="
-                                                        currentTheme ===
-                                                        option.value
-                                                            ? 'bg-primary-100 text-primary-700 dark:bg-primary-800/50 dark:text-primary-200'
-                                                            : 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-300'
-                                                    "
-                                                >
-                                                    <component
-                                                        :is="
-                                                            getIcon(option.icon)
-                                                        "
-                                                        class="h-5 w-5"
-                                                    />
-                                                </span>
-                                                <span
-                                                    v-if="
-                                                        currentTheme ===
-                                                        option.value
-                                                    "
-                                                    class="grid h-6 w-6 place-items-center rounded-full bg-primary-600 text-white"
-                                                >
-                                                    <component
-                                                        :is="getIcon('Check')"
-                                                        class="h-3.5 w-3.5"
-                                                    />
-                                                </span>
-                                            </div>
-                                            <p
-                                                class="mt-4 text-sm font-semibold text-surface-900 dark:text-surface-100"
-                                            >
-                                                {{ option.label }}
-                                            </p>
-                                            <p
-                                                class="mt-1 text-xs text-surface-500 dark:text-surface-400"
-                                            >
-                                                {{ option.description }}
-                                            </p>
-                                            <div
-                                                class="mt-4 overflow-hidden rounded-xl border border-surface-200 p-2 dark:border-surface-700"
-                                                :class="
-                                                    option.value === 'light'
-                                                        ? 'bg-surface-50'
-                                                        : 'bg-surface-900'
-                                                "
-                                            >
-                                                <div
-                                                    class="h-2 w-2/3 rounded-full"
-                                                    :class="
-                                                        option.value === 'light'
-                                                            ? 'bg-surface-300'
-                                                            : 'bg-surface-600'
-                                                    "
-                                                />
-                                                <div
-                                                    class="mt-1.5 h-2 w-full rounded-full"
-                                                    :class="
-                                                        option.value === 'light'
-                                                            ? 'bg-surface-200'
-                                                            : 'bg-surface-700'
-                                                    "
-                                                />
-                                                <div
-                                                    class="mt-1.5 h-2 w-4/5 rounded-full"
-                                                    :class="
-                                                        option.value === 'light'
-                                                            ? 'bg-surface-200'
-                                                            : 'bg-surface-700'
-                                                    "
-                                                />
-                                            </div>
-                                        </button>
-                                    </div>
-
-                                    <p
-                                        class="text-xs text-surface-500 dark:text-surface-400"
-                                    >
-                                        Tema saat ini:
-                                        <strong
-                                            class="text-surface-800 dark:text-surface-100"
-                                        >
-                                            {{ currentThemeOption?.label }}
-                                        </strong>
-                                    </p>
-                                </div>
-
-                                <!-- Account summary -->
-                                <div
-                                    v-else-if="settingsTab === 'account'"
-                                    class="space-y-6"
-                                >
-                                    <div>
-                                        <h2
-                                            class="text-lg font-semibold text-surface-950 dark:text-surface-50"
-                                        >
-                                            Ringkasan akun
-                                        </h2>
-                                        <p
-                                            class="mt-1 text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                        >
-                                            Detail akun yang digunakan pada
-                                            ruang kerja ini.
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        class="overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-700"
-                                    >
-                                        <div
-                                            v-for="(row, index) in accountRows"
-                                            :key="row.label"
-                                            class="flex items-center gap-3 px-4 py-3.5"
-                                            :class="
-                                                index > 0
-                                                    ? 'border-t border-surface-100 dark:border-surface-800'
-                                                    : ''
-                                            "
-                                        >
-                                            <span
-                                                class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-300"
-                                            >
-                                                <component
-                                                    :is="getIcon(row.icon)"
-                                                    class="h-4 w-4"
-                                                />
-                                            </span>
-                                            <div class="min-w-0 flex-1">
-                                                <p
-                                                    class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                                                >
-                                                    {{ row.label }}
-                                                </p>
-                                                <p
-                                                    class="truncate text-sm font-semibold text-surface-900 capitalize dark:text-surface-100"
-                                                >
-                                                    {{ row.value }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="flex items-start gap-3 rounded-2xl border p-4"
+                                        {{ roleLabel }}
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
                                         :class="
-                                            account.email_verified
-                                                ? 'border-primary-200 bg-primary-50/60 dark:border-primary-700/40 dark:bg-primary-900/20'
-                                                : 'border-accent-200 bg-accent-50/60 dark:border-accent-700/40 dark:bg-accent-900/20'
+                                            account.is_active
+                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                : 'bg-surface-200 text-surface-700 dark:bg-surface-800 dark:text-surface-300'
                                         "
                                     >
-                                        <component
-                                            :is="
-                                                getIcon(
-                                                    account.email_verified
-                                                        ? 'CheckCircle2'
-                                                        : 'AlertTriangle',
-                                                )
-                                            "
-                                            class="mt-0.5 h-5 w-5 shrink-0"
-                                            :class="
-                                                account.email_verified
-                                                    ? 'text-primary-700 dark:text-primary-300'
-                                                    : 'text-accent-700 dark:text-accent-300'
-                                            "
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="account.is_active ? 'bg-emerald-500' : 'bg-surface-400'"
                                         />
-                                        <div>
-                                            <p
-                                                class="text-sm font-semibold text-surface-900 dark:text-surface-100"
-                                            >
-                                                {{
-                                                    account.email_verified
-                                                        ? 'Email terverifikasi'
-                                                        : 'Email belum terverifikasi'
-                                                }}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 text-xs leading-5 text-surface-500 dark:text-surface-400"
-                                            >
-                                                {{
-                                                    account.email_verified
-                                                        ? 'Alamat email Anda sudah terverifikasi dan siap menerima notifikasi penting.'
-                                                        : 'Hubungi administrator jika Anda memerlukan bantuan verifikasi email.'
-                                                }}
-                                            </p>
-                                        </div>
-                                    </div>
+                                        {{ account.is_active ? 'Akun Aktif' : 'Akun Nonaktif' }}
+                                    </span>
                                 </div>
+                            </div>
+                        </div>
 
-                                <!-- Security -->
-                                <div v-else class="space-y-6">
-                                    <div>
-                                        <h2
-                                            class="text-lg font-semibold text-surface-950 dark:text-surface-50"
-                                        >
-                                            Keamanan akun
-                                        </h2>
-                                        <p
-                                            class="mt-1 text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                        >
-                                            Ringkasan lapisan keamanan yang
-                                            melindungi akun Anda.
-                                        </p>
+                        <!-- Details Grid -->
+                        <div>
+                            <h4 class="mb-3 text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                                Detail Data Akun
+                            </h4>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div
+                                    v-for="item in accountDetails"
+                                    :key="item.label"
+                                    class="rounded-2xl border border-surface-200/80 bg-white p-4 transition-colors hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700"
+                                >
+                                    <div class="flex items-center gap-2 text-surface-400 dark:text-surface-500">
+                                        <component :is="getIcon(item.icon)" class="h-4 w-4" />
+                                        <span class="text-xs font-medium text-surface-500 dark:text-surface-400">
+                                            {{ item.label }}
+                                        </span>
                                     </div>
-
-                                    <div class="space-y-3">
-                                        <div
-                                            v-for="item in securityItems"
-                                            :key="item.title"
-                                            class="flex items-start gap-3 rounded-2xl border border-surface-200 bg-white p-4 dark:border-surface-700 dark:bg-surface-900"
-                                        >
-                                            <span
-                                                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                                            >
-                                                <component
-                                                    :is="getIcon(item.icon)"
-                                                    class="h-4 w-4"
-                                                />
-                                            </span>
-                                            <div class="min-w-0 flex-1">
-                                                <div
-                                                    class="flex flex-wrap items-center gap-2"
-                                                >
-                                                    <p
-                                                        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
-                                                    >
-                                                        {{ item.title }}
-                                                    </p>
-                                                    <span
-                                                        class="rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                                        :class="item.badgeClass"
-                                                    >
-                                                        {{ item.status }}
-                                                    </span>
-                                                </div>
-                                                <p
-                                                    class="mt-1 text-xs leading-5 text-surface-500 dark:text-surface-400"
-                                                >
-                                                    {{ item.description }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <p
-                                        class="rounded-2xl border border-dashed border-surface-300 p-4 text-xs leading-5 text-surface-500 dark:border-surface-700 dark:text-surface-400"
+                                        class="mt-1.5 truncate text-sm font-semibold text-surface-900 dark:text-surface-100"
                                     >
-                                        Pengelolaan kata sandi, verifikasi dua
-                                        faktor, dan passkey akan tersedia
-                                        langsung dari halaman ini pada pembaruan
-                                        berikutnya.
+                                        {{ item.value }}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Profile -->
+                        <!-- Notice Note -->
                         <div
-                            v-else-if="activePanel === 'profile'"
-                            class="space-y-6"
+                            class="flex items-start gap-3 rounded-2xl border border-primary-200/70 bg-primary-50/50 p-4 text-xs leading-relaxed text-primary-900 dark:border-primary-800/40 dark:bg-primary-950/20 dark:text-primary-200"
                         >
-                            <div
-                                class="flex flex-col gap-4 rounded-2xl border border-surface-200 bg-surface-50/70 p-5 sm:flex-row sm:items-center dark:border-surface-700 dark:bg-surface-950/30"
-                            >
-                                <Avatar
-                                    :src="user?.avatar"
-                                    :initials="user?.initials"
-                                    :alt="user?.name"
-                                    size="lg"
-                                />
-                                <div class="min-w-0 flex-1">
-                                    <h2
-                                        class="truncate text-xl font-bold text-surface-950 dark:text-surface-50"
-                                    >
-                                        {{ user?.name }}
-                                    </h2>
-                                    <p
-                                        class="truncate text-sm text-surface-500 dark:text-surface-400"
-                                    >
-                                        {{ user?.email }}
-                                    </p>
-                                    <div class="mt-2 flex flex-wrap gap-2">
-                                        <span
-                                            class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-surface-700 ring-1 ring-surface-200 dark:bg-surface-800 dark:text-surface-200 dark:ring-surface-700"
-                                        >
-                                            {{ roleLabel }}
-                                        </span>
-                                        <span
-                                            class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                                            :class="
-                                                account.is_active
-                                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                                                    : 'bg-surface-200 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
-                                            "
-                                        >
-                                            {{
-                                                account.is_active
-                                                    ? 'Akun aktif'
-                                                    : 'Akun nonaktif'
-                                            }}
-                                        </span>
-                                    </div>
-                                </div>
+                            <component
+                                :is="getIcon('Info')"
+                                class="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400"
+                            />
+                            <div>
+                                <p class="font-semibold">Informasi Sinkronisasi Akun</p>
+                                <p class="mt-0.5 text-primary-800/90 dark:text-primary-300/80">
+                                    Perubahan nama lengkap, alamat email resmi, serta peran pengguna dikelola langsung oleh administrator sistem.
+                                </p>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <div
-                                    v-for="row in accountRows"
-                                    :key="`profile-${row.label}`"
-                                    class="rounded-2xl border border-surface-200 bg-white p-4 dark:border-surface-700 dark:bg-surface-900"
-                                >
-                                    <div class="flex items-center gap-2">
-                                        <component
-                                            :is="getIcon(row.icon)"
-                                            class="h-4 w-4 text-surface-400"
-                                        />
-                                        <p
-                                            class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                                        >
-                                            {{ row.label }}
-                                        </p>
-                                    </div>
-                                    <p
-                                        class="mt-1.5 truncate text-sm font-semibold text-surface-900 capitalize dark:text-surface-100"
-                                    >
-                                        {{ row.value }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <p
-                                class="rounded-2xl border border-dashed border-surface-300 p-4 text-xs leading-5 text-surface-500 dark:border-surface-700 dark:text-surface-400"
-                            >
-                                Perubahan nama, alamat email, dan foto profil
-                                dikelola oleh administrator sistem. Hubungi
-                                administrator jika ada data yang perlu
-                                diperbarui.
+                    <!-- ============================================== -->
+                    <!-- 2. APPEARANCE PANEL (Clean, Simple, Sleek)      -->
+                    <!-- ============================================== -->
+                    <div v-else-if="activePanel === 'appearance'" class="space-y-6">
+                        <div>
+                            <h3 class="text-sm font-semibold text-surface-950 dark:text-surface-50">
+                                Mode Tampilan
+                            </h3>
+                            <p class="mt-0.5 text-xs text-surface-500 dark:text-surface-400">
+                                Pilih tema warna yang sesuai dengan preferensi kenyamanan mata Anda.
                             </p>
                         </div>
 
-                        <!-- Appearance -->
-                        <div
-                            v-else-if="activePanel === 'appearance'"
-                            class="space-y-6"
-                        >
-                            <div>
-                                <h2
-                                    class="text-lg font-semibold text-surface-950 dark:text-surface-50"
-                                >
-                                    Tema aplikasi
-                                </h2>
-                                <p
-                                    class="mt-1 text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                >
-                                    Pilih tampilan yang paling nyaman. Tema
-                                    berlaku untuk seluruh halaman dan tersimpan
-                                    di perangkat ini.
-                                </p>
-                            </div>
-
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <button
-                                    v-for="option in themeOptions"
-                                    :key="`panel-${option.value}`"
-                                    type="button"
-                                    class="rounded-2xl border p-5 text-left transition-all"
-                                    :class="
-                                        currentTheme === option.value
-                                            ? 'border-primary-500 bg-primary-50/60 dark:border-primary-500/70 dark:bg-primary-900/20'
-                                            : 'border-surface-200 bg-white hover:border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:hover:border-surface-600'
-                                    "
-                                    :aria-pressed="
-                                        currentTheme === option.value
-                                    "
-                                    @click="selectTheme(option.value)"
-                                >
-                                    <div
-                                        class="flex items-center justify-between"
-                                    >
-                                        <span
-                                            class="grid h-11 w-11 place-items-center rounded-xl"
-                                            :class="
-                                                currentTheme === option.value
-                                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-800/50 dark:text-primary-200'
-                                                    : 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-300'
-                                            "
-                                        >
-                                            <component
-                                                :is="getIcon(option.icon)"
-                                                class="h-5 w-5"
-                                            />
-                                        </span>
-                                        <span
-                                            v-if="currentTheme === option.value"
-                                            class="grid h-6 w-6 place-items-center rounded-full bg-primary-600 text-white"
-                                        >
-                                            <component
-                                                :is="getIcon('Check')"
-                                                class="h-3.5 w-3.5"
-                                            />
-                                        </span>
-                                    </div>
-                                    <p
-                                        class="mt-4 font-semibold text-surface-900 dark:text-surface-100"
-                                    >
-                                        {{ option.label }}
-                                    </p>
-                                    <p
-                                        class="mt-1 text-xs text-surface-500 dark:text-surface-400"
-                                    >
-                                        {{ option.description }}
-                                    </p>
-                                </button>
-                            </div>
-
-                            <div
-                                class="flex items-center justify-between rounded-2xl border border-surface-200 bg-white p-4 dark:border-surface-700 dark:bg-surface-900"
+                        <!-- 2 Simple, Elegant Choice Cards -->
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <!-- Light Mode Card -->
+                            <button
+                                type="button"
+                                class="relative flex flex-col justify-between rounded-2xl border p-5 text-left transition-all"
+                                :class="
+                                    activeTheme === 'light'
+                                        ? 'border-[#0F5132] bg-primary-50/40 ring-2 ring-[#0F5132]/20 dark:border-primary-500 dark:bg-primary-950/30'
+                                        : 'border-surface-200 bg-white hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700'
+                                "
+                                @click="selectTheme('light')"
                             >
-                                <div>
-                                    <p
-                                        class="text-sm font-semibold text-surface-900 dark:text-surface-100"
+                                <div class="flex items-start justify-between gap-3">
+                                    <div
+                                        class="grid h-11 w-11 place-items-center rounded-xl transition-colors"
+                                        :class="
+                                            activeTheme === 'light'
+                                                ? 'bg-[#0F5132] text-white'
+                                                : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
+                                        "
                                     >
-                                        Tema saat ini
-                                    </p>
-                                    <p
-                                        class="text-xs text-surface-500 dark:text-surface-400"
+                                        <component :is="getIcon('Sun')" class="h-5 w-5" />
+                                    </div>
+
+                                    <span
+                                        v-if="activeTheme === 'light'"
+                                        class="inline-flex items-center gap-1 rounded-full bg-[#0F5132] px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
                                     >
-                                        {{ currentThemeOption?.description }}
+                                        <component :is="getIcon('Check')" class="h-3 w-3" />
+                                        Aktif
+                                    </span>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h4 class="text-sm font-semibold text-surface-950 dark:text-surface-50">
+                                        Mode Terang
+                                    </h4>
+                                    <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                                        Tampilan bersih, terang, dan kontras tinggi untuk suasana kerja siang hari.
                                     </p>
                                 </div>
-                                <span
-                                    class="rounded-full bg-primary-100 px-3 py-1 text-xs font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                            </button>
+
+                            <!-- Dark Mode Card -->
+                            <button
+                                type="button"
+                                class="relative flex flex-col justify-between rounded-2xl border p-5 text-left transition-all"
+                                :class="
+                                    activeTheme === 'dark'
+                                        ? 'border-primary-500 bg-primary-950/30 ring-2 ring-primary-500/20'
+                                        : 'border-surface-200 bg-white hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700'
+                                "
+                                @click="selectTheme('dark')"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div
+                                        class="grid h-11 w-11 place-items-center rounded-xl transition-colors"
+                                        :class="
+                                            activeTheme === 'dark'
+                                                ? 'bg-primary-600 text-white'
+                                                : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
+                                        "
+                                    >
+                                        <component :is="getIcon('Moon')" class="h-5 w-5" />
+                                    </div>
+
+                                    <span
+                                        v-if="activeTheme === 'dark'"
+                                        class="inline-flex items-center gap-1 rounded-full bg-primary-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
+                                    >
+                                        <component :is="getIcon('Check')" class="h-3 w-3" />
+                                        Aktif
+                                    </span>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h4 class="text-sm font-semibold text-surface-950 dark:text-surface-50">
+                                        Mode Gelap
+                                    </h4>
+                                    <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                                        Tampilan gelap yang ramah di mata untuk kondisi pencahayaan rendah.
+                                    </p>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Brief info -->
+                        <div
+                            class="flex items-center gap-2.5 rounded-2xl border border-surface-200/80 bg-surface-50/50 p-4 text-xs text-surface-600 dark:border-surface-800 dark:bg-surface-950/20 dark:text-surface-400"
+                        >
+                            <component :is="getIcon('Info')" class="h-4 w-4 shrink-0 text-surface-400" />
+                            <span>
+                                Tema langsung diterapkan dan tersimpan di perangkat Anda.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- ============================================== -->
+                    <!-- 3. NOTIFICATIONS PANEL                         -->
+                    <!-- ============================================== -->
+                    <div v-else-if="activePanel === 'notifications'" class="space-y-6">
+                        <!-- Search Box -->
+                        <div class="relative">
+                            <span
+                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-surface-400"
+                            >
+                                <component :is="getIcon('Search')" class="h-4 w-4" />
+                            </span>
+                            <input
+                                v-model="search"
+                                type="search"
+                                class="input pl-10 text-xs sm:text-sm"
+                                placeholder="Cari preferensi notifikasi..."
+                                aria-label="Cari preferensi notifikasi"
+                            />
+                        </div>
+
+                        <!-- Notification Groups -->
+                        <div
+                            v-for="group in filteredNotificationGroups"
+                            :key="group.label"
+                            class="space-y-3"
+                        >
+                            <h4
+                                class="text-[10px] font-bold tracking-[0.16em] text-surface-400 uppercase dark:text-surface-500"
+                            >
+                                {{ group.label }}
+                            </h4>
+
+                            <div class="space-y-2.5">
+                                <div
+                                    v-for="item in group.items"
+                                    :key="item.key"
+                                    class="flex items-center gap-3.5 rounded-2xl border p-4 transition-colors"
+                                    :class="
+                                        preferences[item.key]
+                                            ? 'border-primary-200/80 bg-primary-50/40 dark:border-primary-800/40 dark:bg-primary-950/20'
+                                            : 'border-surface-200/80 bg-white dark:border-surface-800 dark:bg-surface-900'
+                                    "
                                 >
-                                    {{ currentThemeOption?.label }}
-                                </span>
+                                    <span
+                                        class="grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors"
+                                        :class="
+                                            preferences[item.key]
+                                                ? 'bg-primary-100 text-primary-800 dark:bg-primary-900/60 dark:text-primary-200'
+                                                : 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400'
+                                        "
+                                    >
+                                        <component :is="getIcon(item.icon)" class="h-4.5 w-4.5" />
+                                    </span>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-xs font-semibold text-surface-900 sm:text-sm dark:text-surface-100">
+                                            {{ item.title }}
+                                        </p>
+                                        <p class="mt-0.5 text-xs text-surface-500 dark:text-surface-400">
+                                            {{ item.description }}
+                                        </p>
+                                    </div>
+
+                                    <Toggle
+                                        v-model="preferences[item.key]"
+                                        :label="item.title"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Help -->
-                        <div v-else class="space-y-5">
-                            <div
-                                class="rounded-2xl border border-surface-200 bg-white p-5 dark:border-surface-700 dark:bg-surface-900"
+                        <!-- Empty state if search yields no results -->
+                        <div
+                            v-if="!hasNotificationResults"
+                            class="rounded-2xl border border-dashed border-surface-200 p-8 text-center dark:border-surface-800"
+                        >
+                            <component
+                                :is="getIcon('Search')"
+                                class="mx-auto h-6 w-6 text-surface-400"
+                            />
+                            <p class="mt-2 text-sm font-semibold text-surface-800 dark:text-surface-200">
+                                Tidak ada notifikasi yang cocok
+                            </p>
+                            <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                                Coba kata kunci lain atau kosongkan kolom pencarian.
+                            </p>
+                        </div>
+
+                        <!-- Save action -->
+                        <div
+                            class="flex flex-col gap-3 border-t border-surface-100 pt-5 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+                        >
+                            <p class="text-xs text-surface-500 dark:text-surface-400">
+                                Pengaturan notifikasi aktif di browser ini.
+                            </p>
+                            <Button
+                                variant="primary"
+                                class="w-full sm:w-auto"
+                                @click="savePreferences"
                             >
-                                <div class="flex items-start gap-3">
-                                    <span
-                                        class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                                <component :is="getIcon('Save')" class="h-4 w-4" />
+                                <span>Simpan Perubahan</span>
+                            </Button>
+                        </div>
+                    </div>
+
+                    <!-- ============================================== -->
+                    <!-- 4. SECURITY PANEL                              -->
+                    <!-- ============================================== -->
+                    <div v-else-if="activePanel === 'security'" class="space-y-6">
+                        <div class="space-y-3">
+                            <div
+                                v-for="item in securityItems"
+                                :key="item.title"
+                                class="flex items-start gap-3.5 rounded-2xl border border-surface-200/80 bg-white p-4.5 dark:border-surface-800 dark:bg-surface-900"
+                            >
+                                <span
+                                    class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                                >
+                                    <component :is="getIcon(item.icon)" class="h-4.5 w-4.5" />
+                                </span>
+
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-sm font-semibold text-surface-900 dark:text-surface-100">
+                                            {{ item.title }}
+                                        </p>
+                                        <span
+                                            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold"
+                                            :class="
+                                                item.tone === 'emerald'
+                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                                    : item.tone === 'amber'
+                                                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                                                      : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
+                                            "
+                                        >
+                                            {{ item.status }}
+                                        </span>
+                                    </div>
+                                    <p class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400">
+                                        {{ item.description }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Security Assurance Note -->
+                        <div
+                            class="rounded-2xl border border-primary-200/70 bg-primary-50/50 p-4 text-xs text-primary-900 dark:border-primary-800/40 dark:bg-primary-950/20 dark:text-primary-200"
+                        >
+                            <p class="font-semibold">Perlindungan Akun Aktif</p>
+                            <p class="mt-1 text-primary-800/90 dark:text-primary-300/80">
+                                Sesi login dilindungi enkripsi standar industri. Hubungi tim administrator jika Anda mencurigai adanya aktivitas tidak sah pada akun Anda.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ============================================== -->
+                    <!-- 5. HELP & SHORTCUTS PANEL                      -->
+                    <!-- ============================================== -->
+                    <div v-else class="space-y-6">
+                        <!-- Shortcuts Box -->
+                        <div
+                            class="rounded-2xl border border-surface-200/80 bg-surface-50/50 p-5 sm:p-6 dark:border-surface-800 dark:bg-surface-950/20"
+                        >
+                            <div class="flex items-center gap-2.5">
+                                <span class="grid h-9 w-9 place-items-center rounded-xl bg-white shadow-2xs dark:bg-surface-800">
+                                    <component :is="getIcon('Keyboard')" class="h-4.5 w-4.5 text-primary-600 dark:text-primary-400" />
+                                </span>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-surface-950 dark:text-surface-50">
+                                        Pintasan Keyboard Cepat
+                                    </h3>
+                                    <p class="text-xs text-surface-500 dark:text-surface-400">
+                                        Navigasi lebih cepat tanpa menyentuh mouse.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                                <div class="flex items-center justify-between rounded-xl bg-white p-3 shadow-2xs dark:bg-surface-900">
+                                    <span class="text-xs text-surface-700 dark:text-surface-300">Pencarian global</span>
+                                    <div class="flex items-center gap-1 font-mono text-[10px]">
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">Ctrl</kbd>
+                                        <span class="text-surface-400">+</span>
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">K</kbd>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between rounded-xl bg-white p-3 shadow-2xs dark:bg-surface-900">
+                                    <span class="text-xs text-surface-700 dark:text-surface-300">Buka Dashboard</span>
+                                    <div class="flex items-center gap-1 font-mono text-[10px]">
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">G</kbd>
+                                        <span class="text-surface-400">lalu</span>
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">D</kbd>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between rounded-xl bg-white p-3 shadow-2xs dark:bg-surface-900">
+                                    <span class="text-xs text-surface-700 dark:text-surface-300">Buka Daftar Proyek</span>
+                                    <div class="flex items-center gap-1 font-mono text-[10px]">
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">G</kbd>
+                                        <span class="text-surface-400">lalu</span>
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">P</kbd>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between rounded-xl bg-white p-3 shadow-2xs dark:bg-surface-900">
+                                    <span class="text-xs text-surface-700 dark:text-surface-300">Buka Daftar Tugas</span>
+                                    <div class="flex items-center gap-1 font-mono text-[10px]">
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">G</kbd>
+                                        <span class="text-surface-400">lalu</span>
+                                        <kbd class="rounded border border-surface-200 bg-surface-50 px-1.5 py-0.5 font-bold dark:border-surface-700 dark:bg-surface-800">T</kbd>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FAQ Accordion -->
+                        <div>
+                            <h3 class="mb-3 text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                                Pertanyaan yang Sering Diajukan
+                            </h3>
+                            <div class="space-y-2.5">
+                                <div
+                                    v-for="(faq, idx) in faqs"
+                                    :key="idx"
+                                    class="rounded-2xl border border-surface-200/80 bg-white transition-all dark:border-surface-800 dark:bg-surface-900"
+                                >
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center justify-between gap-3 p-4 text-left"
+                                        @click="toggleFaq(idx)"
                                     >
+                                        <span class="text-xs font-semibold text-surface-900 sm:text-sm dark:text-surface-100">
+                                            {{ faq.question }}
+                                        </span>
                                         <component
-                                            :is="getIcon('HelpCircle')"
-                                            class="h-5 w-5"
+                                            :is="getIcon(openedFaq === idx ? 'ChevronUp' : 'ChevronDown')"
+                                            class="h-4 w-4 shrink-0 text-surface-400 transition-transform"
                                         />
-                                    </span>
-                                    <div>
-                                        <h2
-                                            class="text-lg font-semibold text-surface-950 dark:text-surface-50"
-                                        >
-                                            Butuh bantuan?
-                                        </h2>
-                                        <p
-                                            class="mt-1 text-sm leading-6 text-surface-500 dark:text-surface-400"
-                                        >
-                                            Beberapa pintasan dan tips untuk
-                                            mempermudah penggunaan ruang kerja.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="mt-5 space-y-3">
-                                    <div class="flex items-start gap-2.5">
-                                        <component
-                                            :is="getIcon('Search')"
-                                            class="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-300"
-                                        />
-                                        <p
-                                            class="text-sm text-surface-600 dark:text-surface-300"
-                                        >
-                                            Tekan
-                                            <kbd
-                                                class="rounded-md border border-surface-200 bg-surface-50 px-1.5 py-0.5 text-[11px] font-semibold dark:border-surface-700 dark:bg-surface-800"
-                                                >Ctrl</kbd
-                                            >
-                                            +
-                                            <kbd
-                                                class="rounded-md border border-surface-200 bg-surface-50 px-1.5 py-0.5 text-[11px] font-semibold dark:border-surface-700 dark:bg-surface-800"
-                                                >K</kbd
-                                            >
-                                            untuk membuka pencarian global.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-2.5">
-                                        <component
-                                            :is="getIcon('Moon')"
-                                            class="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-300"
-                                        />
-                                        <p
-                                            class="text-sm text-surface-600 dark:text-surface-300"
-                                        >
-                                            Gunakan tombol tema di kanan atas
-                                            untuk beralih terang atau gelap.
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-2.5">
-                                        <component
-                                            :is="getIcon('CheckCircle2')"
-                                            class="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-300"
-                                        />
-                                        <p
-                                            class="text-sm text-surface-600 dark:text-surface-300"
-                                        >
-                                            Preferensi notifikasi dapat diatur
-                                            pada menu Pengaturan.
-                                        </p>
+                                    </button>
+                                    <div
+                                        v-show="openedFaq === idx"
+                                        class="border-t border-surface-100 px-4 pt-2.5 pb-4 text-xs leading-relaxed text-surface-600 dark:border-surface-800 dark:text-surface-300"
+                                    >
+                                        {{ faq.answer }}
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div
-                                class="rounded-2xl border border-surface-200 bg-surface-50/60 p-5 dark:border-surface-700 dark:bg-surface-950/30"
-                            >
-                                <p
-                                    class="text-[10px] font-bold tracking-[0.16em] text-surface-400 uppercase"
-                                >
-                                    Tentang aplikasi
-                                </p>
-                                <p
-                                    class="mt-1 text-sm font-semibold text-surface-900 dark:text-surface-100"
-                                >
-                                    {{ appFullName }}
-                                </p>
-                                <p
-                                    class="mt-1 text-xs leading-5 text-surface-500 dark:text-surface-400"
-                                >
-                                    Ruang kerja kolaborasi untuk mengelola
-                                    proyek, tugas, dan aktivitas tim dalam satu
-                                    tempat.
-                                </p>
-                            </div>
-
+                        <!-- Return to dashboard -->
+                        <div class="pt-2">
                             <Link
                                 href="/dashboard"
                                 class="btn btn-secondary w-full sm:w-auto"
                             >
-                                <component
-                                    :is="getIcon('ArrowLeft')"
-                                    class="h-4 w-4"
-                                />
-                                Kembali ke dashboard
+                                <component :is="getIcon('ArrowLeft')" class="h-4 w-4" />
+                                <span>Kembali ke Dashboard</span>
                             </Link>
                         </div>
                     </div>
-                </section>
-            </div>
+                </div>
+            </main>
         </div>
     </div>
 </template>

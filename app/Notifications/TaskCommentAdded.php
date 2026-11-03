@@ -38,7 +38,7 @@ class TaskCommentAdded extends Notification
             'comment_preview' => $this->commentPreview,
             'author_name' => $this->authorName,
             'action' => 'comment',
-            'url' => route('tasks.show', $this->taskId),
+            'url' => route('tasks.show', $this->taskId, false),
         ];
     }
 }

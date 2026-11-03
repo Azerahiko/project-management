@@ -6,10 +6,15 @@ import { gsap } from 'gsap';
 interface Props {
     align?: 'left' | 'right';
     label?: string;
+    /** Render the trigger slot as-is instead of wrapping it in a button. */
+    bare?: boolean;
+    triggerClass?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     align: 'right',
+    bare: false,
+    triggerClass: '',
 });
 
 const open = ref(false);
@@ -83,27 +88,37 @@ onUnmounted(() => {
 
 <template>
     <div ref="root" class="relative">
-        <button
-            type="button"
-            :aria-label="label"
-            :aria-expanded="open"
-            aria-haspopup="menu"
-            class="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
+        <component
+            :is="bare ? 'div' : 'button'"
+            :type="bare ? undefined : 'button'"
+            :aria-label="bare ? undefined : label"
+            :aria-expanded="bare ? undefined : open"
+            :aria-haspopup="bare ? undefined : 'menu'"
+            :class="
+                bare
+                    ? 'inline-flex'
+                    : [
+                          'inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800',
+                          triggerClass,
+                      ]
+            "
             @click="open = !open"
         >
-            <slot name="trigger" />
-        </button>
+            <slot name="trigger" :open="open" />
+        </component>
 
         <div
             v-show="open"
             ref="content"
             role="menu"
             :class="[
-                'dropdown',
+                'dropdown max-h-[min(70vh,24rem)] overflow-y-auto overscroll-contain',
                 isMobile
                     ? 'fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-[calc(100vw-2rem)]'
                     : 'absolute top-full z-50 mt-2',
-                align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left',
+                align === 'right'
+                    ? 'right-0 origin-top-right'
+                    : 'left-0 origin-top-left',
             ]"
         >
             <slot />

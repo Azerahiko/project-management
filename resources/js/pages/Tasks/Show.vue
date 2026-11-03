@@ -10,10 +10,12 @@ import { useToast } from '@/composables/useToast';
 import { getIcon } from '@/components/sidebar/icons';
 import Button from '@/components/ui/Button.vue';
 import Dropdown from '@/components/ui/Dropdown.vue';
+import Select from '@/components/ui/Select.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Modal from '@/components/ui/Modal.vue';
 import TaskComments from '@/components/tasks/TaskComments.vue';
 import TaskActivity from '@/components/tasks/TaskActivity.vue';
+import DeadlineBadge from '@/components/tasks/DeadlineBadge.vue';
 import type {
     Task,
     TaskFilters,
@@ -366,20 +368,13 @@ function formatDateShort(dateString: string | null): string {
                 >
                     Deadline
                 </h3>
-                <p
-                    :class="[
-                        'mt-2 font-medium',
-                        task.is_overdue
-                            ? 'text-accent-700 dark:text-accent-300'
-                            : 'text-surface-900 dark:text-surface-100',
-                    ]"
-                >
-                    {{ formatDate(task.due_date) }}
-                    <span
-                        v-if="task.is_overdue"
-                        class="ml-2 text-xs text-accent-700 dark:text-accent-300"
-                        >(Lewat tenggat)</span
-                    >
+                <p class="mt-2">
+                    <DeadlineBadge
+                        :due-date="task.due_date"
+                        :status="task.status"
+                        :is-overdue="task.is_overdue"
+                        size="md"
+                    />
                 </p>
             </div>
         </div>

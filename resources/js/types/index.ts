@@ -171,6 +171,7 @@ export type Project = {
     members_count?: number;
     members?: ProjectMember[];
     tasks_count?: number;
+    tasks?: Task[];
     can_update?: boolean;
     can_delete?: boolean;
     can_manage_members?: boolean;

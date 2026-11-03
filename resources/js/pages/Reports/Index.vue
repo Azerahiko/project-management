@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { getIcon } from '@/components/sidebar/icons';
+import projectsRoute from '@/routes/projects';
 
 defineOptions({
     layout: AppLayout,
@@ -26,8 +27,14 @@ interface TaskCounts {
 const page = usePage();
 const projects = computed(() => (page.props.projects as ReportProject[]) ?? []);
 const taskCounts = computed(() => (page.props.task_counts as TaskCounts) ?? {});
+const canViewProjects = computed(() => Boolean(page.props.can_view_projects));
 
-const statusLabel: Record<string, string> = {
+// Search, status filter, and sorting for projects list
+const projectSearch = ref('');
+const selectedStatusFilter = ref<string>('all');
+const sortBy = ref<'progress' | 'tasks' | 'name'>('progress');
+
+const statusLabels: Record<string, string> = {
     draft: 'Draft',
     active: 'Aktif',
     on_hold: 'Ditahan',
@@ -35,15 +42,17 @@ const statusLabel: Record<string, string> = {
     archived: 'Arsip',
 };
 
-const projectStatusColors: Record<string, string> = {
-    draft: 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
-    active: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
-    on_hold:
-        'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300',
+const projectStatusBadgeClasses: Record<string, string> = {
+    active:
+        'bg-primary-50 text-primary-800 border-primary-200/80 dark:bg-primary-950/40 dark:text-primary-300 dark:border-primary-800/40',
     completed:
-        'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+        'bg-emerald-50 text-emerald-800 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40',
+    on_hold:
+        'bg-amber-50 text-amber-800 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40',
+    draft:
+        'bg-surface-100 text-surface-700 border-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:border-surface-700',
     archived:
-        'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400',
+        'bg-surface-100 text-surface-500 border-surface-200 dark:bg-surface-800 dark:text-surface-400 dark:border-surface-700',
 };
 
 const totalTasks = computed(() =>
@@ -56,6 +65,12 @@ const totalTasks = computed(() =>
 const totalCompleted = computed(() => taskCounts.value.done ?? 0);
 const totalInProgress = computed(() => taskCounts.value.in_progress ?? 0);
 const totalReview = computed(() => taskCounts.value.review ?? 0);
+const totalTodo = computed(() => taskCounts.value.todo ?? 0);
+
+const activeProjectsCount = computed(
+    () =>
+        projects.value.filter((project) => project.status === 'active').length,
+);
 
 const completionRate = computed(() =>
     totalTasks.value > 0
@@ -63,32 +78,104 @@ const completionRate = computed(() =>
         : 0,
 );
 
+function projectProgress(project: ReportProject): number {
+    if (project.tasks_count === 0) {
+        return 0;
+    }
+
+    return Math.round(
+        (project.completed_tasks_count / project.tasks_count) * 100,
+    );
+}
+
+const averageProjectProgress = computed(() => {
+    const withTasks = projects.value.filter((p) => p.tasks_count > 0);
+    if (withTasks.length === 0) {
+        return 0;
+    }
+
+    return Math.round(
+        withTasks.reduce(
+            (total, project) => total + projectProgress(project),
+            0,
+        ) / withTasks.length,
+    );
+});
+
+// 4 Cohesive Calm System KPI Cards
+const statCards = computed(() => [
+    {
+        label: 'Total Tugas',
+        value: totalTasks.value,
+        subtext: `Dari ${projects.value.length} proyek terdaftar`,
+        icon: 'CheckSquare',
+        badge: `${totalTodo.value} antrean`,
+        iconBg: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300',
+        progress: undefined,
+    },
+    {
+        label: 'Tugas Selesai',
+        value: totalCompleted.value,
+        subtext: `${completionRate.value}% dari seluruh tugas ruang kerja`,
+        icon: 'CheckCircle2',
+        badge: `${completionRate.value}% tuntas`,
+        iconBg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
+        progress: completionRate.value,
+    },
+    {
+        label: 'Sedang Berjalan',
+        value: totalInProgress.value,
+        subtext: 'Dalam pengerjaan aktif oleh tim',
+        icon: 'Clock',
+        badge: 'Aktif',
+        iconBg: 'bg-primary-50 text-primary-800 dark:bg-primary-950/50 dark:text-primary-300',
+        progress: undefined,
+    },
+    {
+        label: 'Menunggu Review',
+        value: totalReview.value,
+        subtext:
+            totalReview.value > 0
+                ? 'Perlu verifikasi & peninjauan hasil'
+                : 'Semua tugas telah ditinjau',
+        icon: 'Eye',
+        badge: totalReview.value > 0 ? 'Perlu respon' : 'Selesai',
+        iconBg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
+        progress: undefined,
+    },
+]);
+
+// Status Breakdown for Tasks
 const statusBreakdown = computed(() => {
     const total = totalTasks.value;
-    const meta = [
+    const stages = [
         {
             key: 'todo',
-            label: 'To Do',
+            label: 'Belum Mulai (To Do)',
             color: '#D6D3C8',
+            bgClass: 'bg-[#D6D3C8]',
         },
         {
             key: 'in_progress',
-            label: 'Sedang Dikerjakan',
-            color: '#6EA980',
+            label: 'Sedang Berjalan',
+            color: '#88C199',
+            bgClass: 'bg-[#88C199]',
         },
         {
             key: 'review',
-            label: 'Review',
+            label: 'Peninjauan (Review)',
             color: '#B7D9C1',
+            bgClass: 'bg-[#B7D9C1]',
         },
         {
             key: 'done',
-            label: 'Selesai',
+            label: 'Selesai (Done)',
             color: '#0F5132',
+            bgClass: 'bg-[#0F5132]',
         },
     ] as const;
 
-    return meta.map((item) => {
+    return stages.map((item) => {
         const count = taskCounts.value[item.key] ?? 0;
 
         return {
@@ -117,428 +204,596 @@ const donutGradient = computed(() => {
     return `conic-gradient(${stops.join(', ')})`;
 });
 
+// Project Status Summary breakdown
 const projectStatusSummary = computed(() =>
     [
-        { key: 'active', label: 'Aktif', dot: 'bg-primary-500' },
-        { key: 'draft', label: 'Draft', dot: 'bg-surface-400' },
-        { key: 'on_hold', label: 'Ditahan', dot: 'bg-accent-500' },
-        { key: 'completed', label: 'Selesai', dot: 'bg-emerald-500' },
-        { key: 'archived', label: 'Arsip', dot: 'bg-surface-300' },
-    ].map((item) => ({
-        ...item,
-        count: projects.value.filter((project) => project.status === item.key)
-            .length,
-    })),
+        {
+            key: 'active',
+            label: 'Aktif',
+            dot: 'bg-primary-600 dark:bg-primary-400',
+            bar: 'bg-primary-600 dark:bg-primary-500',
+        },
+        {
+            key: 'completed',
+            label: 'Selesai',
+            dot: 'bg-emerald-600 dark:bg-emerald-400',
+            bar: 'bg-emerald-600 dark:bg-emerald-500',
+        },
+        {
+            key: 'on_hold',
+            label: 'Ditahan',
+            dot: 'bg-amber-500',
+            bar: 'bg-amber-500',
+        },
+        {
+            key: 'draft',
+            label: 'Draft',
+            dot: 'bg-surface-400',
+            bar: 'bg-surface-400',
+        },
+        {
+            key: 'archived',
+            label: 'Arsip',
+            dot: 'bg-surface-300 dark:bg-surface-600',
+            bar: 'bg-surface-300 dark:bg-surface-600',
+        },
+    ].map((item) => {
+        const count = projects.value.filter(
+            (project) => project.status === item.key,
+        ).length;
+
+        return {
+            ...item,
+            count,
+            percent:
+                projects.value.length > 0
+                    ? Math.round((count / projects.value.length) * 100)
+                    : 0,
+        };
+    }),
 );
 
-function projectProgress(project: ReportProject): number {
-    if (project.tasks_count === 0) {
-        return 0;
+// Filtered and sorted projects
+const filteredProjects = computed(() => {
+    let result = [...projects.value];
+
+    // Status filter
+    if (selectedStatusFilter.value !== 'all') {
+        if (selectedStatusFilter.value === 'other') {
+            result = result.filter(
+                (p) => !['active', 'completed'].includes(p.status),
+            );
+        } else {
+            result = result.filter(
+                (p) => p.status === selectedStatusFilter.value,
+            );
+        }
     }
 
-    return Math.round(
-        (project.completed_tasks_count / project.tasks_count) * 100,
-    );
-}
-
-function progressBarClass(project: ReportProject): string {
-    const progress = projectProgress(project);
-
-    if (progress >= 100) {
-        return 'bg-emerald-500';
+    // Search query
+    const query = projectSearch.value.trim().toLowerCase();
+    if (query) {
+        result = result.filter((p) => p.name.toLowerCase().includes(query));
     }
 
-    if (progress >= 60) {
-        return 'bg-primary-600';
-    }
+    // Sorting
+    result.sort((first, second) => {
+        if (sortBy.value === 'progress') {
+            return (
+                projectProgress(second) - projectProgress(first) ||
+                second.tasks_count - first.tasks_count
+            );
+        }
+        if (sortBy.value === 'tasks') {
+            return (
+                second.tasks_count - first.tasks_count ||
+                projectProgress(second) - projectProgress(first)
+            );
+        }
+        return first.name.localeCompare(second.name);
+    });
 
-    if (progress >= 30) {
-        return 'bg-accent-500';
-    }
-
-    return 'bg-surface-400';
-}
-
-function projectStatusClass(status: string): string {
-    return projectStatusColors[status] ?? projectStatusColors.draft;
-}
+    return result;
+});
 </script>
 
 <template>
-    <div class="space-y-6">
-        <!-- Header -->
-        <div
-            class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+    <div class="space-y-6 pb-12">
+        <!-- 1. Page Header with Calm System Aesthetics -->
+        <header
+            class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <div>
                 <span
-                    class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-700 uppercase dark:border-primary-700/40 dark:bg-primary-900/25 dark:text-primary-200"
+                    class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-800 uppercase dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300"
                 >
                     <component :is="getIcon('BarChart3')" class="h-3 w-3" />
-                    Analitik & KPI
+                    Analitik & KPI Ruang Kerja
                 </span>
                 <h1
                     class="mt-2 text-2xl font-semibold tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
                 >
-                    Laporan
+                    Laporan Kinerja Proyek
                 </h1>
                 <p
-                    class="mt-1 max-w-2xl text-sm leading-6 text-surface-700 dark:text-surface-200"
+                    class="mt-1 max-w-2xl text-sm leading-relaxed text-surface-600 dark:text-surface-300"
                 >
-                    Ringkasan progres proyek, distribusi status, dan kinerja tim
-                    dalam satu tampilan.
+                    Pantau kemajuan pengerjaan proyek, alokasi tugas, dan tingkat penyelesaian tim dalam satu tempat.
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-                <span
-                    class="inline-flex items-center gap-2 rounded-xl border border-surface-200 bg-white px-3 py-2 text-xs font-semibold text-surface-600 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
+            <!-- Action Button / Summary -->
+            <div class="flex items-center gap-3">
+                <Link
+                    v-if="canViewProjects"
+                    :href="projectsRoute.index.url()"
+                    class="btn btn-secondary text-xs shadow-2xs"
                 >
-                    <span class="h-1.5 w-1.5 rounded-full bg-primary-500" />
-                    {{ projects.length }} proyek
-                </span>
-                <span
-                    class="inline-flex items-center gap-2 rounded-xl border border-surface-200 bg-white px-3 py-2 text-xs font-semibold text-surface-600 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300"
-                >
-                    <span class="h-1.5 w-1.5 rounded-full bg-accent-500" />
-                    {{ totalReview }} menunggu review
-                </span>
+                    <component :is="getIcon('FolderKanban')" class="h-4 w-4" />
+                    <span>Daftar Semua Proyek</span>
+                </Link>
             </div>
-        </div>
+        </header>
 
-        <!-- Stats -->
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="card flex items-start gap-4 !p-4">
-                <span
-                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                >
-                    <component :is="getIcon('CheckSquare')" class="h-5 w-5" />
-                </span>
-                <div class="min-w-0">
-                    <p
-                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                    >
-                        Total tugas
+        <!-- 2. Row of 4 Metric Cards -->
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div
+                v-for="stat in statCards"
+                :key="stat.label"
+                class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs transition hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700"
+            >
+                <div class="flex items-start justify-between gap-3">
+                    <p class="text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400">
+                        {{ stat.label }}
                     </p>
-                    <p
-                        class="mt-1 text-2xl font-bold text-surface-950 dark:text-surface-50"
-                    >
-                        {{ totalTasks }}
-                    </p>
-                    <p class="mt-0.5 text-[11px] text-surface-400">
-                        dari {{ projects.length }} proyek
-                    </p>
-                </div>
-            </div>
-
-            <div class="card flex items-start gap-4 !p-4">
-                <span
-                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                >
-                    <component :is="getIcon('CheckCircle2')" class="h-5 w-5" />
-                </span>
-                <div class="min-w-0">
-                    <p
-                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                    >
-                        Selesai
-                    </p>
-                    <p
-                        class="mt-1 text-2xl font-bold text-primary-700 dark:text-primary-300"
-                    >
-                        {{ totalCompleted }}
-                    </p>
-                    <p class="mt-0.5 text-[11px] text-surface-400">
-                        {{ completionRate }}% dari total tugas
-                    </p>
-                </div>
-            </div>
-
-            <div class="card flex items-start gap-4 !p-4">
-                <span
-                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#e7f0f9] text-[#28506f] dark:bg-sky-950/40 dark:text-sky-200"
-                >
-                    <component :is="getIcon('Clock')" class="h-5 w-5" />
-                </span>
-                <div class="min-w-0">
-                    <p
-                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                    >
-                        Sedang dikerjakan
-                    </p>
-                    <p
-                        class="mt-1 text-2xl font-bold text-surface-950 dark:text-surface-50"
-                    >
-                        {{ totalInProgress }}
-                    </p>
-                    <p class="mt-0.5 text-[11px] text-surface-400">
-                        {{ totalReview }} tugas menunggu review
-                    </p>
-                </div>
-            </div>
-
-            <div class="card !p-4">
-                <div class="flex items-start gap-4">
                     <span
-                        class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#f7eed6] text-[#7a5a14] dark:bg-amber-950/40 dark:text-amber-200"
+                        class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                        :class="stat.iconBg"
                     >
-                        <component
-                            :is="getIcon('TrendingUp')"
-                            class="h-5 w-5"
-                        />
+                        <component :is="getIcon(stat.icon)" class="h-5 w-5" />
                     </span>
-                    <div class="min-w-0 flex-1">
-                        <p
-                            class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                        >
-                            Tingkat penyelesaian
-                        </p>
-                        <p
-                            class="mt-1 text-2xl font-bold text-surface-950 dark:text-surface-50"
-                        >
-                            {{ completionRate }}%
-                        </p>
-                    </div>
                 </div>
+
+                <div class="mt-2 flex items-baseline gap-2">
+                    <p
+                        class="font-serif text-3xl font-normal text-surface-950 sm:text-4xl dark:text-surface-50"
+                    >
+                        {{ stat.value }}
+                    </p>
+                    <span
+                        class="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                    >
+                        {{ stat.badge }}
+                    </span>
+                </div>
+
+                <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                    {{ stat.subtext }}
+                </p>
+
+                <!-- Subtle progress indicator if available -->
                 <div
+                    v-if="stat.progress !== undefined"
                     class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
                 >
                     <div
-                        class="h-full rounded-full bg-primary-600 transition-all"
-                        :style="{ width: `${completionRate}%` }"
+                        class="h-full rounded-full bg-[#0F5132] transition-all duration-700 dark:bg-primary-400"
+                        :style="{ width: `${stat.progress}%` }"
                     />
                 </div>
             </div>
         </div>
 
-        <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <!-- Project performance -->
-            <div
-                class="overflow-hidden rounded-[24px] border border-surface-200 bg-white shadow-sm dark:border-surface-700 dark:bg-surface-900"
+        <!-- 3. Main Content: Project List (Left) + Analytical Summary (Right) -->
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+            <!-- Left: Project Performance Section -->
+            <section
+                class="min-w-0 overflow-hidden rounded-3xl border border-surface-200/80 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
+                <!-- Card Header -->
                 <div
-                    class="flex flex-col gap-3 border-b border-surface-200 p-5 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+                    class="border-b border-surface-200/80 p-5 sm:p-6 dark:border-surface-800"
                 >
-                    <div>
-                        <h2
-                            class="text-base font-semibold text-surface-950 dark:text-surface-50"
-                        >
-                            Kinerja proyek
-                        </h2>
-                        <p
-                            class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
-                        >
-                            Perbandingan tugas selesai terhadap total tugas.
-                        </p>
-                    </div>
-                    <span
-                        class="inline-flex w-fit items-center gap-1.5 rounded-full bg-surface-100 px-2.5 py-1 text-[10px] font-bold text-surface-500 dark:bg-surface-800 dark:text-surface-300"
+                    <div
+                        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        {{ projects.length }} proyek
-                    </span>
+                        <div>
+                            <h2
+                                class="text-base font-semibold text-surface-950 dark:text-surface-50"
+                            >
+                                Kinerja & Progres Proyek
+                            </h2>
+                            <p
+                                class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+                            >
+                                Evaluasi persentase penyelesaian tugas pada setiap proyek.
+                            </p>
+                        </div>
+
+                        <!-- Status Filter Pills -->
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button
+                                type="button"
+                                class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
+                                :class="
+                                    selectedStatusFilter === 'all'
+                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
+                                "
+                                @click="selectedStatusFilter = 'all'"
+                            >
+                                Semua ({{ projects.length }})
+                            </button>
+                            <button
+                                type="button"
+                                class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
+                                :class="
+                                    selectedStatusFilter === 'active'
+                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
+                                "
+                                @click="selectedStatusFilter = 'active'"
+                            >
+                                Aktif ({{ activeProjectsCount }})
+                            </button>
+                            <button
+                                type="button"
+                                class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
+                                :class="
+                                    selectedStatusFilter === 'completed'
+                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
+                                "
+                                @click="selectedStatusFilter = 'completed'"
+                            >
+                                Selesai
+                            </button>
+                            <button
+                                type="button"
+                                class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
+                                :class="
+                                    selectedStatusFilter === 'other'
+                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
+                                "
+                                @click="selectedStatusFilter = 'other'"
+                            >
+                                Lainnya
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search and Sort Bar -->
+                    <div
+                        class="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div class="relative flex-1">
+                            <span
+                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
+                            >
+                                <component :is="getIcon('Search')" class="h-4 w-4" />
+                            </span>
+                            <input
+                                v-model="projectSearch"
+                                type="search"
+                                placeholder="Cari nama proyek..."
+                                class="input py-2 pl-9 text-xs sm:text-sm"
+                            />
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-surface-500 whitespace-nowrap dark:text-surface-400">
+                                Urutkan:
+                            </span>
+                            <select
+                                v-model="sortBy"
+                                class="input py-2 text-xs"
+                            >
+                                <option value="progress">Progres Tertinggi</option>
+                                <option value="tasks">Tugas Terbanyak</option>
+                                <option value="name">Nama (A - Z)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div v-if="projects.length > 0">
+                <!-- Projects List -->
+                <div
+                    v-if="filteredProjects.length > 0"
+                    class="divide-y divide-surface-100 dark:divide-surface-800/80"
+                >
                     <div
-                        v-for="project in projects"
+                        v-for="project in filteredProjects"
                         :key="project.id"
-                        class="border-b border-surface-100 p-4 transition-colors last:border-b-0 hover:bg-surface-50/70 sm:p-5 dark:border-surface-800 dark:hover:bg-surface-800/30"
+                        class="group p-4 transition-colors hover:bg-surface-50/70 sm:p-5 dark:hover:bg-surface-800/30"
                     >
-                        <div class="flex items-start gap-3">
-                            <span
-                                class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
-                            >
-                                <component
-                                    :is="getIcon('FolderKanban')"
-                                    class="h-4 w-4"
-                                />
-                            </span>
+                        <div
+                            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <!-- Project Info -->
+                            <div class="flex min-w-0 flex-1 items-center gap-3.5">
+                                <span
+                                    class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary-50 text-primary-800 shadow-2xs transition group-hover:scale-105 dark:bg-primary-950/50 dark:text-primary-300"
+                                >
+                                    <component
+                                        :is="getIcon('FolderKanban')"
+                                        class="h-5 w-5"
+                                    />
+                                </span>
 
-                            <div class="min-w-0 flex-1">
-                                <div class="flex flex-wrap items-center gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <Link
+                                            v-if="canViewProjects"
+                                            :href="projectsRoute.show.url(project.id)"
+                                            class="truncate text-sm font-semibold text-surface-900 transition hover:text-primary-700 sm:text-base dark:text-surface-100 dark:hover:text-primary-300"
+                                        >
+                                            {{ project.name }}
+                                        </Link>
+                                        <span
+                                            v-else
+                                            class="truncate text-sm font-semibold text-surface-900 sm:text-base dark:text-surface-100"
+                                        >
+                                            {{ project.name }}
+                                        </span>
+
+                                        <span
+                                            class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                                            :class="
+                                                projectStatusBadgeClasses[project.status] ??
+                                                projectStatusBadgeClasses.draft
+                                            "
+                                        >
+                                            {{
+                                                statusLabels[project.status] ??
+                                                project.status
+                                            }}
+                                        </span>
+                                    </div>
+
                                     <p
-                                        class="truncate text-sm font-semibold text-surface-900 dark:text-surface-100"
+                                        class="mt-1 text-xs text-surface-500 dark:text-surface-400"
                                     >
-                                        {{ project.name }}
+                                        <strong
+                                            class="font-medium text-surface-800 dark:text-surface-200"
+                                        >
+                                            {{ project.completed_tasks_count }}
+                                        </strong>
+                                        dari
+                                        <strong
+                                            class="font-medium text-surface-800 dark:text-surface-200"
+                                        >
+                                            {{ project.tasks_count }}
+                                        </strong>
+                                        tugas telah diselesaikan
                                     </p>
-                                    <span
-                                        class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                        :class="
-                                            projectStatusClass(project.status)
-                                        "
-                                    >
-                                        {{
-                                            statusLabel[project.status] ??
-                                            project.status
-                                        }}
-                                    </span>
                                 </div>
+                            </div>
 
-                                <div class="mt-3 flex items-center gap-3">
+                            <!-- Progress Metric -->
+                            <div
+                                class="flex items-center gap-4 sm:w-56 sm:shrink-0"
+                            >
+                                <div class="min-w-0 flex-1">
                                     <div
-                                        class="h-2 flex-1 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+                                        class="mb-1 flex items-center justify-between text-[11px] font-medium text-surface-400"
+                                    >
+                                        <span>Penyelesaian</span>
+                                        <span class="font-semibold text-surface-700 dark:text-surface-300">
+                                            {{ projectProgress(project) }}%
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="h-2 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
                                     >
                                         <div
-                                            class="h-full rounded-full transition-all"
-                                            :class="progressBarClass(project)"
+                                            class="h-full rounded-full transition-all duration-700"
+                                            :class="
+                                                projectProgress(project) === 100
+                                                    ? 'bg-emerald-600 dark:bg-emerald-400'
+                                                    : 'bg-[#0F5132] dark:bg-primary-400'
+                                            "
                                             :style="{
                                                 width: `${projectProgress(project)}%`,
                                             }"
                                         />
                                     </div>
-                                    <span
-                                        class="w-9 text-right text-xs font-bold text-surface-700 dark:text-surface-200"
-                                    >
-                                        {{ projectProgress(project) }}%
-                                    </span>
                                 </div>
-                            </div>
 
-                            <div class="shrink-0 text-right">
-                                <p
-                                    class="text-sm font-bold text-surface-900 dark:text-surface-100"
+                                <span
+                                    class="hidden font-serif text-xl font-normal text-surface-900 sm:block dark:text-surface-100"
                                 >
-                                    {{ project.completed_tasks_count }}/{{
-                                        project.tasks_count
-                                    }}
-                                </p>
-                                <p
-                                    class="text-[10px] text-surface-400 dark:text-surface-500"
-                                >
-                                    tugas selesai
-                                </p>
+                                    {{ projectProgress(project) }}%
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div v-else class="p-10 text-center">
+                <!-- Empty State -->
+                <div
+                    v-else
+                    class="p-12 text-center"
+                >
                     <component
                         :is="getIcon('FolderKanban')"
-                        class="mx-auto h-8 w-8 text-surface-300 dark:text-surface-600"
+                        class="mx-auto h-10 w-10 text-surface-300 dark:text-surface-600"
                     />
-                    <p
+                    <h3
                         class="mt-3 text-sm font-semibold text-surface-800 dark:text-surface-100"
                     >
-                        Belum ada data laporan proyek
-                    </p>
+                        Tidak ada proyek yang sesuai
+                    </h3>
                     <p
                         class="mt-1 text-xs text-surface-500 dark:text-surface-400"
                     >
-                        Tambahkan proyek dan tugas untuk melihat kinerjanya di
-                        sini.
+                        Coba sesuaikan kata kunci pencarian atau ubah filter status proyek.
                     </p>
+                    <button
+                        v-if="projectSearch || selectedStatusFilter !== 'all'"
+                        type="button"
+                        class="btn btn-secondary mt-4 text-xs"
+                        @click="
+                            projectSearch = '';
+                            selectedStatusFilter = 'all';
+                        "
+                    >
+                        Reset Filter
+                    </button>
                 </div>
-            </div>
+            </section>
 
-            <!-- Side summaries -->
-            <div class="space-y-5">
-                <div class="card">
+            <!-- Right: Summaries & Breakdowns -->
+            <aside class="space-y-6 xl:sticky xl:top-24">
+                <!-- Task Distribution Card -->
+                <div
+                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs sm:p-6 dark:border-surface-800 dark:bg-surface-900"
+                >
                     <div>
                         <h2
                             class="text-base font-semibold text-surface-950 dark:text-surface-50"
                         >
-                            Distribusi status
+                            Distribusi Tugas
                         </h2>
                         <p
                             class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
                         >
-                            Sebaran seluruh tugas berdasarkan status.
+                            Komposisi status seluruh tugas aktif.
                         </p>
                     </div>
 
-                    <div class="mt-5 flex flex-col items-center gap-5">
+                    <!-- Donut Visual -->
+                    <div class="mt-6 flex flex-col items-center">
                         <div
-                            class="relative h-40 w-40 rounded-full"
+                            class="relative h-40 w-40 rounded-full shadow-inner"
                             :style="{ background: donutGradient }"
                             role="img"
-                            :aria-label="`Total ${totalTasks} tugas`"
+                            :aria-label="`Total ${totalTasks} tugas, ${completionRate}% selesai`"
                         >
                             <div
-                                class="absolute inset-[18px] grid place-items-center rounded-full bg-white text-center dark:bg-surface-900"
+                                class="absolute inset-[20px] grid place-items-center rounded-full bg-white text-center shadow-xs dark:bg-surface-900"
                             >
                                 <div>
                                     <p
-                                        class="text-3xl font-bold text-surface-950 dark:text-surface-50"
+                                        class="font-serif text-3xl font-normal text-surface-950 dark:text-surface-50"
                                     >
-                                        {{ totalTasks }}
+                                        {{ completionRate }}%
                                     </p>
                                     <p
-                                        class="text-[10px] font-semibold tracking-wide text-surface-400 uppercase"
+                                        class="text-[10px] font-bold tracking-wider text-surface-400 uppercase dark:text-surface-500"
                                     >
-                                        total tugas
+                                        Tuntas
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="w-full space-y-2.5">
-                            <div
-                                v-for="status in statusBreakdown"
-                                :key="status.key"
-                                class="flex items-center gap-2"
-                            >
+                        <p
+                            class="mt-3.5 text-xs font-medium text-surface-600 dark:text-surface-300"
+                        >
+                            {{ totalCompleted }} dari {{ totalTasks }} tugas selesai
+                        </p>
+                    </div>
+
+                    <!-- Stages Legend -->
+                    <div class="mt-6 space-y-2.5 border-t border-surface-100 pt-5 dark:border-surface-800">
+                        <div
+                            v-for="status in statusBreakdown"
+                            :key="status.key"
+                            class="flex items-center justify-between text-xs"
+                        >
+                            <div class="flex min-w-0 items-center gap-2">
                                 <span
                                     class="h-2.5 w-2.5 shrink-0 rounded-full"
-                                    :style="{
-                                        backgroundColor: status.color,
-                                    }"
+                                    :style="{ backgroundColor: status.color }"
                                 />
-                                <span
-                                    class="min-w-0 flex-1 truncate text-xs font-medium text-surface-600 dark:text-surface-300"
-                                >
+                                <span class="truncate text-surface-700 dark:text-surface-300">
                                     {{ status.label }}
                                 </span>
-                                <span
-                                    class="text-xs font-bold text-surface-900 dark:text-surface-100"
-                                >
+                            </div>
+                            <div class="flex items-center gap-2 font-medium">
+                                <span class="text-surface-950 dark:text-surface-100">
                                     {{ status.count }}
                                 </span>
-                                <span
-                                    class="w-9 text-right text-[10px] font-medium text-surface-400"
-                                >
-                                    {{ status.percent }}%
+                                <span class="text-[11px] text-surface-400">
+                                    ({{ status.percent }}%)
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h2
-                        class="text-base font-semibold text-surface-950 dark:text-surface-50"
+                <!-- Project Status Summary Card -->
+                <div
+                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs sm:p-6 dark:border-surface-800 dark:bg-surface-900"
+                >
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h2
+                                class="text-base font-semibold text-surface-950 dark:text-surface-50"
+                            >
+                                Ringkasan Proyek
+                            </h2>
+                            <p
+                                class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+                            >
+                                Sebaran status {{ projects.length }} proyek tim.
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">
+                                Rata-rata
+                            </span>
+                            <p class="font-serif text-lg font-normal text-surface-950 dark:text-surface-50">
+                                {{ averageProjectProgress }}%
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Stacked Multi-bar -->
+                    <div
+                        v-if="projects.length > 0"
+                        class="mt-4 flex h-2.5 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
                     >
-                        Ringkasan proyek
-                    </h2>
-                    <div class="mt-4 space-y-3">
+                        <div
+                            v-for="item in projectStatusSummary"
+                            v-show="item.count > 0"
+                            :key="item.key"
+                            class="h-full transition-all"
+                            :class="item.bar"
+                            :style="{ width: `${item.percent}%` }"
+                            :title="`${item.label}: ${item.count} (${item.percent}%)`"
+                        />
+                    </div>
+
+                    <!-- Status chips -->
+                    <div class="mt-4 grid grid-cols-2 gap-2">
                         <div
                             v-for="item in projectStatusSummary"
                             :key="item.key"
-                            class="flex items-center gap-2.5"
+                            class="rounded-xl border border-surface-200/70 bg-surface-50/50 p-2.5 dark:border-surface-800 dark:bg-surface-950/30"
                         >
-                            <span
-                                class="h-2 w-2 shrink-0 rounded-full"
-                                :class="item.dot"
-                            />
-                            <span
-                                class="flex-1 text-xs font-medium text-surface-600 dark:text-surface-300"
-                            >
-                                {{ item.label }}
-                            </span>
-                            <span
-                                class="text-xs font-bold text-surface-900 dark:text-surface-100"
-                            >
-                                {{ item.count }}
-                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span
+                                    class="h-2 w-2 shrink-0 rounded-full"
+                                    :class="item.dot"
+                                />
+                                <span class="truncate text-[11px] font-medium text-surface-600 dark:text-surface-400">
+                                    {{ item.label }}
+                                </span>
+                            </div>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="font-serif text-base font-normal text-surface-950 dark:text-surface-50">
+                                    {{ item.count }}
+                                </span>
+                                <span class="text-[10px] text-surface-400">
+                                    {{ item.percent }}%
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <p
-                        class="mt-4 border-t border-surface-100 pt-3 text-[11px] leading-5 text-surface-400 dark:border-surface-800 dark:text-surface-500"
-                    >
-                        Data dihitung dari seluruh proyek yang dapat Anda akses.
-                    </p>
                 </div>
-            </div>
+            </aside>
         </div>
     </div>
 </template>

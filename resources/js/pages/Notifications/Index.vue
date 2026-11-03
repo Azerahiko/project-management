@@ -4,7 +4,11 @@ import { router } from '@inertiajs/vue3';
 import { getIcon } from '@/components/sidebar/icons';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/ui/Pagination.vue';
-import { useNotifications } from '@/composables/useNotifications';
+import { useToast } from '@/composables/useToast';
+import {
+    useNotifications,
+    type NotificationFilter,
+} from '@/composables/useNotifications';
 import type { Notification } from '@/types';
 
 defineOptions({
@@ -15,51 +19,148 @@ const {
     notifications,
     meta,
     loading,
+    error: loadError,
     unreadCount,
     fetchNotifications,
     markAsRead,
     markAllAsRead,
 } = useNotifications();
+const { error: toastError } = useToast();
 
-const activeTab = ref<'all' | 'unread' | 'tasks' | 'projects'>('all');
+const activeTab = ref<NotificationFilter>('all');
+const markingAll = ref(false);
+
+const tabs: Array<{ value: NotificationFilter; label: string }> = [
+    { value: 'all', label: 'Semua' },
+    { value: 'unread', label: 'Belum Dibaca' },
+    { value: 'tasks', label: 'Tugas' },
+    { value: 'projects', label: 'Proyek' },
+];
+
+const emptyCopy = computed(() => {
+    if (activeTab.value === 'unread') {
+        return {
+            title: 'Semua sudah dibaca.',
+            description:
+                'Tidak ada notifikasi yang belum dibaca saat ini. Anda sudah menyusul semua pembaruan tim.',
+            icon: 'CheckCheck',
+        };
+    }
+
+    if (activeTab.value === 'tasks') {
+        return {
+            title: 'Belum ada notifikasi tugas.',
+            description:
+                'Penugasan baru, komentar, dan perubahan status tugas akan muncul di sini.',
+            icon: 'CheckSquare',
+        };
+    }
+
+    if (activeTab.value === 'projects') {
+        return {
+            title: 'Belum ada notifikasi proyek.',
+            description:
+                'Pembaruan keanggotaan dan aktivitas proyek akan muncul di sini.',
+            icon: 'FolderKanban',
+        };
+    }
+
+    return {
+        title: 'Semua sudah selesai.',
+        description:
+            'Tidak ada pemberitahuan baru yang memerlukan perhatian Anda saat ini.',
+        icon: 'CheckCheck',
+    };
+});
+
+async function loadNotifications(page = 1): Promise<boolean> {
+    const ok = await fetchNotifications(page, activeTab.value);
+
+    if (!ok && loadError.value) {
+        toastError('Gagal memuat notifikasi', loadError.value);
+    }
+
+    return ok;
+}
+
+async function selectTab(tab: NotificationFilter): Promise<void> {
+    if (activeTab.value === tab) {
+        return;
+    }
+
+    activeTab.value = tab;
+    await loadNotifications(1);
+}
 
 onMounted(() => {
-    fetchNotifications(1);
+    loadNotifications(1);
 });
 
-const filteredNotifications = computed(() => {
-    let list = notifications.value;
-    if (activeTab.value === 'unread') {
-        list = list.filter((n) => !n.read_at);
-    } else if (activeTab.value === 'tasks') {
-        list = list.filter(
-            (n) =>
-                n.data.action === 'assigned' ||
-                n.data.action === 'comment' ||
-                n.data.action === 'status_changed',
-        );
-    } else if (activeTab.value === 'projects') {
-        list = list.filter((n) => n.data.action === 'project_member_added');
-    }
-    return list;
-});
-
-function handleNotificationClick(notification: Notification): void {
+async function handleNotificationClick(
+    notification: Notification,
+): Promise<void> {
     if (!notification.read_at) {
-        markAsRead(notification.id);
+        try {
+            await markAsRead(notification.id);
+        } catch {
+            toastError(
+                'Gagal memperbarui notifikasi',
+                'Status baca tidak dapat disimpan. Coba lagi.',
+            );
+        }
     }
+
     if (notification.data.url) {
         router.visit(notification.data.url);
+        return;
+    }
+
+    if (activeTab.value === 'unread') {
+        await loadNotifications(meta.value.current_page);
     }
 }
 
-function handleMarkSingleRead(notification: Notification, e: Event): void {
+async function handleMarkSingleRead(
+    notification: Notification,
+    e: Event,
+): Promise<void> {
     e.stopPropagation();
-    markAsRead(notification.id);
+
+    try {
+        await markAsRead(notification.id);
+
+        if (activeTab.value === 'unread') {
+            await loadNotifications(meta.value.current_page);
+        }
+    } catch {
+        toastError(
+            'Gagal memperbarui notifikasi',
+            'Status baca tidak dapat disimpan. Coba lagi.',
+        );
+    }
 }
 
-function handleMarkAllRead(): void {
-    markAllAsRead();
+async function handleMarkAllRead(): Promise<void> {
+    if (markingAll.value) {
+        return;
+    }
+
+    markingAll.value = true;
+
+    try {
+        await markAllAsRead();
+
+        if (activeTab.value !== 'all') {
+            await loadNotifications(1);
+        }
+    } catch {
+        toastError(
+            'Gagal menandai semua notifikasi',
+            'Terjadi kesalahan saat memperbarui status baca.',
+        );
+    } finally {
+        markingAll.value = false;
+    }
 }
 
 function formatTime(dateString: string): string {
@@ -130,31 +231,25 @@ function getNotificationHeadline(notification: Notification): {
 }
 
 function handlePageChange(pageNum: number): void {
-    fetchNotifications(pageNum);
+    loadNotifications(pageNum);
 }
 </script>
 
 <template>
     <div class="space-y-6">
-        <!-- 1. Header Section: Calm System Style -->
+        <!-- 1. Header Section -->
         <div
             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <div
-                    class="flex items-center gap-2 text-xs font-medium text-surface-500"
+                <span
+                    class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-700 uppercase dark:border-primary-700/40 dark:bg-primary-900/25 dark:text-primary-200"
                 >
-                    <span
-                        class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
-                    />
-                    <span>Pusat Notifikasi</span>
-                    <span class="text-surface-300 dark:text-surface-700"
-                        >·</span
-                    >
-                    <span>Tasks Flow Workspace</span>
-                </div>
+                    <component :is="getIcon('Bell')" class="h-3 w-3" />
+                    Pusat Notifikasi
+                </span>
                 <h1
-                    class="mt-1 font-serif text-2xl font-normal tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
+                    class="mt-2 text-2xl font-semibold tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
                 >
                     Pemberitahuan & Aktivitas
                 </h1>
@@ -166,153 +261,181 @@ function handlePageChange(pageNum: number): void {
                 </p>
             </div>
 
-            <!-- Actions Header (NO pill badges!) -->
-            <div class="flex items-center gap-3">
+            <!-- Actions Header -->
+            <div class="flex flex-wrap items-center gap-3">
                 <div
                     v-if="unreadCount > 0"
                     class="flex items-center gap-2 text-xs font-medium text-surface-700 dark:text-surface-300"
                 >
                     <span
-                        class="h-2 w-2 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
+                        class="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400"
                     />
                     <span>{{ unreadCount }} belum dibaca</span>
                 </div>
                 <button
                     v-if="unreadCount > 0"
                     type="button"
-                    class="inline-flex items-center gap-2 rounded-full bg-[#0F5132] px-4 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
+                    :disabled="markingAll"
+                    class="btn btn-primary btn-sm"
                     @click="handleMarkAllRead"
                 >
                     <component
                         :is="getIcon('CheckCheck')"
                         class="h-3.5 w-3.5"
                     />
-                    <span>Tandai Semua Dibaca</span>
+                    <span>{{
+                        markingAll ? 'Memproses...' : 'Tandai Semua Dibaca'
+                    }}</span>
                 </button>
             </div>
         </div>
 
-        <!-- 2. Segmented Filter Tabs (Calm 07 TABS & SLIDER Style) -->
+        <!-- 2. Segmented Filter Tabs -->
         <div
-            class="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-surface-200/80 bg-white p-2.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-surface-200 bg-white p-2.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
         >
             <div
-                class="flex items-center rounded-full border border-surface-200 bg-surface-100 p-1 dark:border-surface-800 dark:bg-surface-800"
+                class="no-scrollbar flex w-full gap-1 overflow-x-auto rounded-xl border border-surface-200 bg-surface-100 p-1 sm:w-auto sm:flex-nowrap sm:overflow-visible sm:rounded-full dark:border-surface-800 dark:bg-surface-800"
             >
                 <button
+                    v-for="tab in tabs"
+                    :key="tab.value"
                     type="button"
-                    class="rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
+                    class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition active:scale-95"
                     :class="
-                        activeTab === 'all'
-                            ? 'bg-[#0F5132] text-white shadow-2xs'
+                        activeTab === tab.value
+                            ? 'bg-primary-700 text-white shadow-2xs dark:bg-primary-300 dark:text-primary-950'
                             : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
                     "
-                    @click="activeTab = 'all'"
+                    :aria-pressed="activeTab === tab.value"
+                    @click="selectTab(tab.value)"
                 >
-                    Semua
-                </button>
-                <button
-                    type="button"
-                    class="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
-                    :class="
-                        activeTab === 'unread'
-                            ? 'bg-[#0F5132] text-white shadow-2xs'
-                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
-                    "
-                    @click="activeTab = 'unread'"
-                >
-                    <span>Belum Dibaca</span>
+                    <span>{{ tab.label }}</span>
                     <span
-                        v-if="unreadCount > 0"
-                        class="py-0.2 rounded-md bg-white/20 px-1.5 text-[10px] font-bold"
+                        v-if="tab.value === 'unread' && unreadCount > 0"
+                        class="rounded-md px-1.5 text-[10px] font-bold"
+                        :class="
+                            activeTab === tab.value
+                                ? 'bg-white/20 text-white dark:bg-primary-950/15 dark:text-primary-950'
+                                : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-200'
+                        "
                     >
                         {{ unreadCount }}
                     </span>
                 </button>
-                <button
-                    type="button"
-                    class="rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
-                    :class="
-                        activeTab === 'tasks'
-                            ? 'bg-[#0F5132] text-white shadow-2xs'
-                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
-                    "
-                    @click="activeTab = 'tasks'"
-                >
-                    Tugas
-                </button>
-                <button
-                    type="button"
-                    class="rounded-full px-4 py-1.5 text-xs font-medium transition active:scale-95"
-                    :class="
-                        activeTab === 'projects'
-                            ? 'bg-[#0F5132] text-white shadow-2xs'
-                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
-                    "
-                    @click="activeTab = 'projects'"
-                >
-                    Proyek
-                </button>
             </div>
 
-            <div class="px-3 text-xs text-surface-400">
-                Menampilkan {{ filteredNotifications.length }} pemberitahuan
+            <div class="flex items-center gap-2 px-3 text-xs text-surface-400">
+                <span
+                    v-if="loading && notifications.length > 0"
+                    class="h-3 w-3 animate-spin rounded-full border-2 border-primary-700 border-t-transparent dark:border-primary-300 dark:border-t-transparent"
+                />
+                Menampilkan {{ meta.total }} pemberitahuan
             </div>
         </div>
 
         <!-- 3. Notification List (Calm 08 NOTIFICATION Style) -->
+        <div v-if="loadError && notifications.length === 0 && !loading">
+            <div
+                class="flex flex-col items-start gap-3 rounded-3xl border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-rose-900/40 dark:bg-rose-950/20"
+                role="alert"
+            >
+                <div class="flex items-start gap-3">
+                    <span
+                        class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/70 text-rose-600 dark:bg-surface-900/40 dark:text-rose-300"
+                    >
+                        <component
+                            :is="getIcon('AlertTriangle')"
+                            class="h-4 w-4"
+                        />
+                    </span>
+                    <div>
+                        <p
+                            class="text-sm font-semibold text-rose-800 dark:text-rose-200"
+                        >
+                            Gagal memuat notifikasi
+                        </p>
+                        <p
+                            class="mt-0.5 text-xs text-rose-700 dark:text-rose-300"
+                        >
+                            {{ loadError }}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 rounded-full border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200"
+                    @click="loadNotifications(1)"
+                >
+                    <component :is="getIcon('RefreshCw')" class="h-3.5 w-3.5" />
+                    Coba lagi
+                </button>
+            </div>
+        </div>
+
         <div
-            v-if="loading && notifications.length === 0"
+            v-else-if="loading && notifications.length === 0"
             class="flex justify-center py-20"
         >
             <div
-                class="h-8 w-8 animate-spin rounded-full border-3 border-[#0F5132] border-t-transparent dark:border-[#b7d9c1]"
+                class="h-8 w-8 animate-spin rounded-full border-3 border-primary-700 border-t-transparent dark:border-primary-300 dark:border-t-transparent"
             />
         </div>
 
         <!-- Empty State (Calm Style) -->
         <div
-            v-else-if="filteredNotifications.length === 0"
-            class="flex flex-col items-center justify-center rounded-3xl border border-surface-200/80 bg-white p-16 text-center shadow-xs dark:border-surface-800 dark:bg-surface-900"
+            v-else-if="notifications.length === 0"
+            class="flex flex-col items-center justify-center rounded-3xl border border-surface-200/80 bg-white p-10 text-center shadow-xs sm:p-16 dark:border-surface-800 dark:bg-surface-900"
         >
             <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B7D9C1]/30 text-[#0F5132] dark:bg-[#0F5132]/30 dark:text-[#B7D9C1]"
+                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200"
             >
-                <component :is="getIcon('CheckCheck')" class="h-7 w-7" />
+                <component :is="getIcon(emptyCopy.icon)" class="h-7 w-7" />
             </div>
             <h3
-                class="mt-4 font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+                class="mt-4 text-lg font-bold text-surface-950 dark:text-surface-50"
             >
-                Semua Sudah Selesai.
+                {{ emptyCopy.title }}
             </h3>
             <p
-                class="mt-1 max-w-sm text-xs text-surface-500 dark:text-surface-400"
+                class="mt-1 max-w-sm text-xs leading-5 text-surface-500 dark:text-surface-400"
             >
-                Tidak ada pemberitahuan baru yang memerlukan perhatian Anda saat
-                ini.
+                {{ emptyCopy.description }}
             </p>
+            <button
+                v-if="activeTab !== 'all'"
+                type="button"
+                class="btn btn-secondary btn-sm mt-4"
+                @click="selectTab('all')"
+            >
+                Lihat semua notifikasi
+            </button>
         </div>
 
-        <!-- Notification Cards (Calm 08 NOTIFICATION Style) -->
+        <!-- Notification Cards -->
         <div v-else class="space-y-3">
             <article
-                v-for="notification in filteredNotifications"
+                v-for="notification in notifications"
                 :key="notification.id"
-                class="group relative flex cursor-pointer flex-col justify-between gap-4 rounded-3xl border p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center"
+                class="group relative flex cursor-pointer flex-col justify-between gap-4 rounded-2xl border p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary-600/40 focus-visible:outline-hidden sm:flex-row sm:items-center sm:p-5"
                 :class="
                     !notification.read_at
-                        ? 'border-[#0F5132]/30 bg-white dark:border-[#0F5132]/40 dark:bg-surface-900'
-                        : 'border-surface-200/80 bg-[#FAF9F4]/60 hover:bg-white dark:border-surface-800 dark:bg-surface-900/40 dark:hover:bg-surface-900'
+                        ? 'border-primary-700/25 bg-white dark:border-primary-500/30 dark:bg-surface-900'
+                        : 'border-surface-200 bg-surface-50/60 hover:bg-white dark:border-surface-800 dark:bg-surface-900/40 dark:hover:bg-surface-900'
                 "
+                role="button"
+                tabindex="0"
+                :aria-label="`Buka notifikasi: ${getNotificationHeadline(notification).title}`"
                 @click="handleNotificationClick(notification)"
+                @keydown.enter="handleNotificationClick(notification)"
+                @keydown.space.prevent="handleNotificationClick(notification)"
             >
-                <div class="flex min-w-0 flex-1 items-start gap-4">
-                    <!-- Calm 08 Reference Mint Circle Badge -->
+                <div class="flex min-w-0 flex-1 items-start gap-3.5 sm:gap-4">
                     <div
                         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition"
                         :class="
                             !notification.read_at
-                                ? 'bg-[#B7D9C1]/50 text-[#0F5132] dark:bg-[#0F5132]/40 dark:text-[#b7d9c1]'
+                                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-200'
                                 : 'bg-surface-200/70 text-surface-500 dark:bg-surface-800 dark:text-surface-400'
                         "
                     >
@@ -329,7 +452,7 @@ function handlePageChange(pageNum: number): void {
                     <!-- Notification Content -->
                     <div class="min-w-0 flex-1">
                         <div
-                            class="flex items-center gap-2 text-xs font-medium text-surface-400"
+                            class="flex flex-wrap items-center gap-2 text-xs font-medium text-surface-400"
                         >
                             <span>{{
                                 getNotificationHeadline(notification).category
@@ -340,21 +463,20 @@ function handlePageChange(pageNum: number): void {
                             <span>{{
                                 formatTime(notification.created_at)
                             }}</span>
-                            <!-- Unread Indicator Dot (NO pill badge) -->
+                            <!-- Unread Indicator Dot -->
                             <span
                                 v-if="!notification.read_at"
-                                class="inline-flex items-center gap-1 font-semibold text-[#0F5132] dark:text-[#b7d9c1]"
+                                class="inline-flex items-center gap-1 font-semibold text-primary-700 dark:text-primary-300"
                             >
                                 <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
+                                    class="h-1.5 w-1.5 rounded-full bg-primary-700 dark:bg-primary-300"
                                 />
                                 <span>Baru</span>
                             </span>
                         </div>
 
-                        <!-- Serif Headline (Calm Reference "All set.") -->
                         <h2
-                            class="mt-1 font-serif text-base font-normal tracking-tight text-surface-950 transition group-hover:text-[#0F5132] dark:text-surface-50 dark:group-hover:text-[#b7d9c1]"
+                            class="mt-1 text-sm font-semibold tracking-tight text-surface-950 transition group-hover:text-primary-700 dark:text-surface-50 dark:group-hover:text-primary-300"
                         >
                             {{ getNotificationHeadline(notification).title }}
                         </h2>
@@ -371,7 +493,9 @@ function handlePageChange(pageNum: number): void {
                 </div>
 
                 <!-- Right Action / Link -->
-                <div class="flex shrink-0 items-center gap-2 sm:self-center">
+                <div
+                    class="flex shrink-0 flex-wrap items-center gap-2 sm:self-center"
+                >
                     <button
                         v-if="!notification.read_at"
                         type="button"
@@ -383,7 +507,7 @@ function handlePageChange(pageNum: number): void {
                     </button>
                     <span
                         v-if="notification.data.url"
-                        class="inline-flex items-center gap-1 text-xs font-medium text-[#0F5132] transition group-hover:underline dark:text-[#b7d9c1]"
+                        class="inline-flex items-center gap-1 text-xs font-medium text-primary-700 transition group-hover:underline dark:text-primary-300"
                     >
                         <span>Buka</span>
                         <span>→</span>

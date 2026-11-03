@@ -32,7 +32,7 @@ class ProjectMemberAdded extends Notification
             'role' => $this->role,
             'added_by_name' => $this->addedByName,
             'action' => 'project_member_added',
-            'url' => route('projects.show', $this->projectId),
+            'url' => route('projects.show', $this->projectId, false),
         ];
     }
 }

@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/projects/{project}', function (Project $project, Request $request) {
             abort_unless($request->user()->can('view', $project), 403);
 
-            $project->load(['owner', 'projectMembers.user']);
+            $project->load(['owner', 'projectMembers.user', 'tasks.assignee']);
             $project->can_update = $request->user()->can('update', $project);
             $project->can_delete = $request->user()->can('delete', $project);
             $project->can_manage_members = $request->user()->can('manageMembers', $project);
@@ -69,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/projects/{project}/edit', function (Project $project, Request $request) {
             abort_unless($request->user()->can('update', $project), 403);
 
-            $project->load(['owner', 'projectMembers.user']);
+            $project->load(['owner', 'projectMembers.user', 'tasks.assignee']);
             $project->can_update = $request->user()->can('update', $project);
             $project->can_delete = $request->user()->can('delete', $project);
             $project->can_manage_members = $request->user()->can('manageMembers', $project);

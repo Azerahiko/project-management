@@ -5,6 +5,7 @@ import { notifications as notificationsRoute } from '@/routes';
 import { getIcon } from '@/components/sidebar/icons';
 import { gsap } from 'gsap';
 import { useNotifications } from '@/composables/useNotifications';
+import { useToast } from '@/composables/useToast';
 import type { Notification } from '@/types';
 
 interface Props {
@@ -24,8 +25,10 @@ const {
     markAllAsRead,
     fetchNotifications,
 } = useNotifications();
+const { error: toastError } = useToast();
 
 const open = ref(false);
+const markingAll = ref(false);
 const root = ref<HTMLElement | null>(null);
 const content = ref<HTMLElement | null>(null);
 let dropdownCtx: gsap.Context | null = null;
@@ -58,19 +61,46 @@ function onEscape(event: KeyboardEvent): void {
     }
 }
 
-function handleNotificationClick(notification: Notification): void {
+async function handleNotificationClick(
+    notification: Notification,
+): Promise<void> {
     if (!notification.read_at) {
-        markAsRead(notification.id);
+        try {
+            await markAsRead(notification.id);
+        } catch {
+            toastError(
+                'Gagal memperbarui notifikasi',
+                'Status baca tidak dapat disimpan. Coba lagi.',
+            );
+        }
     }
+
     if (notification.data.url) {
         router.visit(notification.data.url);
     }
+
     close();
 }
 
-function handleMarkAllRead(event: Event): void {
+async function handleMarkAllRead(event: Event): Promise<void> {
     event.stopPropagation();
-    markAllAsRead();
+
+    if (markingAll.value) {
+        return;
+    }
+
+    markingAll.value = true;
+
+    try {
+        await markAllAsRead();
+    } catch {
+        toastError(
+            'Gagal menandai semua notifikasi',
+            'Terjadi kesalahan saat memperbarui status baca.',
+        );
+    } finally {
+        markingAll.value = false;
+    }
 }
 
 function formatTime(dateString: string): string {
