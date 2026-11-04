@@ -126,8 +126,12 @@ const nearestTasks = computed(() => {
     return allTasks.value
         .slice()
         .sort((a, b) => {
-            const diffA = Math.abs(new Date(a.due_date).getTime() - new Date(target).getTime());
-            const diffB = Math.abs(new Date(b.due_date).getTime() - new Date(target).getTime());
+            const diffA = Math.abs(
+                new Date(a.due_date).getTime() - new Date(target).getTime(),
+            );
+            const diffB = Math.abs(
+                new Date(b.due_date).getTime() - new Date(target).getTime(),
+            );
             return diffA - diffB;
         })
         .slice(0, 4);
@@ -371,7 +375,8 @@ function relativeDueLabel(value: string): string {
                 <p
                     class="mt-1 max-w-2xl text-sm leading-relaxed text-surface-600 dark:text-surface-300"
                 >
-                    Tinjau jadwal tenggat, distribusi beban kerja harian, dan ritme pengerjaan proyek tim secara terpadu.
+                    Tinjau jadwal tenggat, distribusi beban kerja harian, dan
+                    ritme pengerjaan proyek tim secara terpadu.
                 </p>
             </div>
 
@@ -403,11 +408,16 @@ function relativeDueLabel(value: string): string {
                 class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Tenggat Bulan Ini</span>
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Tenggat Bulan Ini</span
+                    >
                     <component :is="getIcon('Calendar')" class="h-4 w-4" />
                 </div>
                 <div class="mt-2 flex items-baseline gap-2">
-                    <p class="font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50">
+                    <p
+                        class="font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50"
+                    >
                         {{ totalTasks }}
                     </p>
                     <span class="text-xs font-semibold text-surface-500">
@@ -423,11 +433,19 @@ function relativeDueLabel(value: string): string {
                 class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Prioritas Tinggi</span>
-                    <component :is="getIcon('AlertTriangle')" class="h-4 w-4 text-amber-500" />
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Prioritas Tinggi</span
+                    >
+                    <component
+                        :is="getIcon('AlertTriangle')"
+                        class="h-4 w-4 text-amber-500"
+                    />
                 </div>
                 <div class="mt-2 flex items-baseline gap-2">
-                    <p class="font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50">
+                    <p
+                        class="font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50"
+                    >
                         {{ highPriorityTasks }}
                     </p>
                     <span class="text-xs font-semibold text-amber-600">
@@ -443,15 +461,25 @@ function relativeDueLabel(value: string): string {
                 class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Tingkat Tuntas</span>
-                    <component :is="getIcon('CheckCircle2')" class="h-4 w-4 text-emerald-600" />
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Tingkat Tuntas</span
+                    >
+                    <component
+                        :is="getIcon('CheckCircle2')"
+                        class="h-4 w-4 text-emerald-600"
+                    />
                 </div>
                 <div class="mt-2 flex items-baseline gap-2">
-                    <p class="font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50">
+                    <p
+                        class="font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50"
+                    >
                         {{ completionRate }}%
                     </p>
                 </div>
-                <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800">
+                <div
+                    class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+                >
                     <div
                         class="h-full rounded-full bg-emerald-600 transition-all duration-700"
                         :style="{ width: `${completionRate}%` }"
@@ -463,13 +491,23 @@ function relativeDueLabel(value: string): string {
                 class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Lewat Tenggat</span>
-                    <component :is="getIcon('Clock')" class="h-4 w-4 text-rose-500" />
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Lewat Tenggat</span
+                    >
+                    <component
+                        :is="getIcon('Clock')"
+                        class="h-4 w-4 text-rose-500"
+                    />
                 </div>
                 <div class="mt-2 flex items-baseline gap-2">
                     <p
                         class="font-serif text-2xl font-normal sm:text-3xl"
-                        :class="overdueTasks > 0 ? 'text-rose-600' : 'text-surface-950 dark:text-surface-50'"
+                        :class="
+                            overdueTasks > 0
+                                ? 'text-rose-600'
+                                : 'text-surface-950 dark:text-surface-50'
+                        "
                     >
                         {{ overdueTasks }}
                     </p>
@@ -481,13 +519,19 @@ function relativeDueLabel(value: string): string {
                     </span>
                 </div>
                 <p class="mt-1 text-[11px] text-surface-400">
-                    {{ overdueTasks === 0 ? 'Semua tugas tepat waktu' : 'Perlu penyelesaian segera' }}
+                    {{
+                        overdueTasks === 0
+                            ? 'Semua tugas tepat waktu'
+                            : 'Perlu penyelesaian segera'
+                    }}
                 </p>
             </div>
         </div>
 
         <!-- 3. Main Content: Calendar Grid + Project Summary (Left) + Unified Schedule Sidebar (Right) -->
-        <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+        <div
+            class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start"
+        >
             <!-- Left Column: Calendar Grid Card + Distribution Card -->
             <div class="min-w-0 space-y-6">
                 <!-- Calendar Grid Card -->
@@ -502,14 +546,22 @@ function relativeDueLabel(value: string): string {
                             <div
                                 class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary-50 font-serif text-primary-800 shadow-2xs dark:bg-primary-950/50 dark:text-primary-300"
                             >
-                                <component :is="getIcon('Calendar')" class="h-5 w-5" />
+                                <component
+                                    :is="getIcon('Calendar')"
+                                    class="h-5 w-5"
+                                />
                             </div>
                             <div>
-                                <h2 class="text-lg font-bold tracking-tight text-surface-950 sm:text-xl dark:text-surface-50">
+                                <h2
+                                    class="text-lg font-bold tracking-tight text-surface-950 sm:text-xl dark:text-surface-50"
+                                >
                                     {{ monthLabel }}
                                 </h2>
-                                <p class="text-xs text-surface-500 dark:text-surface-400">
-                                    {{ filteredTasks.length }} tugas terdata di bulan ini
+                                <p
+                                    class="text-xs text-surface-500 dark:text-surface-400"
+                                >
+                                    {{ filteredTasks.length }} tugas terdata di
+                                    bulan ini
                                 </p>
                             </div>
                         </div>
@@ -517,11 +569,17 @@ function relativeDueLabel(value: string): string {
                         <!-- Toolbar Controls: View Mode & Month Navigator -->
                         <div class="flex items-center gap-2">
                             <!-- View Toggle -->
-                            <div class="flex items-center rounded-xl border border-surface-200 bg-surface-50 p-0.5 dark:border-surface-700 dark:bg-surface-800">
+                            <div
+                                class="flex items-center rounded-xl border border-surface-200 bg-surface-50 p-0.5 dark:border-surface-700 dark:bg-surface-800"
+                            >
                                 <button
                                     type="button"
                                     class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-                                    :class="viewMode === 'month' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100' : 'text-surface-500'"
+                                    :class="
+                                        viewMode === 'month'
+                                            ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100'
+                                            : 'text-surface-500'
+                                    "
                                     @click="viewMode = 'month'"
                                 >
                                     Kalender
@@ -529,7 +587,11 @@ function relativeDueLabel(value: string): string {
                                 <button
                                     type="button"
                                     class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-                                    :class="viewMode === 'agenda' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100' : 'text-surface-500'"
+                                    :class="
+                                        viewMode === 'agenda'
+                                            ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100'
+                                            : 'text-surface-500'
+                                    "
                                     @click="viewMode = 'agenda'"
                                 >
                                     Agenda
@@ -539,18 +601,32 @@ function relativeDueLabel(value: string): string {
                             <!-- Month Stepper -->
                             <div class="flex items-center gap-1">
                                 <Link
-                                    :href="calendar.url({ query: { month: prevMonth } })"
+                                    :href="
+                                        calendar.url({
+                                            query: { month: prevMonth },
+                                        })
+                                    "
                                     class="flex h-8 w-8 items-center justify-center rounded-xl border border-surface-200 text-surface-600 transition hover:bg-surface-100 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800"
                                     aria-label="Bulan sebelumnya"
                                 >
-                                    <component :is="getIcon('ChevronLeft')" class="h-4 w-4" />
+                                    <component
+                                        :is="getIcon('ChevronLeft')"
+                                        class="h-4 w-4"
+                                    />
                                 </Link>
                                 <Link
-                                    :href="calendar.url({ query: { month: nextMonth } })"
+                                    :href="
+                                        calendar.url({
+                                            query: { month: nextMonth },
+                                        })
+                                    "
                                     class="flex h-8 w-8 items-center justify-center rounded-xl border border-surface-200 text-surface-600 transition hover:bg-surface-100 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800"
                                     aria-label="Bulan berikutnya"
                                 >
-                                    <component :is="getIcon('ChevronRight')" class="h-4 w-4" />
+                                    <component
+                                        :is="getIcon('ChevronRight')"
+                                        class="h-4 w-4"
+                                    />
                                 </Link>
                             </div>
                         </div>
@@ -560,8 +636,12 @@ function relativeDueLabel(value: string): string {
                     <div
                         class="flex items-center gap-2 border-b border-surface-100 bg-surface-50/50 px-4 py-2.5 sm:px-6 dark:border-surface-800/80 dark:bg-surface-950/25"
                     >
-                        <span class="text-xs font-medium text-surface-400">Prioritas:</span>
-                        <div class="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
+                        <span class="text-xs font-medium text-surface-400"
+                            >Prioritas:</span
+                        >
+                        <div
+                            class="no-scrollbar flex items-center gap-1.5 overflow-x-auto"
+                        >
                             <button
                                 v-for="p in priorityPills"
                                 :key="p.val"
@@ -587,19 +667,27 @@ function relativeDueLabel(value: string): string {
                     <!-- View 1: Month Grid View -->
                     <div v-if="viewMode === 'month'">
                         <!-- Weekday Headers -->
-                        <div class="grid grid-cols-7 border-b border-surface-200/80 bg-surface-50/40 dark:border-surface-800 dark:bg-surface-950/20">
+                        <div
+                            class="grid grid-cols-7 border-b border-surface-200/80 bg-surface-50/40 dark:border-surface-800 dark:bg-surface-950/20"
+                        >
                             <div
                                 v-for="day in weekDays"
                                 :key="day.label"
                                 class="py-2.5 text-center text-[11px] font-bold tracking-wider uppercase"
-                                :class="day.isWeekend ? 'text-amber-600 dark:text-amber-400' : 'text-surface-500 dark:text-surface-400'"
+                                :class="
+                                    day.isWeekend
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : 'text-surface-500 dark:text-surface-400'
+                                "
                             >
                                 {{ day.label }}
                             </div>
                         </div>
 
                         <!-- Days Grid with generous spacing and beautiful task chips -->
-                        <div class="grid grid-cols-7 gap-px bg-surface-200/80 dark:bg-surface-800/80">
+                        <div
+                            class="grid grid-cols-7 gap-px bg-surface-200/80 dark:bg-surface-800/80"
+                        >
                             <div
                                 v-for="cell in days"
                                 :key="cell.iso"
@@ -609,10 +697,10 @@ function relativeDueLabel(value: string): string {
                                         ? 'cursor-pointer bg-white hover:bg-surface-50/90 dark:bg-surface-900 dark:hover:bg-surface-800/40'
                                         : 'bg-surface-50/50 dark:bg-surface-950/40',
                                     cell.isToday
-                                        ? 'bg-primary-50/40 ring-1 ring-inset ring-[#0F5132]/30 dark:bg-primary-950/20 dark:ring-primary-500/40'
+                                        ? 'bg-primary-50/40 ring-1 ring-[#0F5132]/30 ring-inset dark:bg-primary-950/20 dark:ring-primary-500/40'
                                         : '',
                                     cell.iso === selectedDate
-                                        ? 'ring-2 ring-inset ring-[#0F5132] dark:ring-primary-400'
+                                        ? 'ring-2 ring-[#0F5132] ring-inset dark:ring-primary-400'
                                         : '',
                                 ]"
                                 @click="selectDate(cell)"
@@ -625,11 +713,11 @@ function relativeDueLabel(value: string): string {
                                             cell.isToday
                                                 ? 'bg-[#0F5132] text-white dark:bg-primary-500 dark:text-primary-950'
                                                 : cell.iso === selectedDate
-                                                  ? 'bg-surface-200 text-surface-900 font-black dark:bg-surface-700 dark:text-white'
+                                                  ? 'bg-surface-200 font-black text-surface-900 dark:bg-surface-700 dark:text-white'
                                                   : cell.isCurrentMonth
                                                     ? cell.isWeekend
-                                                      ? 'text-amber-700 dark:text-amber-300'
-                                                      : 'text-surface-700 dark:text-surface-300'
+                                                        ? 'text-amber-700 dark:text-amber-300'
+                                                        : 'text-surface-700 dark:text-surface-300'
                                                     : 'text-surface-300 dark:text-surface-600',
                                         ]"
                                     >
@@ -645,22 +733,36 @@ function relativeDueLabel(value: string): string {
                                 </div>
 
                                 <!-- Task Chips inside cell -->
-                                <div class="mt-1 flex-1 space-y-1 overflow-hidden">
+                                <div
+                                    class="mt-1 flex-1 space-y-1 overflow-hidden"
+                                >
                                     <template v-if="cell.tasks.length > 0">
                                         <div
-                                            v-for="task in cell.tasks.slice(0, 2)"
+                                            v-for="task in cell.tasks.slice(
+                                                0,
+                                                2,
+                                            )"
                                             :key="`chip-${task.id}`"
                                             class="flex items-center gap-1.5 rounded-lg border px-1.5 py-0.5 text-[10px] leading-tight font-medium transition"
-                                            :class="priorityBadges[task.priority] ?? priorityBadges.medium"
+                                            :class="
+                                                priorityBadges[task.priority] ??
+                                                priorityBadges.medium
+                                            "
                                             :title="`${task.title} (${task.project_name})`"
                                         >
                                             <span
                                                 class="h-1.5 w-1.5 shrink-0 rounded-full"
-                                                :class="priorityDot[task.priority]"
+                                                :class="
+                                                    priorityDot[task.priority]
+                                                "
                                             />
                                             <span
                                                 class="truncate"
-                                                :class="task.status === 'done' ? 'line-through opacity-70' : ''"
+                                                :class="
+                                                    task.status === 'done'
+                                                        ? 'line-through opacity-70'
+                                                        : ''
+                                                "
                                             >
                                                 {{ task.title }}
                                             </span>
@@ -680,7 +782,10 @@ function relativeDueLabel(value: string): string {
                     </div>
 
                     <!-- View 2: Agenda Chronological View -->
-                    <div v-else class="divide-y divide-surface-100 p-4 sm:p-6 dark:divide-surface-800">
+                    <div
+                        v-else
+                        class="divide-y divide-surface-100 p-4 sm:p-6 dark:divide-surface-800"
+                    >
                         <div
                             v-for="group in agendaDays"
                             :key="group.date"
@@ -696,7 +801,10 @@ function relativeDueLabel(value: string): string {
                                                 : 'bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-200'
                                         "
                                     >
-                                        <component :is="getIcon('Calendar')" class="h-3.5 w-3.5" />
+                                        <component
+                                            :is="getIcon('Calendar')"
+                                            class="h-3.5 w-3.5"
+                                        />
                                         {{ group.formattedDate }}
                                     </span>
                                     <span
@@ -706,7 +814,9 @@ function relativeDueLabel(value: string): string {
                                         (Hari Ini)
                                     </span>
                                 </div>
-                                <span class="text-xs font-semibold text-surface-400">
+                                <span
+                                    class="text-xs font-semibold text-surface-400"
+                                >
                                     {{ group.tasks.length }} tugas
                                 </span>
                             </div>
@@ -726,14 +836,23 @@ function relativeDueLabel(value: string): string {
                                             v-if="canViewTasks"
                                             :href="taskRoutes.show.url(task.id)"
                                             class="truncate text-xs font-semibold text-surface-900 transition hover:text-primary-700 dark:text-surface-100 dark:hover:text-primary-300"
-                                            :class="task.status === 'done' ? 'line-through opacity-60' : ''"
+                                            :class="
+                                                task.status === 'done'
+                                                    ? 'line-through opacity-60'
+                                                    : ''
+                                            "
                                         >
                                             {{ task.title }}
                                         </Link>
-                                        <p v-else class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100">
+                                        <p
+                                            v-else
+                                            class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100"
+                                        >
                                             {{ task.title }}
                                         </p>
-                                        <p class="mt-0.5 truncate text-[11px] text-surface-500 dark:text-surface-400">
+                                        <p
+                                            class="mt-0.5 truncate text-[11px] text-surface-500 dark:text-surface-400"
+                                        >
                                             {{ task.project_name }}
                                         </p>
                                     </div>
@@ -756,17 +875,27 @@ function relativeDueLabel(value: string): string {
                     v-if="projectDeadlinesSummary.length > 0"
                     class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs sm:p-6 dark:border-surface-800 dark:bg-surface-900"
                 >
-                    <div class="flex items-center justify-between border-b border-surface-100 pb-3.5 dark:border-surface-800">
+                    <div
+                        class="flex items-center justify-between border-b border-surface-100 pb-3.5 dark:border-surface-800"
+                    >
                         <div class="flex items-center gap-2.5">
-                            <span class="grid h-8 w-8 place-items-center rounded-xl bg-primary-50 text-primary-800 dark:bg-primary-950/50 dark:text-primary-300">
-                                <component :is="getIcon('FolderKanban')" class="h-4 w-4" />
+                            <span
+                                class="grid h-8 w-8 place-items-center rounded-xl bg-primary-50 text-primary-800 dark:bg-primary-950/50 dark:text-primary-300"
+                            >
+                                <component
+                                    :is="getIcon('FolderKanban')"
+                                    class="h-4 w-4"
+                                />
                             </span>
                             <div>
-                                <h3 class="text-sm font-bold text-surface-950 dark:text-surface-50">
+                                <h3
+                                    class="text-sm font-bold text-surface-950 dark:text-surface-50"
+                                >
                                     Distribusi Tenggat per Proyek Bulan Ini
                                 </h3>
                                 <p class="text-[11px] text-surface-400">
-                                    {{ projectDeadlinesSummary.length }} proyek memiliki agenda tenggat terdata
+                                    {{ projectDeadlinesSummary.length }} proyek
+                                    memiliki agenda tenggat terdata
                                 </p>
                             </div>
                         </div>
@@ -782,29 +911,50 @@ function relativeDueLabel(value: string): string {
                             class="flex flex-col justify-between rounded-2xl border border-surface-200/70 bg-surface-50/50 p-4 transition hover:border-primary-600/40 hover:bg-white dark:border-surface-800 dark:bg-surface-950/30 dark:hover:bg-surface-800/40"
                         >
                             <div>
-                                <div class="flex items-start justify-between gap-2">
-                                    <h4 class="line-clamp-1 text-xs font-bold text-surface-900 dark:text-surface-100">
+                                <div
+                                    class="flex items-start justify-between gap-2"
+                                >
+                                    <h4
+                                        class="line-clamp-1 text-xs font-bold text-surface-900 dark:text-surface-100"
+                                    >
                                         {{ proj.projectName }}
                                     </h4>
-                                    <span class="shrink-0 font-serif text-xs font-normal text-surface-700 dark:text-surface-300">
+                                    <span
+                                        class="shrink-0 font-serif text-xs font-normal text-surface-700 dark:text-surface-300"
+                                    >
                                         {{ proj.completionRate }}%
                                     </span>
                                 </div>
                                 <p class="mt-1 text-[10px] text-surface-400">
-                                    Tenggat: {{ formatDate(proj.earliestDue) }} – {{ formatDate(proj.latestDue) }}
+                                    Tenggat:
+                                    {{ formatDate(proj.earliestDue) }} –
+                                    {{ formatDate(proj.latestDue) }}
                                 </p>
                             </div>
 
                             <div class="mt-3">
-                                <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-200/80 dark:bg-surface-800">
+                                <div
+                                    class="h-1.5 w-full overflow-hidden rounded-full bg-surface-200/80 dark:bg-surface-800"
+                                >
                                     <div
                                         class="h-full rounded-full bg-[#0F5132] transition-all duration-500 dark:bg-[#b7d9c1]"
-                                        :style="{ width: `${proj.completionRate}%` }"
+                                        :style="{
+                                            width: `${proj.completionRate}%`,
+                                        }"
                                     />
                                 </div>
-                                <div class="mt-2 flex items-center justify-between text-[10px] text-surface-500">
-                                    <span>{{ proj.completedTasks }} dari {{ proj.totalTasks }} tugas selesai</span>
-                                    <span v-if="proj.urgentCount > 0" class="font-semibold text-rose-600">
+                                <div
+                                    class="mt-2 flex items-center justify-between text-[10px] text-surface-500"
+                                >
+                                    <span
+                                        >{{ proj.completedTasks }} dari
+                                        {{ proj.totalTasks }} tugas
+                                        selesai</span
+                                    >
+                                    <span
+                                        v-if="proj.urgentCount > 0"
+                                        class="font-semibold text-rose-600"
+                                    >
                                         {{ proj.urgentCount }} mendesak
                                     </span>
                                     <span v-else class="text-emerald-600">
@@ -818,17 +968,23 @@ function relativeDueLabel(value: string): string {
             </div>
 
             <!-- Right Column: Unified Schedule & Detail Panel (Sticky, Sejajar & Tanpa Ruang Kosong) -->
-            <aside class="space-y-6 sticky top-6 self-start">
+            <aside class="sticky top-6 space-y-6 self-start">
                 <!-- 1. Selected Date Schedule Details -->
                 <div
                     class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs sm:p-6 dark:border-surface-800 dark:bg-surface-900"
                 >
-                    <div class="flex items-center justify-between border-b border-surface-100 pb-4 dark:border-surface-800">
+                    <div
+                        class="flex items-center justify-between border-b border-surface-100 pb-4 dark:border-surface-800"
+                    >
                         <div>
-                            <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">
+                            <span
+                                class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                            >
                                 Jadwal Tanggal Terpilih
                             </span>
-                            <h3 class="mt-0.5 text-base font-bold text-surface-950 capitalize dark:text-surface-50">
+                            <h3
+                                class="mt-0.5 text-base font-bold text-surface-950 capitalize dark:text-surface-50"
+                            >
                                 {{ selectedDateLabel }}
                             </h3>
                         </div>
@@ -844,7 +1000,10 @@ function relativeDueLabel(value: string): string {
                     </div>
 
                     <!-- Tasks for Selected Date -->
-                    <div v-if="selectedDateTasks.length > 0" class="mt-4 space-y-2.5">
+                    <div
+                        v-if="selectedDateTasks.length > 0"
+                        class="mt-4 space-y-2.5"
+                    >
                         <div
                             v-for="task in selectedDateTasks"
                             :key="task.id"
@@ -859,14 +1018,23 @@ function relativeDueLabel(value: string): string {
                                     v-if="canViewTasks"
                                     :href="taskRoutes.show.url(task.id)"
                                     class="truncate text-xs font-semibold text-surface-900 transition hover:text-primary-700 dark:text-surface-100 dark:hover:text-primary-300"
-                                    :class="task.status === 'done' ? 'line-through opacity-60' : ''"
+                                    :class="
+                                        task.status === 'done'
+                                            ? 'line-through opacity-60'
+                                            : ''
+                                    "
                                 >
                                     {{ task.title }}
                                 </Link>
-                                <p v-else class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100">
+                                <p
+                                    v-else
+                                    class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100"
+                                >
                                     {{ task.title }}
                                 </p>
-                                <p class="mt-0.5 text-[11px] text-surface-500 dark:text-surface-400">
+                                <p
+                                    class="mt-0.5 text-[11px] text-surface-500 dark:text-surface-400"
+                                >
                                     {{ task.project_name }}
                                 </p>
                                 <div class="mt-2 flex items-center gap-2">
@@ -894,8 +1062,12 @@ function relativeDueLabel(value: string): string {
 
                     <!-- If No Tasks on Selected Date: Show nearest schedule instead of empty dead space! -->
                     <div v-else class="mt-4">
-                        <div class="rounded-2xl border border-dashed border-surface-200 p-4 text-center dark:border-surface-800">
-                            <p class="text-xs font-semibold text-surface-700 dark:text-surface-300">
+                        <div
+                            class="rounded-2xl border border-dashed border-surface-200 p-4 text-center dark:border-surface-800"
+                        >
+                            <p
+                                class="text-xs font-semibold text-surface-700 dark:text-surface-300"
+                            >
                                 Tidak ada tenggat pada tanggal ini
                             </p>
                             <p class="mt-0.5 text-[11px] text-surface-400">
@@ -917,11 +1089,15 @@ function relativeDueLabel(value: string): string {
                                     >
                                         {{ near.title }}
                                     </Link>
-                                    <p v-else class="truncate text-xs font-medium text-surface-900 dark:text-surface-100">
+                                    <p
+                                        v-else
+                                        class="truncate text-xs font-medium text-surface-900 dark:text-surface-100"
+                                    >
                                         {{ near.title }}
                                     </p>
                                     <p class="text-[10px] text-surface-400">
-                                        {{ formatDate(near.due_date) }} · {{ relativeDueLabel(near.due_date) }}
+                                        {{ formatDate(near.due_date) }} ·
+                                        {{ relativeDueLabel(near.due_date) }}
                                     </p>
                                 </div>
                                 <span
@@ -939,14 +1115,23 @@ function relativeDueLabel(value: string): string {
                 <div
                     class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs sm:p-6 dark:border-surface-800 dark:bg-surface-900"
                 >
-                    <div class="flex items-center justify-between border-b border-surface-100 pb-3 dark:border-surface-800">
+                    <div
+                        class="flex items-center justify-between border-b border-surface-100 pb-3 dark:border-surface-800"
+                    >
                         <div class="flex items-center gap-2">
-                            <component :is="getIcon('Clock')" class="h-4 w-4 text-primary-700 dark:text-primary-400" />
-                            <h3 class="text-sm font-bold text-surface-950 dark:text-surface-50">
+                            <component
+                                :is="getIcon('Clock')"
+                                class="h-4 w-4 text-primary-700 dark:text-primary-400"
+                            />
+                            <h3
+                                class="text-sm font-bold text-surface-950 dark:text-surface-50"
+                            >
                                 Agenda Mendatang
                             </h3>
                         </div>
-                        <span class="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-bold text-surface-600 dark:bg-surface-800 dark:text-surface-300">
+                        <span
+                            class="rounded-full bg-surface-100 px-2 py-0.5 text-[10px] font-bold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                        >
                             {{ agendaTasks.length }}
                         </span>
                     </div>
@@ -958,11 +1143,17 @@ function relativeDueLabel(value: string): string {
                             class="flex items-center gap-3 rounded-2xl border border-surface-200/70 bg-surface-50/40 p-3 transition hover:border-surface-300 dark:border-surface-800 dark:bg-surface-950/20"
                         >
                             <!-- Date badge box -->
-                            <div class="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-white shadow-2xs dark:bg-surface-800">
-                                <span class="font-serif text-xs font-bold leading-none text-surface-950 dark:text-surface-50">
+                            <div
+                                class="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-white shadow-2xs dark:bg-surface-800"
+                            >
+                                <span
+                                    class="font-serif text-xs leading-none font-bold text-surface-950 dark:text-surface-50"
+                                >
                                     {{ dateParts(task.due_date).day }}
                                 </span>
-                                <span class="text-[9px] font-bold tracking-wider text-surface-400 uppercase">
+                                <span
+                                    class="text-[9px] font-bold tracking-wider text-surface-400 uppercase"
+                                >
                                     {{ dateParts(task.due_date).month }}
                                 </span>
                             </div>
@@ -972,15 +1163,23 @@ function relativeDueLabel(value: string): string {
                                     v-if="canViewTasks"
                                     :href="taskRoutes.show.url(task.id)"
                                     class="truncate text-xs font-semibold text-surface-900 transition hover:text-primary-700 dark:text-surface-100 dark:hover:text-primary-300"
-                                    :class="task.status === 'done' ? 'line-through opacity-60' : ''"
+                                    :class="
+                                        task.status === 'done'
+                                            ? 'line-through opacity-60'
+                                            : ''
+                                    "
                                 >
                                     {{ task.title }}
                                 </Link>
-                                <p v-else class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100">
+                                <p
+                                    v-else
+                                    class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100"
+                                >
                                     {{ task.title }}
                                 </p>
                                 <p class="text-[10px] text-surface-400">
-                                    {{ task.project_name }} · {{ relativeDueLabel(task.due_date) }}
+                                    {{ task.project_name }} ·
+                                    {{ relativeDueLabel(task.due_date) }}
                                 </p>
                             </div>
 

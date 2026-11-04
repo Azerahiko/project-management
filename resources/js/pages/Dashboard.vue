@@ -193,7 +193,10 @@ const hoveredStage = ref<string | null>(null);
 
 const hoveredStageInfo = computed(() => {
     if (!hoveredStage.value) return null;
-    return statusDistribution.value.find((s) => s.key === hoveredStage.value) ?? null;
+    return (
+        statusDistribution.value.find((s) => s.key === hoveredStage.value) ??
+        null
+    );
 });
 
 const wavePhase = ref(0);
@@ -526,7 +529,9 @@ onBeforeUnmount(() => {
                     </p>
                 </div>
 
-                <div class="mt-5 min-h-[44px] flex flex-col justify-center space-y-1.5">
+                <div
+                    class="mt-5 flex min-h-[44px] flex-col justify-center space-y-1.5"
+                >
                     <div
                         class="flex items-center justify-between text-[11px] font-medium text-surface-500"
                     >
@@ -585,7 +590,7 @@ onBeforeUnmount(() => {
 
                 <!-- Clean dot indicator without status badge -->
                 <div
-                    class="mt-5 min-h-[44px] flex items-center gap-2 text-xs font-medium text-surface-600 dark:text-surface-400"
+                    class="mt-5 flex min-h-[44px] items-center gap-2 text-xs font-medium text-surface-600 dark:text-surface-400"
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
@@ -645,7 +650,9 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Clean dot indicator without badge -->
-                <div class="mt-5 min-h-[44px] flex items-center gap-2 text-xs font-medium">
+                <div
+                    class="mt-5 flex min-h-[44px] items-center gap-2 text-xs font-medium"
+                >
                     <span
                         class="h-1.5 w-1.5 rounded-full"
                         :class="
@@ -704,7 +711,7 @@ onBeforeUnmount(() => {
                     </p>
                 </div>
 
-                <div class="mt-5 min-h-[44px] flex items-center gap-2">
+                <div class="mt-5 flex min-h-[44px] items-center gap-2">
                     <div class="flex -space-x-1.5 overflow-hidden">
                         <div
                             v-for="(u, idx) in activeTeamUsers"
@@ -769,7 +776,8 @@ onBeforeUnmount(() => {
                                     </span>
                                 </div>
                                 <p class="mt-0.5 text-xs text-surface-500">
-                                    Kapasitas dan sebaran tugas tim di setiap fase alur proyek
+                                    Kapasitas dan sebaran tugas tim di setiap
+                                    fase alur proyek
                                 </p>
                             </div>
 
@@ -784,7 +792,8 @@ onBeforeUnmount(() => {
                                     >
                                     tugas tercatat</span
                                 >
-                                <span class="text-surface-300 dark:text-surface-700"
+                                <span
+                                    class="text-surface-300 dark:text-surface-700"
                                     >·</span
                                 >
                                 <span
@@ -817,7 +826,8 @@ onBeforeUnmount(() => {
                                     <span
                                         class="h-2 w-2 rounded-full"
                                         :style="{
-                                            backgroundColor: hoveredStageInfo.color,
+                                            backgroundColor:
+                                                hoveredStageInfo.color,
                                         }"
                                     />
                                     <span
@@ -908,9 +918,7 @@ onBeforeUnmount(() => {
                                                 result="coloredBlur"
                                             />
                                             <feMerge>
-                                                <feMergeNode
-                                                    in="coloredBlur"
-                                                />
+                                                <feMergeNode in="coloredBlur" />
                                                 <feMergeNode
                                                     in="SourceGraphic"
                                                 />
@@ -980,7 +988,11 @@ onBeforeUnmount(() => {
                                         stroke="#10b981"
                                         stroke-width="1.5"
                                         stroke-dasharray="2 3"
-                                        :opacity="hoveredStage === pt.key ? 0.85 : 0.22"
+                                        :opacity="
+                                            hoveredStage === pt.key
+                                                ? 0.85
+                                                : 0.22
+                                        "
                                         class="transition-opacity duration-200"
                                     />
 
@@ -1064,10 +1076,14 @@ onBeforeUnmount(() => {
                                         <circle
                                             :cx="pt.x"
                                             :cy="pt.y"
-                                            :r="hoveredStage === pt.key ? 13 : 9"
+                                            :r="
+                                                hoveredStage === pt.key ? 13 : 9
+                                            "
                                             fill="#10b981"
                                             :fill-opacity="
-                                                hoveredStage === pt.key ? 0.3 : 0.16
+                                                hoveredStage === pt.key
+                                                    ? 0.3
+                                                    : 0.16
                                             "
                                             class="transition-all duration-200"
                                             :class="
@@ -1080,7 +1096,11 @@ onBeforeUnmount(() => {
                                         <circle
                                             :cx="pt.x"
                                             :cy="pt.y"
-                                            :r="hoveredStage === pt.key ? 6.5 : 5"
+                                            :r="
+                                                hoveredStage === pt.key
+                                                    ? 6.5
+                                                    : 5
+                                            "
                                             fill="#ffffff"
                                             stroke="url(#trendStrokeGradient)"
                                             stroke-width="2.5"
@@ -1121,7 +1141,7 @@ onBeforeUnmount(() => {
                             >
                                 <!-- Top Accent Indicator Bar -->
                                 <div
-                                    class="absolute top-0 inset-x-0 h-1 transition-opacity duration-300"
+                                    class="absolute inset-x-0 top-0 h-1 transition-opacity duration-300"
                                     :class="
                                         hoveredStage === st.key
                                             ? 'opacity-100'
@@ -1176,7 +1196,9 @@ onBeforeUnmount(() => {
                     <div
                         class="mt-6 flex items-center justify-between border-t border-surface-100 pt-4 text-xs font-medium text-surface-500 dark:border-surface-800"
                     >
-                        <span>Pembaruan alur tugas tersinkronisasi otomatis</span>
+                        <span
+                            >Pembaruan alur tugas tersinkronisasi otomatis</span
+                        >
                         <Link
                             :href="tasks.index.url()"
                             class="inline-flex items-center gap-1 text-[#0F5132] transition hover:underline dark:text-[#b7d9c1]"
@@ -1205,7 +1227,9 @@ onBeforeUnmount(() => {
                                     Ketepatan jadwal dan prioritas tindakan tim
                                 </p>
                             </div>
-                            <div class="flex items-center gap-1.5 text-xs font-medium">
+                            <div
+                                class="flex items-center gap-1.5 text-xs font-medium"
+                            >
                                 <span
                                     class="h-1.5 w-1.5 rounded-full"
                                     :class="
@@ -1250,7 +1274,9 @@ onBeforeUnmount(() => {
                                 >
                                     <div
                                         class="h-full rounded-full bg-[#0F5132] transition-all duration-500 dark:bg-[#b7d9c1]"
-                                        :style="{ width: `${focusMetrics.on_time_rate}%` }"
+                                        :style="{
+                                            width: `${focusMetrics.on_time_rate}%`,
+                                        }"
                                     />
                                 </div>
                                 <p class="mt-2 text-[11px] text-surface-500">
@@ -1267,13 +1293,21 @@ onBeforeUnmount(() => {
                                 <div
                                     class="rounded-2xl border border-surface-200/60 bg-[#FAF9F4]/70 p-3 dark:border-surface-800 dark:bg-surface-900/60"
                                 >
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-semibold text-surface-400 uppercase">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-[10px] font-semibold text-surface-400 uppercase"
+                                        >
                                             Tugas Aktif
                                         </span>
-                                        <span class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]" />
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
+                                        />
                                     </div>
-                                    <div class="mt-1 font-serif text-xl font-normal text-surface-950 dark:text-surface-50">
+                                    <div
+                                        class="mt-1 font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+                                    >
                                         {{ focusMetrics.my_tasks_count }}
                                     </div>
                                     <span class="text-[11px] text-surface-400">
@@ -1284,8 +1318,12 @@ onBeforeUnmount(() => {
                                 <div
                                     class="rounded-2xl border border-surface-200/60 bg-[#FAF9F4]/70 p-3 dark:border-surface-800 dark:bg-surface-900/60"
                                 >
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-semibold text-surface-400 uppercase">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-[10px] font-semibold text-surface-400 uppercase"
+                                        >
                                             Terlambat
                                         </span>
                                         <span
@@ -1308,27 +1346,38 @@ onBeforeUnmount(() => {
                                         {{ focusMetrics.overdue_count }}
                                     </div>
                                     <span class="text-[11px] text-surface-400">
-                                        {{ focusMetrics.overdue_count > 0 ? 'Perlu tindakan' : 'Tepat waktu' }}
+                                        {{
+                                            focusMetrics.overdue_count > 0
+                                                ? 'Perlu tindakan'
+                                                : 'Tepat waktu'
+                                        }}
                                     </span>
                                 </div>
 
                                 <div
                                     class="rounded-2xl border border-surface-200/60 bg-[#FAF9F4]/70 p-3 dark:border-surface-800 dark:bg-surface-900/60"
                                 >
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-semibold text-surface-400 uppercase">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-[10px] font-semibold text-surface-400 uppercase"
+                                        >
                                             Prioritas Tinggi
                                         </span>
                                         <span
                                             class="h-1.5 w-1.5 rounded-full"
                                             :class="
-                                                focusMetrics.urgent_tasks_count > 0
+                                                focusMetrics.urgent_tasks_count >
+                                                0
                                                     ? 'bg-amber-500'
                                                     : 'bg-surface-300 dark:bg-surface-700'
                                             "
                                         />
                                     </div>
-                                    <div class="mt-1 font-serif text-xl font-normal text-surface-950 dark:text-surface-50">
+                                    <div
+                                        class="mt-1 font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+                                    >
                                         {{ focusMetrics.urgent_tasks_count }}
                                     </div>
                                     <span class="text-[11px] text-surface-400">
@@ -1339,20 +1388,27 @@ onBeforeUnmount(() => {
                                 <div
                                     class="rounded-2xl border border-surface-200/60 bg-[#FAF9F4]/70 p-3 dark:border-surface-800 dark:bg-surface-900/60"
                                 >
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[10px] font-semibold text-surface-400 uppercase">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-[10px] font-semibold text-surface-400 uppercase"
+                                        >
                                             Perlu Review
                                         </span>
                                         <span
                                             class="h-1.5 w-1.5 rounded-full"
                                             :class="
-                                                focusMetrics.review_tasks_count > 0
+                                                focusMetrics.review_tasks_count >
+                                                0
                                                     ? 'bg-sky-500'
                                                     : 'bg-surface-300 dark:bg-surface-700'
                                             "
                                         />
                                     </div>
-                                    <div class="mt-1 font-serif text-xl font-normal text-surface-950 dark:text-surface-50">
+                                    <div
+                                        class="mt-1 font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+                                    >
                                         {{ focusMetrics.review_tasks_count }}
                                     </div>
                                     <span class="text-[11px] text-surface-400">
@@ -1368,11 +1424,17 @@ onBeforeUnmount(() => {
                                 <div
                                     class="flex items-center justify-between text-xs text-surface-600 dark:text-surface-300"
                                 >
-                                    <span class="font-medium">Penyelesaian Seluruh Tugas</span>
+                                    <span class="font-medium"
+                                        >Penyelesaian Seluruh Tugas</span
+                                    >
                                     <span
                                         class="font-serif text-sm font-normal text-surface-900 dark:text-surface-100"
                                     >
-                                        {{ focusMetrics.completed_tasks_count }} / {{ focusMetrics.total_tasks_count }} ({{ focusMetrics.completion_rate }}%)
+                                        {{ focusMetrics.completed_tasks_count }}
+                                        /
+                                        {{ focusMetrics.total_tasks_count }} ({{
+                                            focusMetrics.completion_rate
+                                        }}%)
                                     </span>
                                 </div>
                                 <div
@@ -1380,15 +1442,20 @@ onBeforeUnmount(() => {
                                 >
                                     <div
                                         class="h-full rounded-full bg-[#0F5132] transition-all duration-500 dark:bg-[#b7d9c1]"
-                                        :style="{ width: `${focusMetrics.completion_rate}%` }"
+                                        :style="{
+                                            width: `${focusMetrics.completion_rate}%`,
+                                        }"
                                     />
                                 </div>
                                 <div
                                     class="mt-2 flex items-center justify-between text-[11px] text-surface-500"
                                 >
                                     <span>Tenggat minggu ini:</span>
-                                    <span class="font-semibold text-surface-800 dark:text-surface-200">
-                                        {{ focusMetrics.due_this_week_count }} tugas
+                                    <span
+                                        class="font-semibold text-surface-800 dark:text-surface-200"
+                                    >
+                                        {{ focusMetrics.due_this_week_count }}
+                                        tugas
                                     </span>
                                 </div>
                             </div>
@@ -1400,17 +1467,18 @@ onBeforeUnmount(() => {
                                     focusMetrics.overdue_count > 0
                                         ? 'border-rose-200 bg-rose-50/60 text-rose-900 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-200'
                                         : focusMetrics.review_tasks_count > 0
-                                            ? 'border-sky-200 bg-sky-50/60 text-sky-900 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-200'
-                                            : 'border-emerald-200/80 bg-emerald-50/50 text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-200'
+                                          ? 'border-sky-200 bg-sky-50/60 text-sky-900 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-200'
+                                          : 'border-emerald-200/80 bg-emerald-50/50 text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-200'
                                 "
                             >
                                 <span class="mt-0.5 shrink-0 text-sm">
                                     {{
                                         focusMetrics.overdue_count > 0
                                             ? '⚠️'
-                                            : focusMetrics.review_tasks_count > 0
-                                                ? '🔍'
-                                                : '✓'
+                                            : focusMetrics.review_tasks_count >
+                                                0
+                                              ? '🔍'
+                                              : '✓'
                                     }}
                                 </span>
                                 <div class="min-w-0 flex-1 leading-relaxed">
@@ -1418,18 +1486,20 @@ onBeforeUnmount(() => {
                                         {{
                                             focusMetrics.overdue_count > 0
                                                 ? 'Tindakan Mendesak'
-                                                : focusMetrics.review_tasks_count > 0
-                                                    ? 'Validasi Diperlukan'
-                                                    : 'Alur Kerja Terkendali'
+                                                : focusMetrics.review_tasks_count >
+                                                    0
+                                                  ? 'Validasi Diperlukan'
+                                                  : 'Alur Kerja Terkendali'
                                         }}
                                     </p>
                                     <p class="mt-0.5 text-[11px] opacity-90">
                                         {{
                                             focusMetrics.overdue_count > 0
                                                 ? `Ada ${focusMetrics.overdue_count} tugas lewat tenggat. Lakukan reskedul atau koordinasi dengan PIC terkait.`
-                                                : focusMetrics.review_tasks_count > 0
-                                                    ? `Ada ${focusMetrics.review_tasks_count} tugas menunggu review untuk melanjutkan ke tahap rilis.`
-                                                    : 'Semua alur kerja berjalan sesuai rencana tanpa hambatan kritis.'
+                                                : focusMetrics.review_tasks_count >
+                                                    0
+                                                  ? `Ada ${focusMetrics.review_tasks_count} tugas menunggu review untuk melanjutkan ke tahap rilis.`
+                                                  : 'Semua alur kerja berjalan sesuai rencana tanpa hambatan kritis.'
                                         }}
                                     </p>
                                 </div>
@@ -1476,7 +1546,8 @@ onBeforeUnmount(() => {
                                     Progres Proyek
                                 </h2>
                                 <p class="mt-0.5 text-xs text-surface-500">
-                                    {{ projectProgress.length }} proyek aktif dalam alur tim
+                                    {{ projectProgress.length }} proyek aktif
+                                    dalam alur tim
                                 </p>
                             </div>
                             <Link
@@ -1499,7 +1570,9 @@ onBeforeUnmount(() => {
                                 class="group flex flex-col justify-between rounded-2xl border border-surface-200/70 bg-[#FAF9F4]/60 p-5 transition hover:border-[#0F5132]/40 hover:bg-white dark:border-surface-800 dark:bg-surface-900/60 dark:hover:bg-surface-800/40"
                             >
                                 <div>
-                                    <div class="flex items-start justify-between gap-3">
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
                                         <div class="min-w-0 flex-1">
                                             <Link
                                                 :href="`/projects/${proj.id}`"
@@ -1514,7 +1587,10 @@ onBeforeUnmount(() => {
                                                 <span
                                                     class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
                                                 />
-                                                <span>{{ getProjectTheme(proj).statusLabel }}</span>
+                                                <span>{{
+                                                    getProjectTheme(proj)
+                                                        .statusLabel
+                                                }}</span>
                                             </div>
                                         </div>
 
@@ -1541,14 +1617,22 @@ onBeforeUnmount(() => {
                                     >
                                         <div
                                             class="h-full rounded-full bg-[#0F5132] transition-all duration-500 dark:bg-[#b7d9c1]"
-                                            :style="{ width: `${proj.progress_percent}%` }"
+                                            :style="{
+                                                width: `${proj.progress_percent}%`,
+                                            }"
                                         />
                                     </div>
 
                                     <div
                                         class="mt-2.5 flex items-center justify-between text-xs text-surface-500"
                                     >
-                                        <span>{{ proj.completed_tasks_count }} dari {{ proj.tasks_count }} tugas selesai</span>
+                                        <span
+                                            >{{
+                                                proj.completed_tasks_count
+                                            }}
+                                            dari {{ proj.tasks_count }} tugas
+                                            selesai</span
+                                        >
                                         <Link
                                             :href="`/projects/${proj.id}`"
                                             class="inline-flex items-center gap-1 text-[#0F5132] transition hover:underline dark:text-[#b7d9c1]"
@@ -1572,7 +1656,8 @@ onBeforeUnmount(() => {
                                 Belum Ada Proyek Aktif
                             </p>
                             <p class="mt-1 text-xs text-surface-400">
-                                Mulai koordinasikan pekerjaan Anda dengan membuat proyek tim.
+                                Mulai koordinasikan pekerjaan Anda dengan
+                                membuat proyek tim.
                             </p>
                             <Link
                                 :href="projects.create.url()"
@@ -1613,7 +1698,8 @@ onBeforeUnmount(() => {
                                     Tenggat Waktu
                                 </h2>
                                 <p class="mt-0.5 text-xs text-surface-500">
-                                    Agenda tugas yang mendekati batas waktu penyelesaian
+                                    Agenda tugas yang mendekati batas waktu
+                                    penyelesaian
                                 </p>
                             </div>
                             <Link
@@ -1636,13 +1722,29 @@ onBeforeUnmount(() => {
                                 class="group flex flex-col justify-between gap-3 rounded-2xl border border-surface-200/70 bg-[#FAF9F4]/60 p-4 transition hover:border-[#0F5132]/40 hover:bg-white sm:flex-row sm:items-center dark:border-surface-800 dark:bg-surface-900/60 dark:hover:bg-surface-800/40"
                             >
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-2 text-xs font-medium">
+                                    <div
+                                        class="flex items-center gap-2 text-xs font-medium"
+                                    >
                                         <span
                                             class="h-1.5 w-1.5 rounded-full"
-                                            :class="getUrgencyIndicator(task.deadline_urgency).dotColor"
+                                            :class="
+                                                getUrgencyIndicator(
+                                                    task.deadline_urgency,
+                                                ).dotColor
+                                            "
                                         />
-                                        <span :class="getUrgencyIndicator(task.deadline_urgency).textColor">
-                                            {{ getUrgencyIndicator(task.deadline_urgency).text }}
+                                        <span
+                                            :class="
+                                                getUrgencyIndicator(
+                                                    task.deadline_urgency,
+                                                ).textColor
+                                            "
+                                        >
+                                            {{
+                                                getUrgencyIndicator(
+                                                    task.deadline_urgency,
+                                                ).text
+                                            }}
                                         </span>
                                         <span
                                             v-if="task.project"
@@ -1668,7 +1770,9 @@ onBeforeUnmount(() => {
                                 <div
                                     class="flex shrink-0 items-center gap-4 text-xs font-medium text-surface-500"
                                 >
-                                    <span>{{ formatDueDate(task.due_date) }}</span>
+                                    <span>{{
+                                        formatDueDate(task.due_date)
+                                    }}</span>
                                     <Link
                                         :href="`/tasks/${task.id}`"
                                         class="inline-flex items-center gap-1 text-[#0F5132] transition hover:underline dark:text-[#b7d9c1]"
@@ -1696,7 +1800,10 @@ onBeforeUnmount(() => {
                     <div
                         class="mt-6 flex items-center justify-between border-t border-surface-100 pt-4 text-xs font-medium text-surface-500 dark:border-surface-800"
                     >
-                        <span>Prioritaskan tugas dengan batas waktu terdekat</span>
+                        <span
+                            >Prioritaskan tugas dengan batas waktu
+                            terdekat</span
+                        >
                         <Link
                             :href="'/calendar'"
                             class="inline-flex items-center gap-1 text-[#0F5132] transition hover:underline dark:text-[#b7d9c1]"
@@ -1715,7 +1822,9 @@ onBeforeUnmount(() => {
                     class="dash-card flex h-full flex-col justify-between rounded-3xl border border-surface-200/80 bg-white p-6 shadow-sm sm:p-8 xl:col-span-7 dark:border-surface-800 dark:bg-surface-900"
                 >
                     <div>
-                        <div class="flex items-center justify-between gap-3 border-b border-surface-100 pb-5 dark:border-surface-800">
+                        <div
+                            class="flex items-center justify-between gap-3 border-b border-surface-100 pb-5 dark:border-surface-800"
+                        >
                             <div>
                                 <h2
                                     class="font-serif text-xl font-normal text-surface-950 sm:text-2xl dark:text-surface-50"
@@ -1723,7 +1832,8 @@ onBeforeUnmount(() => {
                                     Aktivitas Terkini
                                 </h2>
                                 <p class="mt-0.5 text-xs text-surface-500">
-                                    Pembaruan log dan jejak tindakan tim secara realtime
+                                    Pembaruan log dan jejak tindakan tim secara
+                                    realtime
                                 </p>
                             </div>
                             <Link
@@ -1776,7 +1886,9 @@ onBeforeUnmount(() => {
                     <div
                         class="mt-6 flex items-center justify-between border-t border-surface-100 pt-4 text-xs font-medium text-surface-500 dark:border-surface-800"
                     >
-                        <span>Sinkronisasi log aktivitas proyek & tugas tim</span>
+                        <span
+                            >Sinkronisasi log aktivitas proyek & tugas tim</span
+                        >
                         <Link
                             :href="'/collaboration'"
                             class="inline-flex items-center gap-1 text-[#0F5132] transition hover:underline dark:text-[#b7d9c1]"
@@ -1788,12 +1900,16 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Right Column (5 cols): Kalender Mingguan + Pintasan Ruang Kerja -->
-                <div class="flex h-full flex-col justify-between gap-6 xl:col-span-5">
+                <div
+                    class="flex h-full flex-col justify-between gap-6 xl:col-span-5"
+                >
                     <!-- Mini Kalender Interaktif Mingguan -->
                     <div
                         class="dash-card rounded-3xl border border-surface-200/80 bg-white p-6 shadow-sm dark:border-surface-800 dark:bg-surface-900"
                     >
-                        <div class="flex items-center justify-between gap-3 pb-4">
+                        <div
+                            class="flex items-center justify-between gap-3 pb-4"
+                        >
                             <div>
                                 <h2
                                     class="font-serif text-lg font-normal text-surface-950 dark:text-surface-50"
@@ -1825,7 +1941,9 @@ onBeforeUnmount(() => {
                                         : 'text-surface-600 hover:bg-surface-100/60 dark:text-surface-300 dark:hover:bg-surface-800/50',
                                 ]"
                             >
-                                <span class="text-[10px] font-medium opacity-80">
+                                <span
+                                    class="text-[10px] font-medium opacity-80"
+                                >
                                     {{ d.name }}
                                 </span>
                                 <span class="font-serif text-sm font-normal">
@@ -1862,7 +1980,8 @@ onBeforeUnmount(() => {
                                     </span>
                                 </div>
                                 <p class="mt-0.5 text-xs text-surface-400">
-                                    Akses instan modul kerja dan navigasi alur proyek
+                                    Akses instan modul kerja dan navigasi alur
+                                    proyek
                                 </p>
                             </div>
                         </div>
@@ -1882,7 +2001,9 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
                                         <p
                                             class="truncate text-xs font-semibold text-surface-900 group-hover:text-emerald-700 dark:text-surface-100 dark:group-hover:text-emerald-300"
                                         >
@@ -1893,7 +2014,9 @@ onBeforeUnmount(() => {
                                             >→</span
                                         >
                                     </div>
-                                    <p class="truncate text-[11px] text-surface-400">
+                                    <p
+                                        class="truncate text-[11px] text-surface-400"
+                                    >
                                         Kanban & alur kerja
                                     </p>
                                 </div>
@@ -1913,7 +2036,9 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
                                         <p
                                             class="truncate text-xs font-semibold text-surface-900 group-hover:text-indigo-700 dark:text-surface-100 dark:group-hover:text-indigo-300"
                                         >
@@ -1924,7 +2049,9 @@ onBeforeUnmount(() => {
                                             >→</span
                                         >
                                     </div>
-                                    <p class="truncate text-[11px] text-surface-400">
+                                    <p
+                                        class="truncate text-[11px] text-surface-400"
+                                    >
                                         Portofolio & inisiatif
                                     </p>
                                 </div>
@@ -1944,7 +2071,9 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
                                         <p
                                             class="truncate text-xs font-semibold text-surface-900 group-hover:text-amber-700 dark:text-surface-100 dark:group-hover:text-amber-300"
                                         >
@@ -1955,7 +2084,9 @@ onBeforeUnmount(() => {
                                             >→</span
                                         >
                                     </div>
-                                    <p class="truncate text-[11px] text-surface-400">
+                                    <p
+                                        class="truncate text-[11px] text-surface-400"
+                                    >
                                         Agenda & deadline
                                     </p>
                                 </div>
@@ -1975,7 +2106,9 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
                                         <p
                                             class="truncate text-xs font-semibold text-surface-900 group-hover:text-purple-700 dark:text-surface-100 dark:group-hover:text-purple-300"
                                         >
@@ -1986,7 +2119,9 @@ onBeforeUnmount(() => {
                                             >→</span
                                         >
                                     </div>
-                                    <p class="truncate text-[11px] text-surface-400">
+                                    <p
+                                        class="truncate text-[11px] text-surface-400"
+                                    >
                                         Diskusi alur kerja
                                     </p>
                                 </div>
@@ -2006,7 +2141,9 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
                                         <p
                                             class="truncate text-xs font-semibold text-surface-900 group-hover:text-sky-700 dark:text-surface-100 dark:group-hover:text-sky-300"
                                         >
@@ -2017,7 +2154,9 @@ onBeforeUnmount(() => {
                                             >→</span
                                         >
                                     </div>
-                                    <p class="truncate text-[11px] text-surface-400">
+                                    <p
+                                        class="truncate text-[11px] text-surface-400"
+                                    >
                                         Perpustakaan berkas
                                     </p>
                                 </div>
@@ -2037,7 +2176,9 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
                                         <p
                                             class="truncate text-xs font-semibold text-surface-900 group-hover:text-rose-700 dark:text-surface-100 dark:group-hover:text-rose-300"
                                         >
@@ -2048,7 +2189,9 @@ onBeforeUnmount(() => {
                                             >→</span
                                         >
                                     </div>
-                                    <p class="truncate text-[11px] text-surface-400">
+                                    <p
+                                        class="truncate text-[11px] text-surface-400"
+                                    >
                                         Analitik performa
                                     </p>
                                 </div>
@@ -2059,7 +2202,9 @@ onBeforeUnmount(() => {
                         <div
                             class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-surface-100 pt-3 dark:border-surface-800"
                         >
-                            <span class="text-[11px] font-medium text-surface-400">
+                            <span
+                                class="text-[11px] font-medium text-surface-400"
+                            >
                                 Aksi Cepat:
                             </span>
                             <div class="flex items-center gap-2">
@@ -2067,7 +2212,10 @@ onBeforeUnmount(() => {
                                     :href="tasks.index.url()"
                                     class="inline-flex items-center gap-1.5 rounded-full border border-surface-200/80 bg-surface-50 px-3 py-1 text-xs font-medium text-surface-700 transition hover:border-[#0F5132]/40 hover:bg-white hover:text-[#0F5132] dark:border-surface-700 dark:bg-surface-800/60 dark:text-surface-300 dark:hover:text-[#b7d9c1]"
                                 >
-                                    <component :is="getIcon('Plus')" class="h-3 w-3" />
+                                    <component
+                                        :is="getIcon('Plus')"
+                                        class="h-3 w-3"
+                                    />
                                     <span>Buka Tugas</span>
                                 </Link>
                                 <Link

@@ -170,10 +170,12 @@ class SettingsController extends Controller
             'preferences.*.boolean' => 'Nilai preferensi notifikasi tidak valid.',
         ]);
 
-        $preferences = collect($validated['preferences'])
-            ->only($allowed)
-            ->map(fn ($value): bool => (bool) $value)
-            ->all();
+        $preferences = [];
+        foreach ($allowed as $key) {
+            if (isset($validated['preferences'][$key])) {
+                $preferences[$key] = (bool) $validated['preferences'][$key];
+            }
+        }
 
         $user->forceFill([
             'notification_preferences' => array_merge(

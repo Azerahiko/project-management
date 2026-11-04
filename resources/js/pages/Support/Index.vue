@@ -101,7 +101,8 @@ const faqList: FaqItem[] = [
         id: 2,
         category: 'task',
         categoryLabel: 'Alur Tugas & Kanban',
-        question: 'Bagaimana cara memindahkan alur status tugas di papan Kanban?',
+        question:
+            'Bagaimana cara memindahkan alur status tugas di papan Kanban?',
         answer: 'Buka menu Tugas untuk melihat papan Kanban interaktif. Setiap tugas dipetakan ke dalam 4 kolom alur: Belum Mulai (Todo), Sedang Berjalan (In Progress), Peninjauan (Review), dan Selesai (Done). Anda dapat mengklik tugas untuk memperbarui statusnya secara instan, mengubah prioritas (Rendah, Sedang, Tinggi, Mendesak), atau menambahkan komentar diskusi.',
         icon: 'CheckSquare',
         readTime: '1 mnt baca',
@@ -110,7 +111,8 @@ const faqList: FaqItem[] = [
         id: 3,
         category: 'task',
         categoryLabel: 'Alur Tugas & Kanban',
-        question: 'Bagaimana sistem menentukan tenggat waktu tugas yang terlambat (Overdue)?',
+        question:
+            'Bagaimana sistem menentukan tenggat waktu tugas yang terlambat (Overdue)?',
         answer: 'Sistem secara otomatis membandingkan tanggal jatuh tempo (due date) tugas dengan tanggal hari ini. Jika tugas belum berstatus "Done" dan tanggal jatuh tempo telah lewat, lencana merah "Terlambat" akan otomatis disematkan dan pengingat akan dikirimkan ke penanggung jawab tugas melalui panel notifikasi.',
         icon: 'Clock',
         readTime: '1 mnt baca',
@@ -119,7 +121,8 @@ const faqList: FaqItem[] = [
         id: 4,
         category: 'account',
         categoryLabel: 'Akun & Notifikasi',
-        question: 'Bagaimana cara mengatur preferensi notifikasi email dan aplikasi?',
+        question:
+            'Bagaimana cara mengatur preferensi notifikasi email dan aplikasi?',
         answer: 'Buka menu Pengaturan > Tab Notifikasi. Anda dapat menyesuaikan jenis pemberitahuan yang ingin diterima, seperti pembaruan alur tugas, penyebutan (@mentions), komentar baru, dan pengingat harian. Setiap saluran pemberitahuan dapat dinyalakan atau dimatikan secara mandiri.',
         icon: 'HelpCircle',
         readTime: '2 mnt baca',
@@ -128,7 +131,8 @@ const faqList: FaqItem[] = [
         id: 5,
         category: 'project',
         categoryLabel: 'Manajemen Proyek',
-        question: 'Apakah berkas spesifikasi dan lampiran dokumen dapat diunggah?',
+        question:
+            'Apakah berkas spesifikasi dan lampiran dokumen dapat diunggah?',
         answer: 'Ya, Anda dapat mengunggah berkas rancangan, dokumen kerja, dan aset langsung di menu Dokumen atau melampirkannya di setiap kartu tugas. Batas ukuran maksimal adalah 25MB per berkas dengan format PDF, gambar (PNG, JPG), spreadsheet, atau arsip ZIP.',
         icon: 'FileText',
         readTime: '1 mnt baca',
@@ -137,7 +141,8 @@ const faqList: FaqItem[] = [
         id: 6,
         category: 'security',
         categoryLabel: 'Keamanan & Akses',
-        question: 'Bagaimana cara mengaktifkan Otentikasi Dua Faktor (2FA) atau Passkeys?',
+        question:
+            'Bagaimana cara mengaktifkan Otentikasi Dua Faktor (2FA) atau Passkeys?',
         answer: 'Kunjungi Pengaturan > Tab Keamanan. Anda dapat mengaktifkan 2FA berbasis aplikasi authenticator (Google Authenticator, 1Password) atau mendaftarkan Passkeys (biometrik Face ID / Fingerprint) untuk proses masuk yang lebih cepat, aman, dan tanpa kata sandi.',
         icon: 'ShieldCheck',
         readTime: '2 mnt baca',
@@ -154,8 +159,16 @@ const categoryTabs = [
 
 const priorities = [
     { key: 'Normal', label: 'Normal (Pertanyaan Umum)', dot: 'bg-emerald-500' },
-    { key: 'Tinggi', label: 'Tinggi (Kendala Alur Kerja)', dot: 'bg-amber-500' },
-    { key: 'Mendesak', label: 'Mendesak (Kendala Kritis Sistem)', dot: 'bg-rose-500' },
+    {
+        key: 'Tinggi',
+        label: 'Tinggi (Kendala Alur Kerja)',
+        dot: 'bg-amber-500',
+    },
+    {
+        key: 'Mendesak',
+        label: 'Mendesak (Kendala Kritis Sistem)',
+        dot: 'bg-rose-500',
+    },
 ];
 
 const recentTickets = [
@@ -192,13 +205,18 @@ const keyboardShortcuts: ShortcutAction[] = [
         keys: ['Ctrl', 'K'],
         description: 'Fokus kursor langsung ke kolom pencarian bantuan',
         action: () => {
-            const input = document.getElementById('support-search-input') as HTMLInputElement | null;
+            const input = document.getElementById(
+                'support-search-input',
+            ) as HTMLInputElement | null;
             if (input) {
                 input.focus();
                 input.select();
                 input.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            triggerVisualNotice('search', 'Pencarian Cepat diaktifkan (Ctrl + K)');
+            triggerVisualNotice(
+                'search',
+                'Pencarian Cepat diaktifkan (Ctrl + K)',
+            );
         },
     },
     {
@@ -227,7 +245,10 @@ const keyboardShortcuts: ShortcutAction[] = [
         keys: ['G', 'P'],
         description: 'Akses portofolio proyek dan manajemen tim',
         action: () => {
-            triggerVisualNotice('projects', 'Membuka Daftar Proyek (G lalu P)...');
+            triggerVisualNotice(
+                'projects',
+                'Membuka Daftar Proyek (G lalu P)...',
+            );
             setTimeout(() => router.visit('/projects'), 250);
         },
     },
@@ -237,7 +258,10 @@ const keyboardShortcuts: ShortcutAction[] = [
         keys: ['G', 'C'],
         description: 'Lihat agenda tenggat waktu dan jadwal rilis',
         action: () => {
-            triggerVisualNotice('calendar', 'Membuka Kalender Kerja (G lalu C)...');
+            triggerVisualNotice(
+                'calendar',
+                'Membuka Kalender Kerja (G lalu C)...',
+            );
             setTimeout(() => router.visit('/calendar'), 250);
         },
     },
@@ -247,7 +271,10 @@ const keyboardShortcuts: ShortcutAction[] = [
         keys: ['G', 'S'],
         description: 'Kelola profil, keamanan, 2FA, dan Passkeys',
         action: () => {
-            triggerVisualNotice('settings', 'Membuka Pengaturan Akun (G lalu S)...');
+            triggerVisualNotice(
+                'settings',
+                'Membuka Pengaturan Akun (G lalu S)...',
+            );
             setTimeout(() => router.visit('/settings'), 250);
         },
     },
@@ -259,7 +286,10 @@ const keyboardShortcuts: ShortcutAction[] = [
         action: () => {
             searchQuery.value = '';
             (document.activeElement as HTMLElement)?.blur?.();
-            triggerVisualNotice('escape', 'Pencarian dibersihkan & fokus ditutup (Esc)');
+            triggerVisualNotice(
+                'escape',
+                'Pencarian dibersihkan & fokus ditutup (Esc)',
+            );
         },
     },
 ];
@@ -332,14 +362,18 @@ function handlePageKeydown(e: KeyboardEvent): void {
             e.preventDefault();
             keyboardShortcuts.find((s) => s.id === 'settings')?.action();
         } else {
-            triggerVisualNotice('', `Kombinasi 'G lalu ${e.key.toUpperCase()}' tidak dikenal`);
+            triggerVisualNotice(
+                '',
+                `Kombinasi 'G lalu ${e.key.toUpperCase()}' tidak dikenal`,
+            );
         }
         return;
     }
 
     if (key === 'g' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         pendingSequenceG = true;
-        activeKeyNotice.value = "Tombol 'G' aktif! Tekan D (Dashboard), T (Tugas), P (Proyek), C (Kalender), atau S (Pengaturan)";
+        activeKeyNotice.value =
+            "Tombol 'G' aktif! Tekan D (Dashboard), T (Tugas), P (Proyek), C (Kalender), atau S (Pengaturan)";
         if (sequenceTimer) clearTimeout(sequenceTimer);
         sequenceTimer = setTimeout(() => {
             pendingSequenceG = false;
@@ -393,7 +427,10 @@ function rateFaq(id: number, feedback: 'yes' | 'no'): void {
 function copySupportEmail(): void {
     navigator.clipboard.writeText('support@project.local');
     copiedEmail.value = true;
-    toast.success('Email Disalin', 'support@project.local telah disalin ke papan klip Anda.');
+    toast.success(
+        'Email Disalin',
+        'support@project.local telah disalin ke papan klip Anda.',
+    );
     setTimeout(() => {
         copiedEmail.value = false;
     }, 2000);
@@ -411,9 +448,13 @@ function removeAttachment(): void {
 }
 
 function submitSupportTicket(): void {
-    if (!ticketForm.value.subject.trim() || !ticketForm.value.message.trim()) return;
+    if (!ticketForm.value.subject.trim() || !ticketForm.value.message.trim())
+        return;
     ticketSubmitted.value = true;
-    toast.success('Tiket Terkirim', 'Laporan Anda telah berhasil diajukan ke tim teknis DigitalCode.');
+    toast.success(
+        'Tiket Terkirim',
+        'Laporan Anda telah berhasil diajukan ke tim teknis DigitalCode.',
+    );
     setTimeout(() => {
         ticketSubmitted.value = false;
         attachedFileName.value = null;
@@ -444,7 +485,9 @@ function submitSupportTicket(): void {
                 class="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-teal-500/10 blur-3xl dark:bg-teal-500/15"
             />
 
-            <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div
+                class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between"
+            >
                 <div class="max-w-2xl">
                     <div class="flex flex-wrap items-center gap-2.5">
                         <span
@@ -463,7 +506,9 @@ function submitSupportTicket(): void {
                         <span
                             class="inline-flex items-center gap-1.5 rounded-full border border-surface-200 bg-white/90 px-3 py-1 text-xs font-medium text-surface-600 shadow-2xs dark:border-surface-700 dark:bg-surface-800/80 dark:text-surface-300"
                         >
-                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                            />
                             3 Spesialis Teknis Online
                         </span>
                     </div>
@@ -476,7 +521,9 @@ function submitSupportTicket(): void {
                     <p
                         class="mt-2 text-sm leading-relaxed text-surface-600 sm:text-base dark:text-surface-300"
                     >
-                        Solusi terintegrasi alur kerja proyek, panduan fitur Kanban, pintasan navigasi cepat, dan layanan bantuan langsung DigitalCode.
+                        Solusi terintegrasi alur kerja proyek, panduan fitur
+                        Kanban, pintasan navigasi cepat, dan layanan bantuan
+                        langsung DigitalCode.
                     </p>
                 </div>
 
@@ -484,42 +531,80 @@ function submitSupportTicket(): void {
                 <div
                     class="grid grid-cols-2 gap-2.5 rounded-2xl border border-surface-200/90 bg-surface-50/70 p-3 shadow-2xs backdrop-blur-md sm:min-w-[320px] dark:border-surface-800 dark:bg-surface-950/60"
                 >
-                    <div class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900">
-                        <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">Status Sistem</span>
-                        <p class="mt-0.5 font-serif text-base font-bold text-emerald-700 dark:text-emerald-400">
+                    <div
+                        class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900"
+                    >
+                        <span
+                            class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                            >Status Sistem</span
+                        >
+                        <p
+                            class="mt-0.5 font-serif text-base font-bold text-emerald-700 dark:text-emerald-400"
+                        >
                             100% Online
                         </p>
-                        <p class="text-[10px] text-surface-400">Seluruh modul aktif</p>
+                        <p class="text-[10px] text-surface-400">
+                            Seluruh modul aktif
+                        </p>
                     </div>
 
-                    <div class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900">
-                        <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">Respon Tim</span>
-                        <p class="mt-0.5 font-serif text-base font-bold text-surface-950 dark:text-surface-50">
+                    <div
+                        class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900"
+                    >
+                        <span
+                            class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                            >Respon Tim</span
+                        >
+                        <p
+                            class="mt-0.5 font-serif text-base font-bold text-surface-950 dark:text-surface-50"
+                        >
                             &lt; 30 Menit
                         </p>
-                        <p class="text-[10px] text-surface-400">Jam kerja aktif</p>
+                        <p class="text-[10px] text-surface-400">
+                            Jam kerja aktif
+                        </p>
                     </div>
 
-                    <div class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900">
-                        <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">Layanan Resmi</span>
-                        <p class="mt-0.5 font-serif text-base font-bold text-surface-950 dark:text-surface-50">
+                    <div
+                        class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900"
+                    >
+                        <span
+                            class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                            >Layanan Resmi</span
+                        >
+                        <p
+                            class="mt-0.5 font-serif text-base font-bold text-surface-950 dark:text-surface-50"
+                        >
                             Sen – Jum
                         </p>
-                        <p class="text-[10px] text-surface-400">08:00 – 18:00 WIB</p>
+                        <p class="text-[10px] text-surface-400">
+                            08:00 – 18:00 WIB
+                        </p>
                     </div>
 
-                    <div class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900">
-                        <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">Enkripsi Data</span>
-                        <p class="mt-0.5 font-serif text-base font-bold text-indigo-700 dark:text-indigo-400">
+                    <div
+                        class="rounded-xl border border-surface-200/70 bg-white p-3 dark:border-surface-800 dark:bg-surface-900"
+                    >
+                        <span
+                            class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                            >Enkripsi Data</span
+                        >
+                        <p
+                            class="mt-0.5 font-serif text-base font-bold text-indigo-700 dark:text-indigo-400"
+                        >
                             TLS 1.3
                         </p>
-                        <p class="text-[10px] text-surface-400">End-to-end terenkripsi</p>
+                        <p class="text-[10px] text-surface-400">
+                            End-to-end terenkripsi
+                        </p>
                     </div>
                 </div>
             </div>
 
             <!-- Integrated Live Search Bar with Instant Shortcut Indicator -->
-            <div class="relative z-10 mt-6 pt-5 border-t border-surface-100 dark:border-surface-800">
+            <div
+                class="relative z-10 mt-6 border-t border-surface-100 pt-5 dark:border-surface-800"
+            >
                 <div class="relative flex items-center">
                     <Search
                         class="pointer-events-none absolute left-4 h-5 w-5 text-surface-400 transition-colors"
@@ -529,9 +614,9 @@ function submitSupportTicket(): void {
                         v-model="searchQuery"
                         type="text"
                         placeholder="Ketik topik bantuan, kata kunci, pertanyaan, atau kendala alur kerja..."
-                        class="h-13 w-full rounded-2xl border border-surface-200/90 bg-white pl-12 pr-28 text-sm text-surface-900 shadow-2xs placeholder:text-surface-400 transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 focus:outline-hidden dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50 dark:placeholder:text-surface-500"
+                        class="h-13 w-full rounded-2xl border border-surface-200/90 bg-white pr-28 pl-12 text-sm text-surface-900 shadow-2xs transition-all placeholder:text-surface-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 focus:outline-hidden dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50 dark:placeholder:text-surface-500"
                     />
-                    
+
                     <div class="absolute right-3.5 flex items-center gap-2">
                         <button
                             v-if="searchQuery"
@@ -543,7 +628,7 @@ function submitSupportTicket(): void {
                             <X class="h-4 w-4" />
                         </button>
                         <div
-                            class="hidden sm:inline-flex items-center gap-1 rounded-lg border border-surface-200 bg-surface-100/80 px-2 py-1 font-mono text-[10px] font-semibold text-surface-500 dark:border-surface-700 dark:bg-surface-900/80 dark:text-surface-400"
+                            class="hidden items-center gap-1 rounded-lg border border-surface-200 bg-surface-100/80 px-2 py-1 font-mono text-[10px] font-semibold text-surface-500 sm:inline-flex dark:border-surface-700 dark:bg-surface-900/80 dark:text-surface-400"
                             title="Tekan Ctrl+K untuk fokus pencarian kapan saja"
                         >
                             <span>Ctrl</span>
@@ -555,7 +640,9 @@ function submitSupportTicket(): void {
 
                 <!-- Suggestion Chips -->
                 <div class="mt-3 flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-medium text-surface-400">Pencarian Cepat:</span>
+                    <span class="text-xs font-medium text-surface-400"
+                        >Pencarian Cepat:</span
+                    >
                     <button
                         v-for="sugg in searchSuggestions"
                         :key="sugg"
@@ -590,15 +677,20 @@ function submitSupportTicket(): void {
                 </div>
                 <div class="mt-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                        <h3
+                            class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                        >
                             Manajemen Proyek
                         </h3>
                         <ArrowUpRight
                             class="h-4 w-4 text-surface-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-indigo-600"
                         />
                     </div>
-                    <p class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400">
-                        Inisiasi proyek, penetapan tim, target milestone, dan evaluasi hasil.
+                    <p
+                        class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                    >
+                        Inisiasi proyek, penetapan tim, target milestone, dan
+                        evaluasi hasil.
                     </p>
                 </div>
             </Link>
@@ -622,15 +714,20 @@ function submitSupportTicket(): void {
                 </div>
                 <div class="mt-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                        <h3
+                            class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                        >
                             Alur Tugas Kanban
                         </h3>
                         <ArrowUpRight
                             class="h-4 w-4 text-surface-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-emerald-600"
                         />
                     </div>
-                    <p class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400">
-                        Papan visual 4 fase: Todo, In Progress, Review, dan Done tersinkron.
+                    <p
+                        class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                    >
+                        Papan visual 4 fase: Todo, In Progress, Review, dan Done
+                        tersinkron.
                     </p>
                 </div>
             </Link>
@@ -654,15 +751,20 @@ function submitSupportTicket(): void {
                 </div>
                 <div class="mt-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                        <h3
+                            class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                        >
                             Kalender Kerja
                         </h3>
                         <ArrowUpRight
                             class="h-4 w-4 text-surface-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-amber-600"
                         />
                     </div>
-                    <p class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400">
-                        Pemetaan tanggal jatuh tempo, penyortiran prioritas, & pencegahan overdue.
+                    <p
+                        class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                    >
+                        Pemetaan tanggal jatuh tempo, penyortiran prioritas, &
+                        pencegahan overdue.
                     </p>
                 </div>
             </Link>
@@ -686,15 +788,20 @@ function submitSupportTicket(): void {
                 </div>
                 <div class="mt-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                        <h3
+                            class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                        >
                             Ruang Kolaborasi
                         </h3>
                         <ArrowUpRight
                             class="h-4 w-4 text-surface-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-purple-600"
                         />
                     </div>
-                    <p class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400">
-                        Diskusi langsung tim pengembang, berbagi catatan, dan sinkronisasi kerja.
+                    <p
+                        class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                    >
+                        Diskusi langsung tim pengembang, berbagi catatan, dan
+                        sinkronisasi kerja.
                     </p>
                 </div>
             </Link>
@@ -706,13 +813,20 @@ function submitSupportTicket(): void {
             <section
                 class="rounded-3xl border border-surface-200/80 bg-white p-6 shadow-xs sm:p-7 lg:col-span-7 dark:border-surface-800 dark:bg-surface-900"
             >
-                <div class="flex flex-col gap-2 border-b border-surface-100 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800">
+                <div
+                    class="flex flex-col gap-2 border-b border-surface-100 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+                >
                     <div>
-                        <h2 class="font-serif text-xl font-normal text-surface-950 dark:text-surface-50">
+                        <h2
+                            class="font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+                        >
                             Tanya Jawab Populer (FAQ)
                         </h2>
-                        <p class="text-xs text-surface-500 dark:text-surface-400">
-                            Solusi praktis untuk pertanyaan yang sering ditanyakan
+                        <p
+                            class="text-xs text-surface-500 dark:text-surface-400"
+                        >
+                            Solusi praktis untuk pertanyaan yang sering
+                            ditanyakan
                         </p>
                     </div>
                     <span
@@ -736,7 +850,10 @@ function submitSupportTicket(): void {
                         "
                         @click="selectedCategory = cat.key"
                     >
-                        <component :is="getIcon(cat.icon)" class="h-3.5 w-3.5" />
+                        <component
+                            :is="getIcon(cat.icon)"
+                            class="h-3.5 w-3.5"
+                        />
                         <span>{{ cat.label }}</span>
                     </button>
                 </div>
@@ -747,16 +864,24 @@ function submitSupportTicket(): void {
                         v-if="filteredFaqs.length === 0"
                         class="rounded-2xl border border-dashed border-surface-200 p-8 text-center dark:border-surface-800"
                     >
-                        <p class="font-serif text-base font-semibold text-surface-800 dark:text-surface-200">
-                            Tidak ada jawaban yang cocok dengan "{{ searchQuery }}"
+                        <p
+                            class="font-serif text-base font-semibold text-surface-800 dark:text-surface-200"
+                        >
+                            Tidak ada jawaban yang cocok dengan "{{
+                                searchQuery
+                            }}"
                         </p>
                         <p class="mt-1 text-xs text-surface-400">
-                            Coba kata kunci lain atau kirimkan pertanyaan Anda melalui formulir tiket di bawah.
+                            Coba kata kunci lain atau kirimkan pertanyaan Anda
+                            melalui formulir tiket di bawah.
                         </p>
                         <button
                             type="button"
                             class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-surface-100 px-4 py-1.5 text-xs font-bold text-surface-800 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-200 dark:hover:bg-surface-700"
-                            @click="searchQuery = ''; selectedCategory = 'all'"
+                            @click="
+                                searchQuery = '';
+                                selectedCategory = 'all';
+                            "
                         >
                             Reset Filter Pencarian
                         </button>
@@ -787,10 +912,14 @@ function submitSupportTicket(): void {
                                     />
                                 </span>
                                 <div>
-                                    <span class="block text-xs font-semibold text-surface-950 sm:text-sm dark:text-surface-50">
+                                    <span
+                                        class="block text-xs font-semibold text-surface-950 sm:text-sm dark:text-surface-50"
+                                    >
                                         {{ faq.question }}
                                     </span>
-                                    <div class="mt-0.5 flex items-center gap-2 text-[11px] text-surface-400">
+                                    <div
+                                        class="mt-0.5 flex items-center gap-2 text-[11px] text-surface-400"
+                                    >
                                         <span>{{ faq.categoryLabel }}</span>
                                         <span>·</span>
                                         <span>{{ faq.readTime }}</span>
@@ -798,7 +927,11 @@ function submitSupportTicket(): void {
                                 </div>
                             </div>
                             <component
-                                :is="activeFaqIndex === faq.id ? ChevronUp : ChevronDown"
+                                :is="
+                                    activeFaqIndex === faq.id
+                                        ? ChevronUp
+                                        : ChevronDown
+                                "
                                 class="h-4 w-4 shrink-0 text-surface-400 transition-transform duration-200"
                             />
                         </button>
@@ -810,7 +943,9 @@ function submitSupportTicket(): void {
                             <p>{{ faq.answer }}</p>
 
                             <!-- Helpful Rating Indicator -->
-                            <div class="mt-3.5 flex items-center justify-between border-t border-surface-200/60 pt-3 dark:border-surface-800">
+                            <div
+                                class="mt-3.5 flex items-center justify-between border-t border-surface-200/60 pt-3 dark:border-surface-800"
+                            >
                                 <span class="text-[11px] text-surface-400">
                                     Apakah panduan ini membantu Anda?
                                 </span>
@@ -862,16 +997,24 @@ function submitSupportTicket(): void {
                                 <Keyboard class="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                                <h3
+                                    class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                                >
                                     Pintasan Keyboard
                                 </h3>
-                                <p class="text-[11px] text-surface-500 dark:text-surface-400">
+                                <p
+                                    class="text-[11px] text-surface-500 dark:text-surface-400"
+                                >
                                     Navigasi instan keyboard (Aktif & Berfungsi)
                                 </p>
                             </div>
                         </div>
-                        <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-300">
-                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-300"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"
+                            />
                             Aktif
                         </span>
                     </div>
@@ -882,10 +1025,15 @@ function submitSupportTicket(): void {
                         class="mt-4 flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50/90 p-2.5 text-xs font-semibold text-emerald-900 transition-all dark:border-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-200"
                     >
                         <div class="flex items-center gap-2">
-                            <Sparkles class="h-4 w-4 animate-spin text-emerald-600 dark:text-emerald-400" />
+                            <Sparkles
+                                class="h-4 w-4 animate-spin text-emerald-600 dark:text-emerald-400"
+                            />
                             <span class="truncate">{{ activeKeyNotice }}</span>
                         </div>
-                        <span class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-300">Live</span>
+                        <span
+                            class="font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300"
+                            >Live</span
+                        >
                     </div>
 
                     <!-- Interactive Shortcut List -->
@@ -901,25 +1049,43 @@ function submitSupportTicket(): void {
                             "
                         >
                             <div class="min-w-0 pr-2">
-                                <span class="font-medium text-surface-900 dark:text-surface-100">
+                                <span
+                                    class="font-medium text-surface-900 dark:text-surface-100"
+                                >
                                     {{ shortcut.label }}
                                 </span>
-                                <span class="block truncate text-[10px] text-surface-400">
+                                <span
+                                    class="block truncate text-[10px] text-surface-400"
+                                >
                                     {{ shortcut.description }}
                                 </span>
                             </div>
 
                             <div class="flex shrink-0 items-center gap-2">
                                 <!-- Keyboard badges -->
-                                <div class="flex items-center gap-1 font-mono text-[10px]">
-                                    <template v-for="(k, idx) in shortcut.keys" :key="idx">
+                                <div
+                                    class="flex items-center gap-1 font-mono text-[10px]"
+                                >
+                                    <template
+                                        v-for="(k, idx) in shortcut.keys"
+                                        :key="idx"
+                                    >
                                         <kbd
                                             class="rounded border border-surface-300 bg-white px-1.5 py-0.5 font-bold shadow-2xs dark:border-surface-700 dark:bg-surface-800 dark:text-surface-200"
                                         >
                                             {{ k }}
                                         </kbd>
-                                        <span v-if="idx < shortcut.keys.length - 1" class="text-[9px] text-surface-400">
-                                            {{ shortcut.keys.length > 2 ? '+' : 'lalu' }}
+                                        <span
+                                            v-if="
+                                                idx < shortcut.keys.length - 1
+                                            "
+                                            class="text-[9px] text-surface-400"
+                                        >
+                                            {{
+                                                shortcut.keys.length > 2
+                                                    ? '+'
+                                                    : 'lalu'
+                                            }}
                                         </span>
                                     </template>
                                 </div>
@@ -950,21 +1116,33 @@ function submitSupportTicket(): void {
                             <Mail class="h-5 w-5" />
                         </div>
                         <div>
-                            <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                            <h3
+                                class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                            >
                                 Saluran Kontak Langsung
                             </h3>
-                            <p class="text-[11px] text-surface-500 dark:text-surface-400">
+                            <p
+                                class="text-[11px] text-surface-500 dark:text-surface-400"
+                            >
                                 Email resmi & ruang obrolan internal tim
                             </p>
                         </div>
                     </div>
 
-                    <div class="mt-4 rounded-2xl border border-surface-200/90 bg-surface-50/70 p-3.5 dark:border-surface-800 dark:bg-surface-950/40">
-                        <span class="block text-[11px] font-semibold text-surface-500 dark:text-surface-400">
+                    <div
+                        class="mt-4 rounded-2xl border border-surface-200/90 bg-surface-50/70 p-3.5 dark:border-surface-800 dark:bg-surface-950/40"
+                    >
+                        <span
+                            class="block text-[11px] font-semibold text-surface-500 dark:text-surface-400"
+                        >
                             Email Dukungan Resmi:
                         </span>
-                        <div class="mt-1.5 flex items-center justify-between gap-2">
-                            <span class="font-mono text-xs font-bold text-surface-900 dark:text-surface-100">
+                        <div
+                            class="mt-1.5 flex items-center justify-between gap-2"
+                        >
+                            <span
+                                class="font-mono text-xs font-bold text-surface-900 dark:text-surface-100"
+                            >
                                 support@project.local
                             </span>
                             <button
@@ -972,18 +1150,29 @@ function submitSupportTicket(): void {
                                 class="inline-flex items-center gap-1 rounded-xl border border-surface-200 bg-white px-2.5 py-1 text-xs font-semibold text-surface-700 shadow-2xs transition hover:border-emerald-500 hover:text-emerald-700 active:scale-95 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
                                 @click="copySupportEmail"
                             >
-                                <component :is="copiedEmail ? Check : Copy" class="h-3.5 w-3.5 text-emerald-600" />
-                                <span>{{ copiedEmail ? 'Tersalin' : 'Salin' }}</span>
+                                <component
+                                    :is="copiedEmail ? Check : Copy"
+                                    class="h-3.5 w-3.5 text-emerald-600"
+                                />
+                                <span>{{
+                                    copiedEmail ? 'Tersalin' : 'Salin'
+                                }}</span>
                             </button>
                         </div>
                     </div>
 
-                    <div class="mt-3 flex items-center justify-between rounded-2xl border border-surface-200/90 bg-surface-50/70 p-3.5 dark:border-surface-800 dark:bg-surface-950/40">
+                    <div
+                        class="mt-3 flex items-center justify-between rounded-2xl border border-surface-200/90 bg-surface-50/70 p-3.5 dark:border-surface-800 dark:bg-surface-950/40"
+                    >
                         <div>
-                            <span class="block text-xs font-bold text-surface-900 dark:text-surface-100">
+                            <span
+                                class="block text-xs font-bold text-surface-900 dark:text-surface-100"
+                            >
                                 Ruang Obrolan Kolaborasi
                             </span>
-                            <span class="text-[11px] text-surface-500 dark:text-surface-400">
+                            <span
+                                class="text-[11px] text-surface-500 dark:text-surface-400"
+                            >
                                 Diskusi instan dengan rekan kerja
                             </span>
                         </div>
@@ -1005,7 +1194,9 @@ function submitSupportTicket(): void {
             <section
                 class="rounded-3xl border border-surface-200/80 bg-white p-6 shadow-xs sm:p-7 lg:col-span-7 dark:border-surface-800 dark:bg-surface-900"
             >
-                <div class="flex items-center justify-between border-b border-surface-100 pb-4 dark:border-surface-800">
+                <div
+                    class="flex items-center justify-between border-b border-surface-100 pb-4 dark:border-surface-800"
+                >
                     <div class="flex items-center gap-3">
                         <span
                             class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
@@ -1013,15 +1204,22 @@ function submitSupportTicket(): void {
                             <Send class="h-4.5 w-4.5" />
                         </span>
                         <div>
-                            <h2 class="font-serif text-xl font-normal text-surface-950 dark:text-surface-50">
+                            <h2
+                                class="font-serif text-xl font-normal text-surface-950 dark:text-surface-50"
+                            >
                                 Kirim Tiket Dukungan Teknis
                             </h2>
-                            <p class="text-xs text-surface-500 dark:text-surface-400">
-                                Respon langsung ke email akun terdaftar Anda dalam hitungan menit
+                            <p
+                                class="text-xs text-surface-500 dark:text-surface-400"
+                            >
+                                Respon langsung ke email akun terdaftar Anda
+                                dalam hitungan menit
                             </p>
                         </div>
                     </div>
-                    <span class="rounded-full bg-surface-100 px-3 py-1 text-xs font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300">
+                    <span
+                        class="rounded-full bg-surface-100 px-3 py-1 text-xs font-semibold text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                    >
                         Tiket Baru
                     </span>
                 </div>
@@ -1033,18 +1231,33 @@ function submitSupportTicket(): void {
                 >
                     <CheckCircle2 class="h-5 w-5 shrink-0 text-emerald-600" />
                     <div>
-                        <h4 class="text-xs font-bold">Tiket Dukungan Berhasil Diajukan!</h4>
-                        <p class="mt-0.5 text-xs text-emerald-800 dark:text-emerald-300">
-                            Nomor referensi tiket Anda: <strong>#TK-{{ Math.floor(1000 + Math.random() * 9000) }}</strong>. Tim teknis kami akan merespon selambat-lambatnya 30 menit ke email terdaftar Anda.
+                        <h4 class="text-xs font-bold">
+                            Tiket Dukungan Berhasil Diajukan!
+                        </h4>
+                        <p
+                            class="mt-0.5 text-xs text-emerald-800 dark:text-emerald-300"
+                        >
+                            Nomor referensi tiket Anda:
+                            <strong
+                                >#TK-{{
+                                    Math.floor(1000 + Math.random() * 9000)
+                                }}</strong
+                            >. Tim teknis kami akan merespon selambat-lambatnya
+                            30 menit ke email terdaftar Anda.
                         </p>
                     </div>
                 </div>
 
                 <!-- Ticket Form -->
-                <form class="mt-5 space-y-4" @submit.prevent="submitSupportTicket">
+                <form
+                    class="mt-5 space-y-4"
+                    @submit.prevent="submitSupportTicket"
+                >
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                            <label
+                                class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                            >
                                 Kategori Masalah
                             </label>
                             <select
@@ -1060,7 +1273,9 @@ function submitSupportTicket(): void {
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                            <label
+                                class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                            >
                                 Tingkat Prioritas
                             </label>
                             <div class="mt-1.5 flex gap-2">
@@ -1076,7 +1291,10 @@ function submitSupportTicket(): void {
                                     "
                                     @click="ticketForm.priority = p.key"
                                 >
-                                    <span class="h-2 w-2 rounded-full" :class="p.dot" />
+                                    <span
+                                        class="h-2 w-2 rounded-full"
+                                        :class="p.dot"
+                                    />
                                     <span>{{ p.key }}</span>
                                 </button>
                             </div>
@@ -1084,7 +1302,9 @@ function submitSupportTicket(): void {
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                        <label
+                            class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                        >
                             Subjek Pertanyaan / Kendala
                         </label>
                         <input
@@ -1098,7 +1318,9 @@ function submitSupportTicket(): void {
 
                     <div>
                         <div class="flex items-center justify-between">
-                            <label class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                            <label
+                                class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                            >
                                 Rincian Kendala & Kronologi
                             </label>
                             <span class="text-[11px] text-surface-400">
@@ -1116,7 +1338,9 @@ function submitSupportTicket(): void {
 
                     <!-- Attachment Zone -->
                     <div>
-                        <label class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                        <label
+                            class="block text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                        >
                             Lampiran Bukti / Tangkapan Layar (Opsional)
                         </label>
                         <div
@@ -1141,7 +1365,10 @@ function submitSupportTicket(): void {
                             class="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-surface-300 bg-surface-50/40 py-2.5 text-xs font-medium text-surface-600 transition hover:border-emerald-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20 dark:text-surface-400"
                         >
                             <Paperclip class="h-4 w-4 text-surface-400" />
-                            <span>Pilih gambar / tangkapan layar pendukung (PNG, JPG, PDF)</span>
+                            <span
+                                >Pilih gambar / tangkapan layar pendukung (PNG,
+                                JPG, PDF)</span
+                            >
                             <input
                                 type="file"
                                 class="hidden"
@@ -1151,15 +1378,24 @@ function submitSupportTicket(): void {
                         </label>
                     </div>
 
-                    <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                        <span class="text-[11px] text-surface-500 dark:text-surface-400">
-                            Akun Pelapor: <strong>{{ user?.name }}</strong> ({{ user?.email }})
+                    <div
+                        class="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <span
+                            class="text-[11px] text-surface-500 dark:text-surface-400"
+                        >
+                            Akun Pelapor: <strong>{{ user?.name }}</strong> ({{
+                                user?.email
+                            }})
                         </span>
 
                         <button
                             type="submit"
                             class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-800 active:scale-95 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                            :disabled="!ticketForm.subject.trim() || !ticketForm.message.trim()"
+                            :disabled="
+                                !ticketForm.subject.trim() ||
+                                !ticketForm.message.trim()
+                            "
                         >
                             <Send class="h-4 w-4" />
                             <span>Kirim Tiket Sekarang</span>
@@ -1182,15 +1418,21 @@ function submitSupportTicket(): void {
                                 <Clock class="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                                <h3
+                                    class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                                >
                                     Riwayat Tiket Terkini
                                 </h3>
-                                <p class="text-[11px] text-surface-500 dark:text-surface-400">
+                                <p
+                                    class="text-[11px] text-surface-500 dark:text-surface-400"
+                                >
                                     Status tiket yang pernah Anda ajukan
                                 </p>
                             </div>
                         </div>
-                        <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                        <span
+                            class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        >
                             2 Selesai
                         </span>
                     </div>
@@ -1202,7 +1444,9 @@ function submitSupportTicket(): void {
                             class="rounded-2xl border border-surface-200/70 bg-surface-50/50 p-3 text-xs dark:border-surface-800 dark:bg-surface-950/30"
                         >
                             <div class="flex items-center justify-between">
-                                <span class="font-mono text-[11px] font-bold text-surface-700 dark:text-surface-300">
+                                <span
+                                    class="font-mono text-[11px] font-bold text-surface-700 dark:text-surface-300"
+                                >
                                     {{ tk.id }}
                                 </span>
                                 <span
@@ -1212,10 +1456,15 @@ function submitSupportTicket(): void {
                                     {{ tk.status }}
                                 </span>
                             </div>
-                            <p class="mt-1 font-medium text-surface-900 dark:text-surface-100">
+                            <p
+                                class="mt-1 font-medium text-surface-900 dark:text-surface-100"
+                            >
                                 {{ tk.subject }}
                             </p>
-                            <span class="mt-1 block text-[10px] text-surface-400">{{ tk.date }}</span>
+                            <span
+                                class="mt-1 block text-[10px] text-surface-400"
+                                >{{ tk.date }}</span
+                            >
                         </div>
                     </div>
                 </div>
@@ -1231,32 +1480,56 @@ function submitSupportTicket(): void {
                             <ShieldCheck class="h-5 w-5" />
                         </div>
                         <div>
-                            <h3 class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50">
+                            <h3
+                                class="font-serif text-base font-semibold text-surface-950 dark:text-surface-50"
+                            >
                                 Jaminan Layanan & SLA
                             </h3>
-                            <p class="text-[11px] text-surface-500 dark:text-surface-400">
+                            <p
+                                class="text-[11px] text-surface-500 dark:text-surface-400"
+                            >
                                 Standar keandalan platform DigitalCode
                             </p>
                         </div>
                     </div>
 
                     <div class="mt-4 space-y-2 text-xs">
-                        <div class="flex items-start gap-2.5 rounded-xl bg-surface-50/60 p-2.5 dark:bg-surface-950/30">
-                            <CheckCircle class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                        <div
+                            class="flex items-start gap-2.5 rounded-xl bg-surface-50/60 p-2.5 dark:bg-surface-950/30"
+                        >
+                            <CheckCircle
+                                class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600"
+                            />
                             <div>
-                                <strong class="text-surface-900 dark:text-surface-100">Respon Cepat Prioritas</strong>
-                                <p class="text-[11px] text-surface-500 dark:text-surface-400">
-                                    Maksimal 30 menit respon teknis pada jam kerja operasional aktif.
+                                <strong
+                                    class="text-surface-900 dark:text-surface-100"
+                                    >Respon Cepat Prioritas</strong
+                                >
+                                <p
+                                    class="text-[11px] text-surface-500 dark:text-surface-400"
+                                >
+                                    Maksimal 30 menit respon teknis pada jam
+                                    kerja operasional aktif.
                                 </p>
                             </div>
                         </div>
 
-                        <div class="flex items-start gap-2.5 rounded-xl bg-surface-50/60 p-2.5 dark:bg-surface-950/30">
-                            <CheckCircle class="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
+                        <div
+                            class="flex items-start gap-2.5 rounded-xl bg-surface-50/60 p-2.5 dark:bg-surface-950/30"
+                        >
+                            <CheckCircle
+                                class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600"
+                            />
                             <div>
-                                <strong class="text-surface-900 dark:text-surface-100">Enkripsi Data Mutakhir</strong>
-                                <p class="text-[11px] text-surface-500 dark:text-surface-400">
-                                    Seluruh berkas dokumen dan riwayat tiket dilindungi standar TLS 1.3.
+                                <strong
+                                    class="text-surface-900 dark:text-surface-100"
+                                    >Enkripsi Data Mutakhir</strong
+                                >
+                                <p
+                                    class="text-[11px] text-surface-500 dark:text-surface-400"
+                                >
+                                    Seluruh berkas dokumen dan riwayat tiket
+                                    dilindungi standar TLS 1.3.
                                 </p>
                             </div>
                         </div>
@@ -1268,13 +1541,20 @@ function submitSupportTicket(): void {
                     class="rounded-3xl border border-surface-200/80 bg-gradient-to-br from-[#FAF9F4] to-surface-100/60 p-5 shadow-2xs dark:border-surface-800 dark:from-surface-900 dark:to-surface-950"
                 >
                     <div class="flex items-center gap-2">
-                        <Sparkles class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                        <h4 class="text-xs font-bold text-surface-900 dark:text-surface-100">
+                        <Sparkles
+                            class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                        />
+                        <h4
+                            class="text-xs font-bold text-surface-900 dark:text-surface-100"
+                        >
                             Pengaturan & Keamanan Akun
                         </h4>
                     </div>
-                    <p class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400">
-                        Atur profil pengguna, aktifkan Passkeys biometrik, otentikasi dua faktor, dan preferensi tema.
+                    <p
+                        class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                    >
+                        Atur profil pengguna, aktifkan Passkeys biometrik,
+                        otentikasi dua faktor, dan preferensi tema.
                     </p>
                     <Link
                         :href="'/settings'"

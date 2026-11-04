@@ -373,7 +373,13 @@ function formatDateShort(dateString: string | null): string {
                     <DeadlineBadge
                         :due-date="project.end_date"
                         :status="projectStatusForBadge"
-                        :is-overdue="Boolean(project.end_date && new Date(project.end_date) < new Date() && project.status !== 'completed')"
+                        :is-overdue="
+                            Boolean(
+                                project.end_date &&
+                                new Date(project.end_date) < new Date() &&
+                                project.status !== 'completed',
+                            )
+                        "
                         size="md"
                     />
                 </p>

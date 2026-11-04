@@ -899,7 +899,9 @@ function projectInitials(name: string): string {
                             v-if="mostDiscussedTasks.length > 0"
                             class="border-t border-surface-100 bg-surface-50/60 p-5 dark:border-surface-800 dark:bg-surface-800/40"
                         >
-                            <div class="flex items-center justify-between gap-2 pb-3">
+                            <div
+                                class="flex items-center justify-between gap-2 pb-3"
+                            >
                                 <div class="flex items-center gap-2">
                                     <span
                                         class="grid h-6 w-6 place-items-center rounded-lg bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
@@ -1062,7 +1064,9 @@ function projectInitials(name: string): string {
             </div>
 
             <!-- Sidebar -->
-            <aside class="min-w-0 space-y-4 lg:col-span-4 sticky top-6 self-start">
+            <aside
+                class="sticky top-6 min-w-0 space-y-4 self-start lg:col-span-4"
+            >
                 <!-- Review queue -->
                 <section
                     class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
@@ -1168,7 +1172,9 @@ function projectInitials(name: string): string {
                             :key="commenter.id"
                             class="flex items-center justify-between rounded-xl px-2 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
                         >
-                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div
+                                class="flex min-w-0 flex-1 items-center gap-2.5"
+                            >
                                 <Avatar
                                     :initials="commenter.initials"
                                     :src="commenter.avatar"
@@ -1319,7 +1325,9 @@ function projectInitials(name: string): string {
                             :key="member.id"
                             class="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
                         >
-                            <div class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900">
+                            <div
+                                class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900"
+                            >
                                 <Avatar
                                     :initials="member.initials"
                                     :src="member.avatar"

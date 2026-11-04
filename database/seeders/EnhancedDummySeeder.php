@@ -194,7 +194,7 @@ class EnhancedDummySeeder extends Seeder
         );
 
         // Helper to get project by name
-        $getProject = fn (string $name) => collect($allProjects)->firstWhere('name', $name)?->id ?? $allProjects[0]['id'];
+        $getProject = fn (string $name) => collect($allProjects)->firstWhere('name', $name)['id'] ?? $allProjects[0]['id'];
 
         $tasksData = [
             // ===== E-Learning Platform =====
@@ -287,46 +287,44 @@ class EnhancedDummySeeder extends Seeder
         }
 
         // ============ RICH COMMENTS ============
-        if (! empty($createdTasks)) {
-            $commentSamples = [
-                ['task' => 1, 'user' => $siti, 'content' => 'Arsitektur multi-tenant sudah direview tim security. Perlu tambahkan row-level policy untuk isolasi data divisi.'],
-                ['task' => 1, 'user' => $budi, 'content' => 'Setuju. Akan implementasikan RLS PostgreSQL minggu depan. Estimasi 2 hari kerja.'],
-                ['task' => 2, 'user' => $andi, 'content' => 'Mux integration hampir selesai. Webhook untuk video.processed sudah handle. Sisa: adaptive bitrate testing di mobile.'],
-                ['task' => 2, 'user' => $siti, 'content' => 'Bagus. Untuk DRM, pakai Widevine/PlayReady via Mux. Butuh klarifikasi budget license fee per bulan.'],
-                ['task' => 3, 'user' => $dewi, 'content' => 'Engine kuis adaptive sudah jalan. Algoritma: difficulty naik 1 level setiap 3 jawaban benar berturut-turut.'],
-                ['task' => 4, 'user' => $extraUsers[0], 'content' => 'Sertifikat PDF generate pakai DomPDF + QR code. Verifikasi publik jalan di route /verify/{hash}.'],
-                ['task' => 5, 'user' => $extraUsers[4], 'content' => 'Dashboard analytics pakai Chart.js. Butuh data enrollment dari HRIS untuk filter per divisi.'],
-                ['task' => 7, 'user' => $dewi, 'content' => 'Payroll engine core sudah handle BPJS Kesehatan (4%+1%) dan Ketenagakerjaan (JHT 3.7%+2%, JP 1%+0.3%, JKM 0.24%, JKK 0.11-1.74%).'],
-                ['task' => 7, 'user' => $budi, 'content' => 'Perhitungan PPh21 pakai NETO method terbaru 2026 (PTKP TK/0 = 54jt). Butuh validasi ke konsultan pajak.'],
-                ['task' => 8, 'user' => $extraUsers[4], 'content' => 'OKR module: objective bisa punya multiple key results. Progress KR rollup ke objective pakai weighted average.'],
-                ['task' => 9, 'user' => $extraUsers[2], 'content' => 'Self-service cuti: approval chain otomatis dari org chart. Notifikasi FCM ke approver + email digest harian.'],
-                ['task' => 13, 'user' => $andi, 'content' => 'WhatsApp BA integration: template HSM sudah approved 12 template. Chatbot FAQ pakai Dialogflow ES.'],
-                ['task' => 14, 'user' => $extraUsers[3], 'content' => 'Email sequence builder drag-drop selesai. Tracking pixel 1x1px di footer. Unsubscribe one-click dengan token JWT.'],
-                ['task' => 15, 'user' => $extraUsers[0], 'content' => 'Forecasting model: weighted pipeline (stage probability) + AI adjustment (historical win rate per rep). MAE ~12%.'],
-                ['task' => 19, 'user' => $siti, 'content' => 'Strangler Fig: facade layer pakai Kong API Gateway. Legacy COBOL dibungkus REST wrapper. Feature flag pakai LaunchDarkly.'],
-                ['task' => 20, 'user' => $dewi, 'content' => 'COA redesign: dimension-based (entity, department, project, cost center). Mapping legacy 1:many ke new structure.'],
-                ['task' => 21, 'user' => $extraUsers[1], 'content' => 'Journal approval: maker-create, checker-approve. Recurring journal auto-post dengan schedule cron. Reversing entry otomatis next period.'],
-                ['task' => 22, 'user' => $extraUsers[4], 'content' => 'Fixed asset: depreciation method configurable per asset class (straight-line, declining balance, units of production).'],
-                ['task' => 23, 'user' => $extraUsers[4], 'content' => 'E-Faktur integration: pakai SDK DJP. QR code embed di PDF faktur. Butuh sertifikat elektronik perusahaan.'],
-                ['task' => 25, 'user' => $budi, 'content' => 'Vendor portal: self-registration pakai invite token. KYC document upload (NPWP, SIUP, SKT, NIB). Risk scoring rule-based.'],
-                ['task' => 27, 'user' => $extraUsers[2], 'content' => '3-way match: PO-GR-Invoice tolerance configurable (qty ±2%, price ±0%). Auto-release payment jika match.'],
-                ['task' => 29, 'user' => $dewi, 'content' => 'Hardware lifecycle: barcode label pakai Code128. Mobile audit app pakai React Native + Expo. GPS capture saat scan.'],
-                ['task' => 30, 'user' => $extraUsers[0], 'content' => 'License compliance: discovery agent pakai OCS Inventory. SaaS spend dari corporate card feed + API vendor (Google, Microsoft, Atlassian).'],
-                ['task' => 31, 'user' => $extraUsers[3], 'content' => 'CMDB: CI types (server, database, application, network device). Relationship: runs_on, depends_on, connects_to. Impact analysis untuk CAB.'],
-                ['task' => 33, 'user' => $admin, 'content' => 'Carbon engine: Scope 1 (direct fuel), Scope 2 (electricity), Scope 3 (travel, waste, procurement). Emission factor dari DEFRA 2026 & IPCC AR6.'],
-                ['task' => 34, 'user' => $budi, 'content' => 'Energy monitoring: IoT meter Modbus TCP ke MQTT broker. Telegraf -> InfluxDB -> Grafana. Anomaly detection pakai Isolation Forest.'],
-            ];
+        $commentSamples = [
+            ['task' => 1, 'user' => $siti, 'content' => 'Arsitektur multi-tenant sudah direview tim security. Perlu tambahkan row-level policy untuk isolasi data divisi.'],
+            ['task' => 1, 'user' => $budi, 'content' => 'Setuju. Akan implementasikan RLS PostgreSQL minggu depan. Estimasi 2 hari kerja.'],
+            ['task' => 2, 'user' => $andi, 'content' => 'Mux integration hampir selesai. Webhook untuk video.processed sudah handle. Sisa: adaptive bitrate testing di mobile.'],
+            ['task' => 2, 'user' => $siti, 'content' => 'Bagus. Untuk DRM, pakai Widevine/PlayReady via Mux. Butuh klarifikasi budget license fee per bulan.'],
+            ['task' => 3, 'user' => $dewi, 'content' => 'Engine kuis adaptive sudah jalan. Algoritma: difficulty naik 1 level setiap 3 jawaban benar berturut-turut.'],
+            ['task' => 4, 'user' => $extraUsers[0], 'content' => 'Sertifikat PDF generate pakai DomPDF + QR code. Verifikasi publik jalan di route /verify/{hash}.'],
+            ['task' => 5, 'user' => $extraUsers[4], 'content' => 'Dashboard analytics pakai Chart.js. Butuh data enrollment dari HRIS untuk filter per divisi.'],
+            ['task' => 7, 'user' => $dewi, 'content' => 'Payroll engine core sudah handle BPJS Kesehatan (4%+1%) dan Ketenagakerjaan (JHT 3.7%+2%, JP 1%+0.3%, JKM 0.24%, JKK 0.11-1.74%).'],
+            ['task' => 7, 'user' => $budi, 'content' => 'Perhitungan PPh21 pakai NETO method terbaru 2026 (PTKP TK/0 = 54jt). Butuh validasi ke konsultan pajak.'],
+            ['task' => 8, 'user' => $extraUsers[4], 'content' => 'OKR module: objective bisa punya multiple key results. Progress KR rollup ke objective pakai weighted average.'],
+            ['task' => 9, 'user' => $extraUsers[2], 'content' => 'Self-service cuti: approval chain otomatis dari org chart. Notifikasi FCM ke approver + email digest harian.'],
+            ['task' => 13, 'user' => $andi, 'content' => 'WhatsApp BA integration: template HSM sudah approved 12 template. Chatbot FAQ pakai Dialogflow ES.'],
+            ['task' => 14, 'user' => $extraUsers[3], 'content' => 'Email sequence builder drag-drop selesai. Tracking pixel 1x1px di footer. Unsubscribe one-click dengan token JWT.'],
+            ['task' => 15, 'user' => $extraUsers[0], 'content' => 'Forecasting model: weighted pipeline (stage probability) + AI adjustment (historical win rate per rep). MAE ~12%.'],
+            ['task' => 19, 'user' => $siti, 'content' => 'Strangler Fig: facade layer pakai Kong API Gateway. Legacy COBOL dibungkus REST wrapper. Feature flag pakai LaunchDarkly.'],
+            ['task' => 20, 'user' => $dewi, 'content' => 'COA redesign: dimension-based (entity, department, project, cost center). Mapping legacy 1:many ke new structure.'],
+            ['task' => 21, 'user' => $extraUsers[1], 'content' => 'Journal approval: maker-create, checker-approve. Recurring journal auto-post dengan schedule cron. Reversing entry otomatis next period.'],
+            ['task' => 22, 'user' => $extraUsers[4], 'content' => 'Fixed asset: depreciation method configurable per asset class (straight-line, declining balance, units of production).'],
+            ['task' => 23, 'user' => $extraUsers[4], 'content' => 'E-Faktur integration: pakai SDK DJP. QR code embed di PDF faktur. Butuh sertifikat elektronik perusahaan.'],
+            ['task' => 25, 'user' => $budi, 'content' => 'Vendor portal: self-registration pakai invite token. KYC document upload (NPWP, SIUP, SKT, NIB). Risk scoring rule-based.'],
+            ['task' => 27, 'user' => $extraUsers[2], 'content' => '3-way match: PO-GR-Invoice tolerance configurable (qty ±2%, price ±0%). Auto-release payment jika match.'],
+            ['task' => 29, 'user' => $dewi, 'content' => 'Hardware lifecycle: barcode label pakai Code128. Mobile audit app pakai React Native + Expo. GPS capture saat scan.'],
+            ['task' => 30, 'user' => $extraUsers[0], 'content' => 'License compliance: discovery agent pakai OCS Inventory. SaaS spend dari corporate card feed + API vendor (Google, Microsoft, Atlassian).'],
+            ['task' => 31, 'user' => $extraUsers[3], 'content' => 'CMDB: CI types (server, database, application, network device). Relationship: runs_on, depends_on, connects_to. Impact analysis untuk CAB.'],
+            ['task' => 33, 'user' => $admin, 'content' => 'Carbon engine: Scope 1 (direct fuel), Scope 2 (electricity), Scope 3 (travel, waste, procurement). Emission factor dari DEFRA 2026 & IPCC AR6.'],
+            ['task' => 34, 'user' => $budi, 'content' => 'Energy monitoring: IoT meter Modbus TCP ke MQTT broker. Telegraf -> InfluxDB -> Grafana. Anomaly detection pakai Isolation Forest.'],
+        ];
 
-            foreach ($commentSamples as $cs) {
-                if (isset($createdTasks[$cs['task']])) {
-                    TaskComment::firstOrCreate(
-                        [
-                            'task_id' => $createdTasks[$cs['task']]->id,
-                            'user_id' => $cs['user']->id,
-                            'content' => $cs['content'],
-                        ]
-                    );
-                }
+        foreach ($commentSamples as $cs) {
+            if (isset($createdTasks[$cs['task']])) {
+                TaskComment::firstOrCreate(
+                    [
+                        'task_id' => $createdTasks[$cs['task']]->id,
+                        'user_id' => $cs['user']->id,
+                        'content' => $cs['content'],
+                    ]
+                );
             }
         }
 
@@ -435,7 +433,7 @@ class EnhancedDummySeeder extends Seeder
 
         // ============ NOTIFICATIONS ============
         foreach ($extendedTeam as $idx => $targetUser) {
-            if ($targetUser->notifications()->count() < 5 && ! empty($createdTasks)) {
+            if ($targetUser->notifications()->count() < 5) {
                 for ($i = 0; $i < 3; $i++) {
                     $targetTask = $createdTasks[($idx + $i) % count($createdTasks)];
                     $targetProject = Project::find($targetTask->project_id) ?? $allProjects[0];

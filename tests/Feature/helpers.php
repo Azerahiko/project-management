@@ -10,13 +10,11 @@ use App\Models\ProjectMember;
 use App\Models\Task;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Support\Facades\Artisan;
 
 if (! function_exists('createTestUsers')) {
     function createTestUsers()
     {
         // Ensure migrations run
-        Artisan::call('migrate', ['--force' => true]);
 
         // Seed roles and permissions
         (new RolePermissionSeeder)->run();

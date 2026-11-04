@@ -111,11 +111,19 @@ class DashboardController extends Controller
             ", [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
             ->first();
 
+        $urgentCount = 0;
+        $dueThisWeekCount = 0;
+
+        if ($focusAggregates) {
+            $urgentCount = (int) ($focusAggregates->urgent_count ?? 0);
+            $dueThisWeekCount = (int) ($focusAggregates->due_this_week_count ?? 0);
+        }
+
         $focusMetrics = [
             'on_time_rate' => $onTimeRate,
-            'urgent_tasks_count' => (int) ($focusAggregates?->urgent_count ?? 0),
+            'urgent_tasks_count' => $urgentCount,
             'review_tasks_count' => $reviewTasksCount,
-            'due_this_week_count' => (int) ($focusAggregates?->due_this_week_count ?? 0),
+            'due_this_week_count' => $dueThisWeekCount,
             'completed_tasks_count' => $completedTasksCount,
             'total_tasks_count' => $totalTasksCount,
             'completion_rate' => $totalTasksCount > 0

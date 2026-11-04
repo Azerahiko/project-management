@@ -101,14 +101,30 @@ function collapseAll(): void {
 // Timeline range bounds calculation
 const timelineBounds = computed(() => {
     if (rangeMode.value === 'month') {
-        const start = new Date(cursorDate.value.getFullYear(), cursorDate.value.getMonth(), 1);
-        const end = new Date(cursorDate.value.getFullYear(), cursorDate.value.getMonth() + 2, 0);
+        const start = new Date(
+            cursorDate.value.getFullYear(),
+            cursorDate.value.getMonth(),
+            1,
+        );
+        const end = new Date(
+            cursorDate.value.getFullYear(),
+            cursorDate.value.getMonth() + 2,
+            0,
+        );
         return { start, end };
     }
 
     if (rangeMode.value === 'quarter') {
-        const start = new Date(cursorDate.value.getFullYear(), cursorDate.value.getMonth() - 1, 1);
-        const end = new Date(cursorDate.value.getFullYear(), cursorDate.value.getMonth() + 2, 0);
+        const start = new Date(
+            cursorDate.value.getFullYear(),
+            cursorDate.value.getMonth() - 1,
+            1,
+        );
+        const end = new Date(
+            cursorDate.value.getFullYear(),
+            cursorDate.value.getMonth() + 2,
+            0,
+        );
         return { start, end };
     }
 
@@ -140,27 +156,54 @@ const timelineBounds = computed(() => {
 });
 
 const totalTimelineDays = computed(() => {
-    const diff = timelineBounds.value.end.getTime() - timelineBounds.value.start.getTime();
+    const diff =
+        timelineBounds.value.end.getTime() -
+        timelineBounds.value.start.getTime();
     return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
 });
 
 // Month headers in the timeline
 const timelineMonths = computed(() => {
     const months = [];
-    const current = new Date(timelineBounds.value.start.getFullYear(), timelineBounds.value.start.getMonth(), 1);
+    const current = new Date(
+        timelineBounds.value.start.getFullYear(),
+        timelineBounds.value.start.getMonth(),
+        1,
+    );
     const end = timelineBounds.value.end;
 
     while (current <= end) {
-        const monthStart = new Date(Math.max(current.getTime(), timelineBounds.value.start.getTime()));
-        const monthEnd = new Date(Math.min(new Date(current.getFullYear(), current.getMonth() + 1, 0).getTime(), end.getTime()));
-        const daysInMonth = Math.round((monthEnd.getTime() - monthStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const monthStart = new Date(
+            Math.max(current.getTime(), timelineBounds.value.start.getTime()),
+        );
+        const monthEnd = new Date(
+            Math.min(
+                new Date(
+                    current.getFullYear(),
+                    current.getMonth() + 1,
+                    0,
+                ).getTime(),
+                end.getTime(),
+            ),
+        );
+        const daysInMonth =
+            Math.round(
+                (monthEnd.getTime() - monthStart.getTime()) /
+                    (1000 * 60 * 60 * 24),
+            ) + 1;
 
-        const startDiff = Math.round((monthStart.getTime() - timelineBounds.value.start.getTime()) / (1000 * 60 * 60 * 24));
+        const startDiff = Math.round(
+            (monthStart.getTime() - timelineBounds.value.start.getTime()) /
+                (1000 * 60 * 60 * 24),
+        );
         const leftPercent = (startDiff / totalTimelineDays.value) * 100;
         const widthPercent = (daysInMonth / totalTimelineDays.value) * 100;
 
         months.push({
-            name: current.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+            name: current.toLocaleDateString('id-ID', {
+                month: 'long',
+                year: 'numeric',
+            }),
             shortName: current.toLocaleDateString('id-ID', { month: 'short' }),
             year: current.getFullYear(),
             left: leftPercent,
@@ -174,11 +217,18 @@ const timelineMonths = computed(() => {
 });
 
 // Calculate Gantt bar left & width percentage
-function getBarCoords(startDateStr: string | null, endDateStr: string | null): { left: number; width: number; isVisible: boolean } {
+function getBarCoords(
+    startDateStr: string | null,
+    endDateStr: string | null,
+): { left: number; width: number; isVisible: boolean } {
     const boundStart = timelineBounds.value.start.getTime();
     const boundEnd = timelineBounds.value.end.getTime();
 
-    const start = startDateStr ? parseIso(startDateStr).getTime() : (endDateStr ? parseIso(endDateStr).getTime() : boundStart);
+    const start = startDateStr
+        ? parseIso(startDateStr).getTime()
+        : endDateStr
+          ? parseIso(endDateStr).getTime()
+          : boundStart;
     const end = endDateStr ? parseIso(endDateStr).getTime() : start;
 
     if (end < boundStart || start > boundEnd) {
@@ -189,7 +239,10 @@ function getBarCoords(startDateStr: string | null, endDateStr: string | null): {
     const clampedEnd = Math.min(boundEnd, end);
 
     const startDays = (clampedStart - boundStart) / (1000 * 60 * 60 * 24);
-    const durationDays = Math.max(1, (clampedEnd - clampedStart) / (1000 * 60 * 60 * 24) + 1);
+    const durationDays = Math.max(
+        1,
+        (clampedEnd - clampedStart) / (1000 * 60 * 60 * 24) + 1,
+    );
 
     const left = (startDays / totalTimelineDays.value) * 100;
     const width = Math.max(1.5, (durationDays / totalTimelineDays.value) * 100);
@@ -214,7 +267,11 @@ const todayMarker = computed(() => {
 // Shift timeline range
 function shiftTimeline(direction: -1 | 1): void {
     const stepMonths = rangeMode.value === 'quarter' ? 3 : 1;
-    cursorDate.value = new Date(cursorDate.value.getFullYear(), cursorDate.value.getMonth() + (direction * stepMonths), 1);
+    cursorDate.value = new Date(
+        cursorDate.value.getFullYear(),
+        cursorDate.value.getMonth() + direction * stepMonths,
+        1,
+    );
 }
 
 function goToToday(): void {
@@ -231,9 +288,10 @@ const filteredProjects = computed(() => {
 
     const query = searchQuery.value.trim().toLowerCase();
     if (query) {
-        list = list.filter((p) =>
-            p.name.toLowerCase().includes(query) ||
-            p.tasks.some((t) => t.title.toLowerCase().includes(query)),
+        list = list.filter(
+            (p) =>
+                p.name.toLowerCase().includes(query) ||
+                p.tasks.some((t) => t.title.toLowerCase().includes(query)),
         );
     }
 
@@ -260,7 +318,10 @@ const summary = computed(() => {
         scheduledTasks,
         completedTasks,
         overdueTasks,
-        completionRate: scheduledTasks > 0 ? Math.round((completedTasks / scheduledTasks) * 100) : 0,
+        completionRate:
+            scheduledTasks > 0
+                ? Math.round((completedTasks / scheduledTasks) * 100)
+                : 0,
     };
 });
 
@@ -272,10 +333,13 @@ function projectCompletion(project: TimelineProject): number {
 
 const statusBadgeClasses: Record<string, string> = {
     active: 'bg-primary-50 text-primary-800 border-primary-200/80 dark:bg-primary-950/40 dark:text-primary-300 dark:border-primary-800/40',
-    completed: 'bg-emerald-50 text-emerald-800 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40',
-    on_hold: 'bg-amber-50 text-amber-800 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40',
+    completed:
+        'bg-emerald-50 text-emerald-800 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40',
+    on_hold:
+        'bg-amber-50 text-amber-800 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40',
     draft: 'bg-surface-100 text-surface-600 border-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:border-surface-700',
-    archived: 'bg-surface-100 text-surface-500 border-surface-200 dark:bg-surface-800 dark:text-surface-400 dark:border-surface-700',
+    archived:
+        'bg-surface-100 text-surface-500 border-surface-200 dark:bg-surface-800 dark:text-surface-400 dark:border-surface-700',
 };
 
 const priorityDotColors: Record<string, string> = {
@@ -301,7 +365,9 @@ if (rawProjects.value.length > 0) {
 <template>
     <div class="space-y-6 pb-12">
         <!-- 1. Header -->
-        <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <header
+            class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
             <div>
                 <span
                     class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200/80 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-800 uppercase dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300"
@@ -317,7 +383,8 @@ if (rawProjects.value.length > 0) {
                 <p
                     class="mt-1 max-w-2xl text-sm leading-relaxed text-surface-600 dark:text-surface-300"
                 >
-                    Visualisasi jadwal pengerjaan, durasi fase, dan capaian tugas tim secara teratur dan berurutan.
+                    Visualisasi jadwal pengerjaan, durasi fase, dan capaian
+                    tugas tim secara teratur dan berurutan.
                 </p>
             </div>
 
@@ -343,17 +410,20 @@ if (rawProjects.value.length > 0) {
         </header>
 
         <!-- 2. KPI Summary Bar -->
-        <div
-            class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4"
-        >
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <div
                 class="rounded-2xl border border-surface-200/80 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Proyek Aktif</span>
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Proyek Aktif</span
+                    >
                     <component :is="getIcon('FolderKanban')" class="h-4 w-4" />
                 </div>
-                <p class="mt-2 font-serif text-2xl font-normal text-surface-950 dark:text-surface-50">
+                <p
+                    class="mt-2 font-serif text-2xl font-normal text-surface-950 dark:text-surface-50"
+                >
                     {{ summary.totalProjects }}
                 </p>
             </div>
@@ -362,10 +432,15 @@ if (rawProjects.value.length > 0) {
                 class="rounded-2xl border border-surface-200/80 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Tugas Terjadwal</span>
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Tugas Terjadwal</span
+                    >
                     <component :is="getIcon('CheckSquare')" class="h-4 w-4" />
                 </div>
-                <p class="mt-2 font-serif text-2xl font-normal text-surface-950 dark:text-surface-50">
+                <p
+                    class="mt-2 font-serif text-2xl font-normal text-surface-950 dark:text-surface-50"
+                >
                     {{ summary.scheduledTasks }}
                 </p>
             </div>
@@ -374,11 +449,19 @@ if (rawProjects.value.length > 0) {
                 class="rounded-2xl border border-surface-200/80 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Tugas Selesai</span>
-                    <component :is="getIcon('CheckCircle2')" class="h-4 w-4 text-emerald-600" />
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Tugas Selesai</span
+                    >
+                    <component
+                        :is="getIcon('CheckCircle2')"
+                        class="h-4 w-4 text-emerald-600"
+                    />
                 </div>
                 <div class="mt-2 flex items-baseline gap-2">
-                    <p class="font-serif text-2xl font-normal text-surface-950 dark:text-surface-50">
+                    <p
+                        class="font-serif text-2xl font-normal text-surface-950 dark:text-surface-50"
+                    >
                         {{ summary.completedTasks }}
                     </p>
                     <span class="text-xs font-semibold text-emerald-600">
@@ -391,12 +474,22 @@ if (rawProjects.value.length > 0) {
                 class="rounded-2xl border border-surface-200/80 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
             >
                 <div class="flex items-center justify-between text-surface-400">
-                    <span class="text-xs font-medium text-surface-500 dark:text-surface-400">Lewat Tenggat</span>
-                    <component :is="getIcon('AlertTriangle')" class="h-4 w-4 text-rose-500" />
+                    <span
+                        class="text-xs font-medium text-surface-500 dark:text-surface-400"
+                        >Lewat Tenggat</span
+                    >
+                    <component
+                        :is="getIcon('AlertTriangle')"
+                        class="h-4 w-4 text-rose-500"
+                    />
                 </div>
                 <p
                     class="mt-2 font-serif text-2xl font-normal"
-                    :class="summary.overdueTasks > 0 ? 'text-rose-600' : 'text-surface-950 dark:text-surface-50'"
+                    :class="
+                        summary.overdueTasks > 0
+                            ? 'text-rose-600'
+                            : 'text-surface-950 dark:text-surface-50'
+                    "
                 >
                     {{ summary.overdueTasks }}
                 </p>
@@ -438,7 +531,10 @@ if (rawProjects.value.length > 0) {
                     <span
                         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
                     >
-                        <component :is="getIcon('Search')" class="h-3.5 w-3.5" />
+                        <component
+                            :is="getIcon('Search')"
+                            class="h-3.5 w-3.5"
+                        />
                     </span>
                     <input
                         v-model="searchQuery"
@@ -449,11 +545,17 @@ if (rawProjects.value.length > 0) {
                 </div>
 
                 <!-- Range Mode (Kuartal / Bulan / Semua) -->
-                <div class="flex items-center rounded-xl border border-surface-200 bg-surface-50 p-0.5 dark:border-surface-700 dark:bg-surface-800">
+                <div
+                    class="flex items-center rounded-xl border border-surface-200 bg-surface-50 p-0.5 dark:border-surface-700 dark:bg-surface-800"
+                >
                     <button
                         type="button"
                         class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
-                        :class="rangeMode === 'quarter' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100' : 'text-surface-500'"
+                        :class="
+                            rangeMode === 'quarter'
+                                ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100'
+                                : 'text-surface-500'
+                        "
                         @click="rangeMode = 'quarter'"
                     >
                         Kuartal
@@ -461,7 +563,11 @@ if (rawProjects.value.length > 0) {
                     <button
                         type="button"
                         class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
-                        :class="rangeMode === 'month' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100' : 'text-surface-500'"
+                        :class="
+                            rangeMode === 'month'
+                                ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100'
+                                : 'text-surface-500'
+                        "
                         @click="rangeMode = 'month'"
                     >
                         2 Bulan
@@ -469,7 +575,11 @@ if (rawProjects.value.length > 0) {
                     <button
                         type="button"
                         class="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
-                        :class="rangeMode === 'all' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100' : 'text-surface-500'"
+                        :class="
+                            rangeMode === 'all'
+                                ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-surface-100'
+                                : 'text-surface-500'
+                        "
                         @click="rangeMode = 'all'"
                     >
                         Semua
@@ -484,7 +594,10 @@ if (rawProjects.value.length > 0) {
                         @click="shiftTimeline(-1)"
                         aria-label="Rentang sebelumnya"
                     >
-                        <component :is="getIcon('ChevronLeft')" class="h-4 w-4" />
+                        <component
+                            :is="getIcon('ChevronLeft')"
+                            class="h-4 w-4"
+                        />
                     </button>
                     <button
                         type="button"
@@ -492,7 +605,10 @@ if (rawProjects.value.length > 0) {
                         @click="shiftTimeline(1)"
                         aria-label="Rentang berikutnya"
                     >
-                        <component :is="getIcon('ChevronRight')" class="h-4 w-4" />
+                        <component
+                            :is="getIcon('ChevronRight')"
+                            class="h-4 w-4"
+                        />
                     </button>
                 </div>
 
@@ -500,9 +616,17 @@ if (rawProjects.value.length > 0) {
                 <button
                     type="button"
                     class="rounded-xl border border-surface-200 px-2.5 py-1.5 text-xs font-semibold text-surface-600 transition hover:bg-surface-100 dark:border-surface-700 dark:text-surface-300 dark:hover:bg-surface-800"
-                    @click="Object.keys(expandedProjects).length > 0 ? collapseAll() : expandAll()"
+                    @click="
+                        Object.keys(expandedProjects).length > 0
+                            ? collapseAll()
+                            : expandAll()
+                    "
                 >
-                    {{ Object.keys(expandedProjects).length > 0 ? 'Tutup Semua' : 'Buka Semua' }}
+                    {{
+                        Object.keys(expandedProjects).length > 0
+                            ? 'Tutup Semua'
+                            : 'Buka Semua'
+                    }}
                 </button>
             </div>
         </div>
@@ -522,16 +646,22 @@ if (rawProjects.value.length > 0) {
                     <div
                         class="flex h-14 items-center justify-between border-b border-surface-200/80 bg-surface-50/70 px-4 dark:border-surface-800 dark:bg-surface-950/40"
                     >
-                        <span class="text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
+                        <span
+                            class="text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                        >
                             Proyek & Rincian Tugas
                         </span>
-                        <span class="text-xs font-semibold text-surface-600 dark:text-surface-400">
+                        <span
+                            class="text-xs font-semibold text-surface-600 dark:text-surface-400"
+                        >
                             {{ filteredProjects.length }} Proyek
                         </span>
                     </div>
 
                     <!-- Project Rows -->
-                    <div class="divide-y divide-surface-100 dark:divide-surface-800/60">
+                    <div
+                        class="divide-y divide-surface-100 dark:divide-surface-800/60"
+                    >
                         <template
                             v-for="project in filteredProjects"
                             :key="`project-row-${project.id}`"
@@ -539,18 +669,32 @@ if (rawProjects.value.length > 0) {
                             <!-- Project Header Row -->
                             <div
                                 class="group flex h-14 items-center justify-between px-3.5 transition-colors hover:bg-surface-50/80 dark:hover:bg-surface-800/40"
-                                :class="selectedProject?.id === project.id ? 'bg-primary-50/40 dark:bg-primary-950/20' : ''"
+                                :class="
+                                    selectedProject?.id === project.id
+                                        ? 'bg-primary-50/40 dark:bg-primary-950/20'
+                                        : ''
+                                "
                                 @click="selectedProject = project"
                             >
-                                <div class="flex min-w-0 flex-1 items-center gap-2">
+                                <div
+                                    class="flex min-w-0 flex-1 items-center gap-2"
+                                >
                                     <!-- Expand / Collapse button -->
                                     <button
                                         type="button"
                                         class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-surface-400 transition hover:bg-surface-200 hover:text-surface-700 dark:hover:bg-surface-700"
-                                        @click.stop="toggleProjectExpand(project.id)"
+                                        @click.stop="
+                                            toggleProjectExpand(project.id)
+                                        "
                                     >
                                         <component
-                                            :is="getIcon(expandedProjects[project.id] ? 'ChevronDown' : 'ChevronRight')"
+                                            :is="
+                                                getIcon(
+                                                    expandedProjects[project.id]
+                                                        ? 'ChevronDown'
+                                                        : 'ChevronRight',
+                                                )
+                                            "
                                             class="h-3.5 w-3.5"
                                         />
                                     </button>
@@ -579,7 +723,10 @@ if (rawProjects.value.length > 0) {
                                 <!-- Tasks Count Pill -->
                                 <span
                                     class="ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                                    :class="statusBadgeClasses[project.status] ?? statusBadgeClasses.draft"
+                                    :class="
+                                        statusBadgeClasses[project.status] ??
+                                        statusBadgeClasses.draft
+                                    "
                                 >
                                     {{ project.tasks.length }} tugas
                                 </span>
@@ -590,18 +737,28 @@ if (rawProjects.value.length > 0) {
                                 <div
                                     v-for="task in project.tasks"
                                     :key="`task-left-${task.id}`"
-                                    class="flex h-11 items-center justify-between border-t border-surface-100/60 bg-surface-50/30 pl-9 pr-3 transition-colors hover:bg-surface-50 dark:border-surface-800/40 dark:bg-surface-950/20 dark:hover:bg-surface-800/30"
+                                    class="flex h-11 items-center justify-between border-t border-surface-100/60 bg-surface-50/30 pr-3 pl-9 transition-colors hover:bg-surface-50 dark:border-surface-800/40 dark:bg-surface-950/20 dark:hover:bg-surface-800/30"
                                 >
-                                    <div class="flex min-w-0 flex-1 items-center gap-2">
+                                    <div
+                                        class="flex min-w-0 flex-1 items-center gap-2"
+                                    >
                                         <span
                                             class="h-1.5 w-1.5 shrink-0 rounded-full"
-                                            :class="priorityDotColors[task.priority] ?? 'bg-surface-400'"
+                                            :class="
+                                                priorityDotColors[
+                                                    task.priority
+                                                ] ?? 'bg-surface-400'
+                                            "
                                         />
                                         <Link
                                             v-if="canViewTasks"
                                             :href="taskRoutes.show.url(task.id)"
                                             class="truncate text-xs text-surface-700 transition hover:text-primary-700 dark:text-surface-300 dark:hover:text-primary-300"
-                                            :class="task.status === 'done' ? 'line-through opacity-60' : ''"
+                                            :class="
+                                                task.status === 'done'
+                                                    ? 'line-through opacity-60'
+                                                    : ''
+                                            "
                                             :title="task.title"
                                         >
                                             {{ task.title }}
@@ -609,7 +766,11 @@ if (rawProjects.value.length > 0) {
                                         <span
                                             v-else
                                             class="truncate text-xs text-surface-700 dark:text-surface-300"
-                                            :class="task.status === 'done' ? 'line-through opacity-60' : ''"
+                                            :class="
+                                                task.status === 'done'
+                                                    ? 'line-through opacity-60'
+                                                    : ''
+                                            "
                                         >
                                             {{ task.title }}
                                         </span>
@@ -650,9 +811,14 @@ if (rawProjects.value.length > 0) {
                                 v-for="(m, idx) in timelineMonths"
                                 :key="`header-month-${idx}`"
                                 class="absolute top-0 bottom-0 flex flex-col justify-center border-l border-surface-200/80 px-3 dark:border-surface-800"
-                                :style="{ left: `${m.left}%`, width: `${m.width}%` }"
+                                :style="{
+                                    left: `${m.left}%`,
+                                    width: `${m.width}%`,
+                                }"
                             >
-                                <span class="truncate text-xs font-bold text-surface-800 dark:text-surface-200">
+                                <span
+                                    class="truncate text-xs font-bold text-surface-800 dark:text-surface-200"
+                                >
                                     {{ m.name }}
                                 </span>
                                 <span class="text-[10px] text-surface-400">
@@ -662,7 +828,9 @@ if (rawProjects.value.length > 0) {
                         </div>
 
                         <!-- Canvas Body Rows (Directly matching left rows height!) -->
-                        <div class="relative divide-y divide-surface-100 dark:divide-surface-800/60">
+                        <div
+                            class="relative divide-y divide-surface-100 dark:divide-surface-800/60"
+                        >
                             <!-- Background Vertical Grid Lines -->
                             <div
                                 class="pointer-events-none absolute inset-0 z-0"
@@ -696,12 +864,21 @@ if (rawProjects.value.length > 0) {
                                 <!-- Project Bar Row (h-14) -->
                                 <div
                                     class="relative h-14 transition-colors hover:bg-surface-50/50 dark:hover:bg-surface-800/20"
-                                    :class="selectedProject?.id === project.id ? 'bg-primary-50/20' : ''"
+                                    :class="
+                                        selectedProject?.id === project.id
+                                            ? 'bg-primary-50/20'
+                                            : ''
+                                    "
                                     @click="selectedProject = project"
                                 >
                                     <!-- Render project Gantt bar -->
                                     <div
-                                        v-if="getBarCoords(project.start_date, project.end_date).isVisible"
+                                        v-if="
+                                            getBarCoords(
+                                                project.start_date,
+                                                project.end_date,
+                                            ).isVisible
+                                        "
                                         class="group absolute top-2.5 h-9 overflow-hidden rounded-xl bg-[#0F5132] px-3 text-white shadow-xs transition hover:brightness-110 dark:bg-primary-600"
                                         :style="{
                                             left: `${getBarCoords(project.start_date, project.end_date).left}%`,
@@ -713,15 +890,25 @@ if (rawProjects.value.length > 0) {
                                         <!-- Internal Progress Bar Fill -->
                                         <div
                                             class="absolute top-0 bottom-0 left-0 bg-white/20 transition-all duration-500"
-                                            :style="{ width: `${projectCompletion(project)}%` }"
+                                            :style="{
+                                                width: `${projectCompletion(project)}%`,
+                                            }"
                                         />
 
-                                        <div class="relative z-10 flex h-full items-center justify-between gap-2">
-                                            <span class="truncate text-xs font-semibold">
+                                        <div
+                                            class="relative z-10 flex h-full items-center justify-between gap-2"
+                                        >
+                                            <span
+                                                class="truncate text-xs font-semibold"
+                                            >
                                                 {{ project.name }}
                                             </span>
-                                            <span class="shrink-0 text-[10px] font-bold opacity-80">
-                                                {{ projectCompletion(project) }}%
+                                            <span
+                                                class="shrink-0 text-[10px] font-bold opacity-80"
+                                            >
+                                                {{
+                                                    projectCompletion(project)
+                                                }}%
                                             </span>
                                         </div>
                                     </div>
@@ -735,9 +922,18 @@ if (rawProjects.value.length > 0) {
                                         class="relative h-11 transition-colors hover:bg-surface-50/50 dark:hover:bg-surface-800/20"
                                     >
                                         <div
-                                            v-if="getBarCoords(task.start_date, task.due_date).isVisible"
+                                            v-if="
+                                                getBarCoords(
+                                                    task.start_date,
+                                                    task.due_date,
+                                                ).isVisible
+                                            "
                                             class="absolute top-2 h-7 overflow-hidden rounded-lg px-2.5 shadow-2xs transition hover:scale-[1.01]"
-                                            :class="priorityBarColors[task.priority] ?? 'bg-surface-600 text-white'"
+                                            :class="
+                                                priorityBarColors[
+                                                    task.priority
+                                                ] ?? 'bg-surface-600 text-white'
+                                            "
                                             :style="{
                                                 left: `${getBarCoords(task.start_date, task.due_date).left}%`,
                                                 width: `${getBarCoords(task.start_date, task.due_date).width}%`,
@@ -745,11 +941,17 @@ if (rawProjects.value.length > 0) {
                                             }"
                                             :title="`${task.title} (${task.start_date || '—'} s/d ${task.due_date || '—'})`"
                                         >
-                                            <div class="flex h-full items-center justify-between gap-1.5">
-                                                <span class="truncate text-[11px] font-medium">
+                                            <div
+                                                class="flex h-full items-center justify-between gap-1.5"
+                                            >
+                                                <span
+                                                    class="truncate text-[11px] font-medium"
+                                                >
                                                     {{ task.title }}
                                                 </span>
-                                                <span class="shrink-0 text-[9px] font-bold uppercase opacity-80">
+                                                <span
+                                                    class="shrink-0 text-[9px] font-bold uppercase opacity-80"
+                                                >
                                                     {{ task.priority_label }}
                                                 </span>
                                             </div>
@@ -768,23 +970,49 @@ if (rawProjects.value.length > 0) {
             v-if="selectedProject"
             class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs transition sm:p-6 dark:border-surface-800 dark:bg-surface-900"
         >
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+            >
                 <div>
-                    <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">
+                    <span
+                        class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                    >
                         Fokus Proyek Terpilih
                     </span>
-                    <h2 class="mt-1 text-lg font-semibold text-surface-950 sm:text-xl dark:text-surface-50">
+                    <h2
+                        class="mt-1 text-lg font-semibold text-surface-950 sm:text-xl dark:text-surface-50"
+                    >
                         {{ selectedProject.name }}
                     </h2>
-                    <p class="mt-0.5 text-xs text-surface-500 dark:text-surface-400">
-                        Rentang: {{ selectedProject.start_date ? formatShortDate(parseIso(selectedProject.start_date)) : '—' }} s/d {{ selectedProject.end_date ? formatShortDate(parseIso(selectedProject.end_date)) : '—' }}
+                    <p
+                        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
+                    >
+                        Rentang:
+                        {{
+                            selectedProject.start_date
+                                ? formatShortDate(
+                                      parseIso(selectedProject.start_date),
+                                  )
+                                : '—'
+                        }}
+                        s/d
+                        {{
+                            selectedProject.end_date
+                                ? formatShortDate(
+                                      parseIso(selectedProject.end_date),
+                                  )
+                                : '—'
+                        }}
                     </p>
                 </div>
 
                 <div class="flex items-center gap-2">
                     <span
                         class="rounded-full px-2.5 py-1 text-xs font-bold"
-                        :class="statusBadgeClasses[selectedProject.status] ?? statusBadgeClasses.draft"
+                        :class="
+                            statusBadgeClasses[selectedProject.status] ??
+                            statusBadgeClasses.draft
+                        "
                     >
                         {{ selectedProject.status_label }}
                     </span>
@@ -793,15 +1021,24 @@ if (rawProjects.value.length > 0) {
                         class="btn btn-secondary text-xs"
                     >
                         <span>Buka Detail Proyek</span>
-                        <component :is="getIcon('ArrowRight')" class="h-3.5 w-3.5" />
+                        <component
+                            :is="getIcon('ArrowRight')"
+                            class="h-3.5 w-3.5"
+                        />
                     </Link>
                 </div>
             </div>
 
             <!-- Tasks list preview in the selected project -->
-            <div class="mt-5 border-t border-surface-100 pt-4 dark:border-surface-800">
-                <h3 class="mb-3 text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400">
-                    Daftar Tugas dalam Proyek Ini ({{ selectedProject.tasks.length }})
+            <div
+                class="mt-5 border-t border-surface-100 pt-4 dark:border-surface-800"
+            >
+                <h3
+                    class="mb-3 text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                >
+                    Daftar Tugas dalam Proyek Ini ({{
+                        selectedProject.tasks.length
+                    }})
                 </h3>
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     <div
@@ -810,16 +1047,30 @@ if (rawProjects.value.length > 0) {
                         class="flex items-center justify-between rounded-2xl border border-surface-200/70 bg-surface-50/50 p-3 dark:border-surface-800 dark:bg-surface-950/30"
                     >
                         <div class="min-w-0 flex-1 pr-2">
-                            <p class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100">
+                            <p
+                                class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100"
+                            >
                                 {{ task.title }}
                             </p>
                             <p class="mt-0.5 text-[10px] text-surface-400">
-                                Tenggat: {{ task.due_date ? formatShortDate(parseIso(task.due_date)) : '—' }}
+                                Tenggat:
+                                {{
+                                    task.due_date
+                                        ? formatShortDate(
+                                              parseIso(task.due_date),
+                                          )
+                                        : '—'
+                                }}
                             </p>
                         </div>
                         <span
                             class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase"
-                            :class="priorityDotColors[task.priority] ? 'text-white ' + priorityDotColors[task.priority] : 'bg-surface-200 text-surface-700'"
+                            :class="
+                                priorityDotColors[task.priority]
+                                    ? 'text-white ' +
+                                      priorityDotColors[task.priority]
+                                    : 'bg-surface-200 text-surface-700'
+                            "
                         >
                             {{ task.priority_label }}
                         </span>

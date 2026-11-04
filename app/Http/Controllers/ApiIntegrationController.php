@@ -103,7 +103,7 @@ class ApiIntegrationController extends Controller
                 'last_delivery_error' => $webhook->last_delivery_error,
                 'last_delivery_at' => $webhook->last_delivery_at?->diffForHumans(),
                 'last_delivery_at_iso' => $webhook->last_delivery_at?->toISOString(),
-                'created_by' => $webhook->user?->name,
+                'created_by' => $webhook->user->name,
                 'created_at' => $webhook->created_at?->translatedFormat('d M Y'),
             ]),
             'webhook_events' => WebhookEvents::all(),
@@ -194,7 +194,7 @@ class ApiIntegrationController extends Controller
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
             'url' => $validated['url'],
-            'events' => array_values($validated['events']),
+            'events' => $validated['events'],
             'secret' => Str::random(40),
             'is_active' => true,
         ]);
@@ -214,8 +214,8 @@ class ApiIntegrationController extends Controller
         $webhook->update([
             'name' => $validated['name'],
             'url' => $validated['url'],
-            'events' => array_values($validated['events']),
-            'is_active' => (bool) ($validated['is_active'] ?? $webhook->is_active),
+            'events' => $validated['events'],
+            'is_active' => $validated['is_active'] ?? $webhook->is_active,
         ]);
 
         return redirect()->back()->with('success', 'Webhook berhasil diperbarui.');
@@ -280,7 +280,7 @@ class ApiIntegrationController extends Controller
     }
 
     /**
-     * @return array{name: string, url: string, events: list<string>}
+     * @return array{name: string, url: string, events: list<string>, is_active?: bool}
      */
     private function validateWebhook(Request $request): array
     {

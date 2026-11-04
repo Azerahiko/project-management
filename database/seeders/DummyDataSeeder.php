@@ -711,36 +711,34 @@ class DummyDataSeeder extends Seeder
         }
 
         // Add Realistic Comments
-        if (! empty($createdTasks)) {
-            TaskComment::firstOrCreate(
-                [
-                    'task_id' => $createdTasks[1]->id,
-                    'user_id' => $siti->id,
-                    'content' => 'Mockup checkout sudah disesuaikan dengan instruksi klien. Desain responsif mobile siap direview.',
-                ]
-            );
-            TaskComment::firstOrCreate(
-                [
-                    'task_id' => $createdTasks[1]->id,
-                    'user_id' => $admin->id,
-                    'content' => 'Bagus sekali. Pastikan tombol bayar tetap terlihat nyaman di perangkat layar kecil.',
-                ]
-            );
-            TaskComment::firstOrCreate(
-                [
-                    'task_id' => $createdTasks[8]->id,
-                    'user_id' => $andi->id,
-                    'content' => 'Scanner barcode kamera sudah berhasil membaca format EAN-13 dan Code-128 dengan akurat.',
-                ]
-            );
-            TaskComment::firstOrCreate(
-                [
-                    'task_id' => $createdTasks[14]->id,
-                    'user_id' => $siti->id,
-                    'content' => 'Koneksi ke Prometheus cluster sudah stabil, threshold alert disetel pada 85% penggunaan CPU.',
-                ]
-            );
-        }
+        TaskComment::firstOrCreate(
+            [
+                'task_id' => $createdTasks[1]->id,
+                'user_id' => $siti->id,
+                'content' => 'Mockup checkout sudah disesuaikan dengan instruksi klien. Desain responsif mobile siap direview.',
+            ]
+        );
+        TaskComment::firstOrCreate(
+            [
+                'task_id' => $createdTasks[1]->id,
+                'user_id' => $admin->id,
+                'content' => 'Bagus sekali. Pastikan tombol bayar tetap terlihat nyaman di perangkat layar kecil.',
+            ]
+        );
+        TaskComment::firstOrCreate(
+            [
+                'task_id' => $createdTasks[8]->id,
+                'user_id' => $andi->id,
+                'content' => 'Scanner barcode kamera sudah berhasil membaca format EAN-13 dan Code-128 dengan akurat.',
+            ]
+        );
+        TaskComment::firstOrCreate(
+            [
+                'task_id' => $createdTasks[14]->id,
+                'user_id' => $siti->id,
+                'content' => 'Koneksi ke Prometheus cluster sudah stabil, threshold alert disetel pada 85% penggunaan CPU.',
+            ]
+        );
 
         // Create Realistic Task Activities
         if (count($createdTasks) >= 5) {
@@ -817,7 +815,7 @@ class DummyDataSeeder extends Seeder
 
         // Seed realistic notifications for all users
         foreach ([$admin, $budi, $siti, $andi, $dewi] as $idx => $targetUser) {
-            if ($targetUser->notifications()->count() === 0 && ! empty($createdTasks)) {
+            if ($targetUser->notifications()->count() === 0) {
                 $targetTask = $createdTasks[$idx % count($createdTasks)];
                 $targetProject = Project::find($targetTask->project_id) ?? $project1;
 

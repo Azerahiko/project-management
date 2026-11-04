@@ -12,14 +12,12 @@ use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskStatusChanged;
 use App\Services\NotificationSender;
 use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 uses()->group('notifications');
 
 beforeEach(function () {
-    Artisan::call('migrate', ['--force' => true]);
     (new RolePermissionSeeder)->run();
 
     // Create test users

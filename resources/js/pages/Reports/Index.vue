@@ -43,14 +43,12 @@ const statusLabels: Record<string, string> = {
 };
 
 const projectStatusBadgeClasses: Record<string, string> = {
-    active:
-        'bg-primary-50 text-primary-800 border-primary-200/80 dark:bg-primary-950/40 dark:text-primary-300 dark:border-primary-800/40',
+    active: 'bg-primary-50 text-primary-800 border-primary-200/80 dark:bg-primary-950/40 dark:text-primary-300 dark:border-primary-800/40',
     completed:
         'bg-emerald-50 text-emerald-800 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40',
     on_hold:
         'bg-amber-50 text-amber-800 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40',
-    draft:
-        'bg-surface-100 text-surface-700 border-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:border-surface-700',
+    draft: 'bg-surface-100 text-surface-700 border-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:border-surface-700',
     archived:
         'bg-surface-100 text-surface-500 border-surface-200 dark:bg-surface-800 dark:text-surface-400 dark:border-surface-700',
 };
@@ -318,7 +316,8 @@ const filteredProjects = computed(() => {
                 <p
                     class="mt-1 max-w-2xl text-sm leading-relaxed text-surface-600 dark:text-surface-300"
                 >
-                    Pantau kemajuan pengerjaan proyek, alokasi tugas, dan tingkat penyelesaian tim dalam satu tempat.
+                    Pantau kemajuan pengerjaan proyek, alokasi tugas, dan
+                    tingkat penyelesaian tim dalam satu tempat.
                 </p>
             </div>
 
@@ -343,7 +342,9 @@ const filteredProjects = computed(() => {
                 class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs transition hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700"
             >
                 <div class="flex items-start justify-between gap-3">
-                    <p class="text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400">
+                    <p
+                        class="text-xs font-semibold tracking-wide text-surface-500 uppercase dark:text-surface-400"
+                    >
                         {{ stat.label }}
                     </p>
                     <span
@@ -385,7 +386,9 @@ const filteredProjects = computed(() => {
         </div>
 
         <!-- 3. Main Content: Project List (Left) + Analytical Summary (Right) -->
-        <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div
+            class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start"
+        >
             <!-- Left: Project Performance Section -->
             <section
                 class="min-w-0 overflow-hidden rounded-3xl border border-surface-200/80 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
@@ -406,7 +409,8 @@ const filteredProjects = computed(() => {
                             <p
                                 class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
                             >
-                                Evaluasi persentase penyelesaian tugas pada setiap proyek.
+                                Evaluasi persentase penyelesaian tugas pada
+                                setiap proyek.
                             </p>
                         </div>
 
@@ -471,7 +475,10 @@ const filteredProjects = computed(() => {
                             <span
                                 class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
                             >
-                                <component :is="getIcon('Search')" class="h-4 w-4" />
+                                <component
+                                    :is="getIcon('Search')"
+                                    class="h-4 w-4"
+                                />
                             </span>
                             <input
                                 v-model="projectSearch"
@@ -482,14 +489,15 @@ const filteredProjects = computed(() => {
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-surface-500 whitespace-nowrap dark:text-surface-400">
+                            <span
+                                class="text-xs whitespace-nowrap text-surface-500 dark:text-surface-400"
+                            >
                                 Urutkan:
                             </span>
-                            <select
-                                v-model="sortBy"
-                                class="input py-2 text-xs"
-                            >
-                                <option value="progress">Progres Tertinggi</option>
+                            <select v-model="sortBy" class="input py-2 text-xs">
+                                <option value="progress">
+                                    Progres Tertinggi
+                                </option>
                                 <option value="tasks">Tugas Terbanyak</option>
                                 <option value="name">Nama (A - Z)</option>
                             </select>
@@ -511,7 +519,9 @@ const filteredProjects = computed(() => {
                             class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <!-- Project Info -->
-                            <div class="flex min-w-0 flex-1 items-center gap-3.5">
+                            <div
+                                class="flex min-w-0 flex-1 items-center gap-3.5"
+                            >
                                 <span
                                     class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary-50 text-primary-800 shadow-2xs transition group-hover:scale-105 dark:bg-primary-950/50 dark:text-primary-300"
                                 >
@@ -522,10 +532,16 @@ const filteredProjects = computed(() => {
                                 </span>
 
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex flex-wrap items-center gap-2">
+                                    <div
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
                                         <Link
                                             v-if="canViewProjects"
-                                            :href="projectsRoute.show.url(project.id)"
+                                            :href="
+                                                projectsRoute.show.url(
+                                                    project.id,
+                                                )
+                                            "
                                             class="truncate text-sm font-semibold text-surface-900 transition hover:text-primary-700 sm:text-base dark:text-surface-100 dark:hover:text-primary-300"
                                         >
                                             {{ project.name }}
@@ -540,7 +556,9 @@ const filteredProjects = computed(() => {
                                         <span
                                             class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold"
                                             :class="
-                                                projectStatusBadgeClasses[project.status] ??
+                                                projectStatusBadgeClasses[
+                                                    project.status
+                                                ] ??
                                                 projectStatusBadgeClasses.draft
                                             "
                                         >
@@ -579,7 +597,9 @@ const filteredProjects = computed(() => {
                                         class="mb-1 flex items-center justify-between text-[11px] font-medium text-surface-400"
                                     >
                                         <span>Penyelesaian</span>
-                                        <span class="font-semibold text-surface-700 dark:text-surface-300">
+                                        <span
+                                            class="font-semibold text-surface-700 dark:text-surface-300"
+                                        >
                                             {{ projectProgress(project) }}%
                                         </span>
                                     </div>
@@ -611,10 +631,7 @@ const filteredProjects = computed(() => {
                 </div>
 
                 <!-- Empty State -->
-                <div
-                    v-else
-                    class="p-12 text-center"
-                >
+                <div v-else class="p-12 text-center">
                     <component
                         :is="getIcon('FolderKanban')"
                         class="mx-auto h-10 w-10 text-surface-300 dark:text-surface-600"
@@ -627,7 +644,8 @@ const filteredProjects = computed(() => {
                     <p
                         class="mt-1 text-xs text-surface-500 dark:text-surface-400"
                     >
-                        Coba sesuaikan kata kunci pencarian atau ubah filter status proyek.
+                        Coba sesuaikan kata kunci pencarian atau ubah filter
+                        status proyek.
                     </p>
                     <button
                         v-if="projectSearch || selectedStatusFilter !== 'all'"
@@ -691,12 +709,15 @@ const filteredProjects = computed(() => {
                         <p
                             class="mt-3.5 text-xs font-medium text-surface-600 dark:text-surface-300"
                         >
-                            {{ totalCompleted }} dari {{ totalTasks }} tugas selesai
+                            {{ totalCompleted }} dari {{ totalTasks }} tugas
+                            selesai
                         </p>
                     </div>
 
                     <!-- Stages Legend -->
-                    <div class="mt-6 space-y-2.5 border-t border-surface-100 pt-5 dark:border-surface-800">
+                    <div
+                        class="mt-6 space-y-2.5 border-t border-surface-100 pt-5 dark:border-surface-800"
+                    >
                         <div
                             v-for="status in statusBreakdown"
                             :key="status.key"
@@ -707,12 +728,16 @@ const filteredProjects = computed(() => {
                                     class="h-2.5 w-2.5 shrink-0 rounded-full"
                                     :style="{ backgroundColor: status.color }"
                                 />
-                                <span class="truncate text-surface-700 dark:text-surface-300">
+                                <span
+                                    class="truncate text-surface-700 dark:text-surface-300"
+                                >
                                     {{ status.label }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-2 font-medium">
-                                <span class="text-surface-950 dark:text-surface-100">
+                                <span
+                                    class="text-surface-950 dark:text-surface-100"
+                                >
                                     {{ status.count }}
                                 </span>
                                 <span class="text-[11px] text-surface-400">
@@ -741,10 +766,14 @@ const filteredProjects = computed(() => {
                             </p>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] font-bold tracking-wider text-surface-400 uppercase">
+                            <span
+                                class="text-[10px] font-bold tracking-wider text-surface-400 uppercase"
+                            >
                                 Rata-rata
                             </span>
-                            <p class="font-serif text-lg font-normal text-surface-950 dark:text-surface-50">
+                            <p
+                                class="font-serif text-lg font-normal text-surface-950 dark:text-surface-50"
+                            >
                                 {{ averageProjectProgress }}%
                             </p>
                         </div>
@@ -778,12 +807,18 @@ const filteredProjects = computed(() => {
                                     class="h-2 w-2 shrink-0 rounded-full"
                                     :class="item.dot"
                                 />
-                                <span class="truncate text-[11px] font-medium text-surface-600 dark:text-surface-400">
+                                <span
+                                    class="truncate text-[11px] font-medium text-surface-600 dark:text-surface-400"
+                                >
                                     {{ item.label }}
                                 </span>
                             </div>
-                            <div class="mt-1 flex items-baseline justify-between">
-                                <span class="font-serif text-base font-normal text-surface-950 dark:text-surface-50">
+                            <div
+                                class="mt-1 flex items-baseline justify-between"
+                            >
+                                <span
+                                    class="font-serif text-base font-normal text-surface-950 dark:text-surface-50"
+                                >
                                     {{ item.count }}
                                 </span>
                                 <span class="text-[10px] text-surface-400">

@@ -65,10 +65,12 @@ const projectNotes = computed(
     () => (page.props.project_notes as ProjectNote[]) ?? [],
 );
 const docStats = computed(
-    () => (page.props.document_stats as DocumentStats | undefined),
+    () => page.props.document_stats as DocumentStats | undefined,
 );
 const recentlyUpdatedList = computed(
-    () => (page.props.recently_updated as RecentlyUpdatedItem[] | undefined) ?? [],
+    () =>
+        (page.props.recently_updated as RecentlyUpdatedItem[] | undefined) ??
+        [],
 );
 const canViewProjects = computed(() => Boolean(page.props.can_view_projects));
 
@@ -298,7 +300,8 @@ function formatRelativeTime(value: string | null): string {
                     class="mt-1 max-w-xl text-sm leading-6 text-surface-600 dark:text-surface-300"
                 >
                     Dokumentasi catatan, ringkasan lingkup, dan konteks proyek.
-                    Semua berkas tersusun rapi untuk referensi cepat seluruh tim.
+                    Semua berkas tersusun rapi untuk referensi cepat seluruh
+                    tim.
                 </p>
             </div>
 
@@ -352,7 +355,9 @@ function formatRelativeTime(value: string | null): string {
         <!-- Main Workspace Grid (Left Sidebar + Right Library - Sejajar & Padat) -->
         <div class="grid items-start gap-6 lg:grid-cols-12">
             <!-- Left Sidebar (lg:col-span-4 xl:col-span-3 - Sticky & Padat) -->
-            <aside class="space-y-4 lg:col-span-4 xl:col-span-3 sticky top-6 self-start">
+            <aside
+                class="sticky top-6 space-y-4 self-start lg:col-span-4 xl:col-span-3"
+            >
                 <!-- Navigasi Perpustakaan -->
                 <div
                     class="rounded-[24px] border border-surface-200/80 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
@@ -433,13 +438,22 @@ function formatRelativeTime(value: string | null): string {
                     </p>
                     <div class="mt-3 space-y-3 px-2">
                         <div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="text-surface-500 dark:text-surface-400">Kelengkapan Catatan</span>
-                                <span class="font-bold text-surface-900 dark:text-surface-100">
+                            <div
+                                class="flex items-center justify-between text-xs"
+                            >
+                                <span
+                                    class="text-surface-500 dark:text-surface-400"
+                                    >Kelengkapan Catatan</span
+                                >
+                                <span
+                                    class="font-bold text-surface-900 dark:text-surface-100"
+                                >
                                     {{ documentationRate }}%
                                 </span>
                             </div>
-                            <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800">
+                            <div
+                                class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+                            >
                                 <div
                                     class="h-full rounded-full bg-primary-600 dark:bg-primary-400"
                                     :style="{ width: `${documentationRate}%` }"
@@ -447,17 +461,31 @@ function formatRelativeTime(value: string | null): string {
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between pt-1 text-xs">
-                            <span class="text-surface-500 dark:text-surface-400">Total Tugas Terkait</span>
-                            <span class="font-semibold text-surface-900 dark:text-surface-100">
+                        <div
+                            class="flex items-center justify-between pt-1 text-xs"
+                        >
+                            <span class="text-surface-500 dark:text-surface-400"
+                                >Total Tugas Terkait</span
+                            >
+                            <span
+                                class="font-semibold text-surface-900 dark:text-surface-100"
+                            >
                                 {{ totalTasks }}
                             </span>
                         </div>
 
                         <div class="flex items-center justify-between text-xs">
-                            <span class="text-surface-500 dark:text-surface-400">Rata-rata Tugas/Berkas</span>
-                            <span class="font-semibold text-surface-900 dark:text-surface-100">
-                                {{ counts.all > 0 ? (totalTasks / counts.all).toFixed(1) : 0 }}
+                            <span class="text-surface-500 dark:text-surface-400"
+                                >Rata-rata Tugas/Berkas</span
+                            >
+                            <span
+                                class="font-semibold text-surface-900 dark:text-surface-100"
+                            >
+                                {{
+                                    counts.all > 0
+                                        ? (totalTasks / counts.all).toFixed(1)
+                                        : 0
+                                }}
                             </span>
                         </div>
                     </div>
@@ -477,14 +505,18 @@ function formatRelativeTime(value: string | null): string {
                         <Clock class="h-3 w-3 text-surface-400" />
                     </div>
 
-                    <div class="divide-y divide-surface-100 dark:divide-surface-800">
+                    <div
+                        class="divide-y divide-surface-100 dark:divide-surface-800"
+                    >
                         <component
                             :is="canViewProjects ? Link : 'div'"
                             v-for="item in recentlyUpdatedList"
                             :key="item.id"
                             :href="
                                 canViewProjects
-                                    ? projectRoutes.show.url({ project: item.id })
+                                    ? projectRoutes.show.url({
+                                          project: item.id,
+                                      })
                                     : undefined
                             "
                             class="group flex items-center justify-between py-2 text-xs transition"
@@ -496,7 +528,8 @@ function formatRelativeTime(value: string | null): string {
                                     {{ item.name }}
                                 </p>
                                 <p class="text-[10px] text-surface-400">
-                                    {{ item.tasks_count }} tugas · {{ formatRelativeTime(item.updated_at) }}
+                                    {{ item.tasks_count }} tugas ·
+                                    {{ formatRelativeTime(item.updated_at) }}
                                 </p>
                             </div>
                             <ArrowUpRight
@@ -511,15 +544,23 @@ function formatRelativeTime(value: string | null): string {
                     class="rounded-[24px] border border-dashed border-surface-200/80 bg-surface-50/50 p-4 dark:border-surface-800 dark:bg-surface-900/40"
                 >
                     <div class="flex items-center gap-2">
-                        <span class="grid h-6 w-6 place-items-center rounded-lg bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                        <span
+                            class="grid h-6 w-6 place-items-center rounded-lg bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
+                        >
                             <BookOpen class="h-3 w-3" />
                         </span>
-                        <p class="text-xs font-semibold text-surface-800 dark:text-surface-100">
+                        <p
+                            class="text-xs font-semibold text-surface-800 dark:text-surface-100"
+                        >
                             Struktur Catatan Proyek
                         </p>
                     </div>
-                    <p class="mt-2 text-[11px] leading-relaxed text-surface-500 dark:text-surface-400">
-                        Pastikan setiap folder memuat tujuan spesifikasi, milestone target, dan daftar PIC agar alur kerja sinkron.
+                    <p
+                        class="mt-2 text-[11px] leading-relaxed text-surface-500 dark:text-surface-400"
+                    >
+                        Pastikan setiap folder memuat tujuan spesifikasi,
+                        milestone target, dan daftar PIC agar alur kerja
+                        sinkron.
                     </p>
                 </div>
             </aside>
@@ -587,15 +628,14 @@ function formatRelativeTime(value: string | null): string {
 
                 <!-- Folder Groups -->
                 <div v-for="group in groups" :key="group.key" class="space-y-4">
-                    <div class="flex items-end justify-between gap-3 border-b border-surface-100 pb-3 dark:border-surface-800">
+                    <div
+                        class="flex items-end justify-between gap-3 border-b border-surface-100 pb-3 dark:border-surface-800"
+                    >
                         <div class="flex items-center gap-2.5">
                             <span
                                 class="grid h-8 w-8 place-items-center rounded-xl bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
                             >
-                                <component
-                                    :is="group.icon"
-                                    class="h-4 w-4"
-                                />
+                                <component :is="group.icon" class="h-4 w-4" />
                             </span>
                             <div>
                                 <h2
@@ -620,12 +660,12 @@ function formatRelativeTime(value: string | null): string {
                     <!-- Grid View Mode (Sejajar, Rata & Padat) -->
                     <div
                         v-if="viewMode === 'grid'"
-                        class="grid gap-4.5 sm:grid-cols-2 xl:grid-cols-3 items-stretch"
+                        class="grid items-stretch gap-4.5 sm:grid-cols-2 xl:grid-cols-3"
                     >
                         <article
                             v-for="(note, index) in group.items"
                             :key="note.id"
-                            class="group relative pt-3 flex flex-col"
+                            class="group relative flex flex-col pt-3"
                         >
                             <!-- Tab Top Indicator -->
                             <div
@@ -638,14 +678,18 @@ function formatRelativeTime(value: string | null): string {
                                 :is="canViewProjects ? Link : 'div'"
                                 :href="
                                     canViewProjects
-                                        ? projectRoutes.show.url({ project: note.id })
+                                        ? projectRoutes.show.url({
+                                              project: note.id,
+                                          })
                                         : undefined
                                 "
                                 class="relative flex h-full flex-col justify-between rounded-2xl border border-surface-200/80 bg-white p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md dark:border-surface-800 dark:bg-surface-900 dark:hover:border-primary-700/60"
                             >
                                 <div>
                                     <!-- Header: Folder Icon + Status Pill -->
-                                    <div class="flex items-start justify-between gap-2">
+                                    <div
+                                        class="flex items-start justify-between gap-2"
+                                    >
                                         <span
                                             class="grid h-10 w-10 place-items-center rounded-xl"
                                             :class="folderTone(index).icon"
@@ -669,43 +713,80 @@ function formatRelativeTime(value: string | null): string {
 
                                     <!-- Description (Equal Height Baseline) -->
                                     <p
-                                        class="mt-1.5 min-h-[3.75rem] line-clamp-3 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                                        class="mt-1.5 line-clamp-3 min-h-[3.75rem] text-xs leading-relaxed text-surface-500 dark:text-surface-400"
                                     >
-                                        {{ note.description || 'Tidak ada deskripsi tambahan untuk berkas proyek ini.' }}
+                                        {{
+                                            note.description ||
+                                            'Tidak ada deskripsi tambahan untuk berkas proyek ini.'
+                                        }}
                                     </p>
 
                                     <!-- Mini Progress Bar (Tugas Selesai) -->
-                                    <div class="mt-3 rounded-xl border border-surface-100 bg-surface-50/70 p-2.5 dark:border-surface-800 dark:bg-surface-800/40">
-                                        <div class="flex items-center justify-between text-[10px]">
-                                            <span class="text-surface-500">Penyelesaian Tugas</span>
-                                            <span class="font-semibold text-surface-800 dark:text-surface-200">
-                                                {{ note.completed_tasks_count ?? 0 }} / {{ note.tasks_count }} ({{ note.progress_percent ?? 0 }}%)
+                                    <div
+                                        class="mt-3 rounded-xl border border-surface-100 bg-surface-50/70 p-2.5 dark:border-surface-800 dark:bg-surface-800/40"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between text-[10px]"
+                                        >
+                                            <span class="text-surface-500"
+                                                >Penyelesaian Tugas</span
+                                            >
+                                            <span
+                                                class="font-semibold text-surface-800 dark:text-surface-200"
+                                            >
+                                                {{
+                                                    note.completed_tasks_count ??
+                                                    0
+                                                }}
+                                                / {{ note.tasks_count }} ({{
+                                                    note.progress_percent ?? 0
+                                                }}%)
                                             </span>
                                         </div>
-                                        <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-200/80 dark:bg-surface-700">
+                                        <div
+                                            class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-200/80 dark:bg-surface-700"
+                                        >
                                             <div
-                                                class="h-full rounded-full bg-primary-600 dark:bg-primary-400 transition-all duration-300"
-                                                :style="{ width: `${note.progress_percent ?? 0}%` }"
+                                                class="h-full rounded-full bg-primary-600 transition-all duration-300 dark:bg-primary-400"
+                                                :style="{
+                                                    width: `${note.progress_percent ?? 0}%`,
+                                                }"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Footer -->
-                                <div class="mt-4 border-t border-surface-100 pt-3 dark:border-surface-800">
-                                    <div class="flex items-center justify-between text-[10px] text-surface-400 dark:text-surface-500">
-                                        <span class="inline-flex items-center gap-1">
+                                <div
+                                    class="mt-4 border-t border-surface-100 pt-3 dark:border-surface-800"
+                                >
+                                    <div
+                                        class="flex items-center justify-between text-[10px] text-surface-400 dark:text-surface-500"
+                                    >
+                                        <span
+                                            class="inline-flex items-center gap-1"
+                                        >
                                             <CheckCircle2 class="h-3 w-3" />
                                             {{ note.tasks_count }} tugas
                                         </span>
-                                        <span class="inline-flex items-center gap-1">
+                                        <span
+                                            class="inline-flex items-center gap-1"
+                                        >
                                             <Clock class="h-3 w-3" />
-                                            {{ formatRelativeTime(note.updated_at) }}
+                                            {{
+                                                formatRelativeTime(
+                                                    note.updated_at,
+                                                )
+                                            }}
                                         </span>
                                     </div>
 
-                                    <div class="mt-2.5 flex items-center justify-between">
-                                        <span class="text-[10px] font-semibold tracking-wider text-surface-400 uppercase">
+                                    <div
+                                        class="mt-2.5 flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-[10px] font-semibold tracking-wider text-surface-400 uppercase"
+                                        >
                                             Catatan Proyek
                                         </span>
                                         <span
@@ -731,12 +812,14 @@ function formatRelativeTime(value: string | null): string {
                             :key="note.id"
                             :href="
                                 canViewProjects
-                                    ? projectRoutes.show.url({ project: note.id })
+                                    ? projectRoutes.show.url({
+                                          project: note.id,
+                                      })
                                     : undefined
                             "
                             class="group flex flex-col gap-3 border-b border-surface-100 p-4 transition last:border-b-0 hover:bg-surface-50/70 sm:flex-row sm:items-center dark:border-surface-800 dark:hover:bg-surface-800/40"
                         >
-                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="flex min-w-0 flex-1 items-center gap-3">
                                 <span
                                     class="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
                                     :class="folderTone(index).icon"
@@ -765,12 +848,24 @@ function formatRelativeTime(value: string | null): string {
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between gap-4 shrink-0 sm:justify-end">
-                                <div class="text-right text-[11px] text-surface-400">
-                                    <p class="font-medium text-surface-700 dark:text-surface-200">
-                                        {{ note.tasks_count }} tugas ({{ note.progress_percent ?? 0 }}% selesai)
+                            <div
+                                class="flex shrink-0 items-center justify-between gap-4 sm:justify-end"
+                            >
+                                <div
+                                    class="text-right text-[11px] text-surface-400"
+                                >
+                                    <p
+                                        class="font-medium text-surface-700 dark:text-surface-200"
+                                    >
+                                        {{ note.tasks_count }} tugas ({{
+                                            note.progress_percent ?? 0
+                                        }}% selesai)
                                     </p>
-                                    <p>{{ formatRelativeTime(note.updated_at) }}</p>
+                                    <p>
+                                        {{
+                                            formatRelativeTime(note.updated_at)
+                                        }}
+                                    </p>
                                 </div>
 
                                 <span

@@ -86,11 +86,16 @@ function isInputFocused(): boolean {
 function handleGlobalKeydown(e: KeyboardEvent): void {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        const supportSearch = document.getElementById('support-search-input') as HTMLInputElement | null;
+        const supportSearch = document.getElementById(
+            'support-search-input',
+        ) as HTMLInputElement | null;
         if (supportSearch) {
             supportSearch.focus();
             supportSearch.select();
-            supportSearch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            supportSearch.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
         } else {
             searchInputRef.value?.focus();
             searchInputRef.value?.select();
@@ -128,11 +133,17 @@ function handleGlobalKeydown(e: KeyboardEvent): void {
             router.visit('/projects');
         } else if (key === 'c') {
             e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Kalender Kerja (G + C)');
+            toast.info(
+                'Pintasan Keyboard',
+                'Beralih ke Kalender Kerja (G + C)',
+            );
             router.visit('/calendar');
         } else if (key === 's') {
             e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Pengaturan Akun (G + S)');
+            toast.info(
+                'Pintasan Keyboard',
+                'Beralih ke Pengaturan Akun (G + S)',
+            );
             router.visit('/settings');
         } else if (key === 'i') {
             e.preventDefault();
@@ -140,7 +151,10 @@ function handleGlobalKeydown(e: KeyboardEvent): void {
             router.visit('/integrations');
         } else if (key === 'h' || key === '?') {
             e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Pusat Bantuan & Support (G + H)');
+            toast.info(
+                'Pintasan Keyboard',
+                'Beralih ke Pusat Bantuan & Support (G + H)',
+            );
             router.visit('/support');
         }
         return;
