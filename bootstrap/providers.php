@@ -1,8 +1,13 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\AuthServiceProvider;
+use App\Providers\FortifyServiceProvider;
+use Inertia\ServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\AuthServiceProvider::class,
-    App\Providers\FortifyServiceProvider::class,
-    Inertia\ServiceProvider::class,
+    AppServiceProvider::class,
+    AuthServiceProvider::class,
+    FortifyServiceProvider::class,
+    ServiceProvider::class,
 ];

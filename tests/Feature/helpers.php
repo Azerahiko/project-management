@@ -23,6 +23,9 @@ if (! function_exists('createTestUsers')) {
             'email' => 'admin@projex.test',
             'password' => bcrypt('password'),
             'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ]);
         $admin->assignRole('administrator');
 
@@ -30,6 +33,9 @@ if (! function_exists('createTestUsers')) {
             'email' => 'pm@projex.test',
             'password' => bcrypt('password'),
             'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ]);
         $pm->assignRole('project_manager');
 
@@ -37,6 +43,9 @@ if (! function_exists('createTestUsers')) {
             'email' => 'member@projex.test',
             'password' => bcrypt('password'),
             'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ]);
         $member->assignRole('member');
 
