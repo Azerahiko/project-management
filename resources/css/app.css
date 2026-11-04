@@ -816,18 +816,6 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Login Background
- * ------------------------------------------------------------------------- */
-.bg-login-bg {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    /* Fallback and default image */
-    background-image: var(--login-bg-image, url('/images/login-bg.png'));
-}
-
-/* ---------------------------------------------------------------------------
  * Bento Modern Theme Utilities
  * ------------------------------------------------------------------------- */
 .bento-canvas {

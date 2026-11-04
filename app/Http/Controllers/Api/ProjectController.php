@@ -14,7 +14,9 @@ use App\Models\ProjectMember;
 use App\Models\User;
 use App\Notifications\ProjectMemberAdded;
 use App\Services\NotificationSender;
+use App\Services\WebhookDispatcher;
 use App\Support\Pagination;
+use App\Support\WebhookEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -23,7 +25,8 @@ use Illuminate\Support\Facades\DB;
 class ProjectController extends Controller
 {
     public function __construct(
-        protected NotificationSender $notificationSender
+        protected NotificationSender $notificationSender,
+        protected WebhookDispatcher $webhookDispatcher,
     ) {}
 
     /**
@@ -97,6 +100,21 @@ class ProjectController extends Controller
             return $project->load(['owner', 'projectMembers.user']);
         });
 
+        $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_CREATED, [
+            'project_id' => $project->id,
+            'name' => $project->name,
+            'status' => $project->status->value,
+            'priority' => $project->priority->value,
+            'owner' => [
+                'id' => $project->owner->id,
+                'name' => $project->owner->name,
+            ],
+            'created_by' => [
+                'id' => $request->user()->id,
+                'name' => $request->user()->name,
+            ],
+        ]);
+
         return ProjectResource::make($project)
             ->response()
             ->setStatusCode(201);
@@ -127,6 +145,7 @@ class ProjectController extends Controller
         $data = $request->validated();
         $newOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : $project->owner_id;
         $ownerChanged = $newOwnerId !== $project->owner_id;
+        $previousStatus = $project->status->value;
 
         // Only the current owner or an administrator may transfer ownership.
         if ($ownerChanged
@@ -145,6 +164,21 @@ class ProjectController extends Controller
                 $this->syncProjectOwner($project, $newOwnerId, $previousOwnerId);
             }
         });
+
+        $project->refresh();
+
+        if ($previousStatus !== $project->status->value && $project->status->value === 'completed') {
+            $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_COMPLETED, [
+                'project_id' => $project->id,
+                'name' => $project->name,
+                'previous_status' => $previousStatus,
+                'new_status' => $project->status->value,
+                'completed_by' => [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                ],
+            ]);
+        }
 
         return ProjectResource::make($project->load(['owner', 'projectMembers.user']));
     }

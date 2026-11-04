@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\WorkspaceOverviewController;
 use App\Http\Resources\ProjectResource;
@@ -14,7 +16,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Laravel\Passkeys\Passkey;
 
 // Public login page (Inertia)
 Route::inertia('/login', 'Auth/Login')->name('login')->middleware('guest');
@@ -162,22 +163,26 @@ Route::middleware(['auth'])->group(function () {
 
     // Settings route (accessible to all authenticated users)
     Route::middleware('can:settings.view')->group(function () {
-        Route::get('/settings', function (Request $request) {
-            $user = $request->user();
-
-            return Inertia::render('Settings/Index', [
-                'account' => [
-                    'is_active' => (bool) $user->is_active,
-                    'email_verified' => $user->email_verified_at !== null,
-                    'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
-                    'passkeys_count' => Passkey::query()
-                        ->where('user_id', $user->id)
-                        ->count(),
-                    'member_since' => $user->created_at?->toISOString(),
-                ],
-            ]);
-        })->name('settings');
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+        Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+        Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+        Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
     });
+
+    // API & Webhook Integrations
+    Route::middleware('can:settings.view')->group(function () {
+        Route::get('/integrations', [ApiIntegrationController::class, 'index'])->name('integrations.index');
+        Route::post('/integrations/tokens', [ApiIntegrationController::class, 'storeToken'])->name('integrations.tokens.store');
+        Route::delete('/integrations/tokens/{token}', [ApiIntegrationController::class, 'destroyToken'])->name('integrations.tokens.destroy');
+        Route::post('/integrations/webhooks', [ApiIntegrationController::class, 'storeWebhook'])->name('integrations.webhooks.store');
+        Route::put('/integrations/webhooks/{webhook}', [ApiIntegrationController::class, 'updateWebhook'])->name('integrations.webhooks.update');
+        Route::patch('/integrations/webhooks/{webhook}/toggle', [ApiIntegrationController::class, 'toggleWebhook'])->name('integrations.webhooks.toggle');
+        Route::delete('/integrations/webhooks/{webhook}', [ApiIntegrationController::class, 'destroyWebhook'])->name('integrations.webhooks.destroy');
+        Route::post('/integrations/webhooks/{webhook}/test', [ApiIntegrationController::class, 'testWebhook'])->name('integrations.webhooks.test');
+    });
+
+    // Support & Help Center (accessible to all authenticated users)
+    Route::inertia('/support', 'Support/Index')->name('support');
 });
 
 // Root redirects to dashboard if authenticated, else login

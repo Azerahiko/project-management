@@ -14,7 +14,9 @@ use App\Notifications\TaskAssigned;
 use App\Notifications\TaskStatusChanged;
 use App\Services\NotificationSender;
 use App\Services\TaskActivityLogger;
+use App\Services\WebhookDispatcher;
 use App\Support\Pagination;
+use App\Support\WebhookEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -26,7 +28,8 @@ class TaskController extends Controller
 {
     public function __construct(
         protected TaskActivityLogger $activityLogger,
-        protected NotificationSender $notificationSender
+        protected NotificationSender $notificationSender,
+        protected WebhookDispatcher $webhookDispatcher,
     ) {}
 
     /**
@@ -120,6 +123,25 @@ class TaskController extends Controller
                 ]);
             });
         }
+
+        $this->webhookDispatcher->dispatch(WebhookEvents::TASK_CREATED, [
+            'task_id' => $task->id,
+            'title' => $task->title,
+            'project' => [
+                'id' => $task->project->id,
+                'name' => $task->project->name,
+            ],
+            'status' => $task->status->value,
+            'priority' => $task->priority->value,
+            'assignee' => $task->assignee ? [
+                'id' => $task->assignee->id,
+                'name' => $task->assignee->name,
+            ] : null,
+            'creator' => [
+                'id' => $request->user()->id,
+                'name' => $request->user()->name,
+            ],
+        ]);
 
         return TaskResource::make($task)
             ->response()
@@ -227,6 +249,21 @@ class TaskController extends Controller
                     }
                 });
             }
+
+            $this->webhookDispatcher->dispatch(WebhookEvents::TASK_STATUS_CHANGED, [
+                'task_id' => $task->id,
+                'title' => $task->title,
+                'project' => [
+                    'id' => $task->project->id,
+                    'name' => $task->project->name,
+                ],
+                'previous_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'changed_by' => [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                ],
+            ]);
         }
 
         return TaskResource::make($task->load(['project', 'assignee', 'creator']));

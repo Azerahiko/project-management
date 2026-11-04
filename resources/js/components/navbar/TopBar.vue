@@ -5,6 +5,7 @@ import UserDropdown from './UserDropdown.vue';
 import NotificationDropdown from './NotificationDropdown.vue';
 import { getIcon } from '@/components/sidebar/icons';
 import { useTheme } from '@/composables/useTheme';
+import { useToast } from '@/composables/useToast';
 import tasks from '@/routes/tasks';
 
 interface Props {
@@ -53,9 +54,12 @@ const pageTitle = computed(() => {
     if (p.startsWith('/roles')) return 'Role & Permission';
     if (p.startsWith('/teams') || p.startsWith('/users')) return 'Anggota Tim';
     if (p.startsWith('/collaboration')) return 'Papan Kolaborasi';
+    if (p.startsWith('/integrations')) return 'Integrasi API';
     if (p.startsWith('/settings')) return 'Pengaturan Akun';
     return 'Ruang Kerja';
 });
+
+const toast = useToast();
 
 function handleSearchSubmit(): void {
     if (!searchQuery.value.trim()) return;
@@ -64,10 +68,90 @@ function handleSearchSubmit(): void {
     );
 }
 
+let pendingG = false;
+let gTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function isInputFocused(): boolean {
+    const el = document.activeElement;
+    if (!el) return false;
+    const tag = el.tagName.toLowerCase();
+    return (
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        (el as HTMLElement).isContentEditable
+    );
+}
+
 function handleGlobalKeydown(e: KeyboardEvent): void {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        searchInputRef.value?.focus();
+        const supportSearch = document.getElementById('support-search-input') as HTMLInputElement | null;
+        if (supportSearch) {
+            supportSearch.focus();
+            supportSearch.select();
+            supportSearch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            searchInputRef.value?.focus();
+            searchInputRef.value?.select();
+        }
+        return;
+    }
+
+    if (isInputFocused()) {
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        pendingG = false;
+        if (gTimeout) clearTimeout(gTimeout);
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+
+    if (pendingG) {
+        pendingG = false;
+        if (gTimeout) clearTimeout(gTimeout);
+
+        if (key === 'd') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Dashboard (G + D)');
+            router.visit('/dashboard');
+        } else if (key === 't') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Papan Tugas (G + T)');
+            router.visit('/tasks');
+        } else if (key === 'p') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Daftar Proyek (G + P)');
+            router.visit('/projects');
+        } else if (key === 'c') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Kalender Kerja (G + C)');
+            router.visit('/calendar');
+        } else if (key === 's') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Pengaturan Akun (G + S)');
+            router.visit('/settings');
+        } else if (key === 'i') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Integrasi API (G + I)');
+            router.visit('/integrations');
+        } else if (key === 'h' || key === '?') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Pusat Bantuan & Support (G + H)');
+            router.visit('/support');
+        }
+        return;
+    }
+
+    if (key === 'g' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        pendingG = true;
+        if (gTimeout) clearTimeout(gTimeout);
+        gTimeout = setTimeout(() => {
+            pendingG = false;
+        }, 1500);
     }
 }
 
@@ -77,6 +161,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeydown);
+    if (gTimeout) clearTimeout(gTimeout);
 });
 </script>
 

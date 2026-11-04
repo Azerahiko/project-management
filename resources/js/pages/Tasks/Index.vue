@@ -665,7 +665,7 @@ watch(
                                     :status="task.status"
                                     :is-overdue="task.is_overdue"
                                     size="xs"
-                                    show-date="false"
+                                    :show-date="false"
                                 />
                             </div>
                         </div>

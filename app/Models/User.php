@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -26,19 +27,21 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $password
  * @property bool $is_active
  * @property string|null $avatar
+ * @property array<string, bool>|null $notification_preferences
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Project> $ownedProjects
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, ProjectMember> $projectMemberships
+ * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -51,7 +54,38 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'notification_preferences' => 'array',
         ];
+    }
+
+    /**
+     * Default notification preferences for users who have not customised them.
+     *
+     * @return array<string, bool>
+     */
+    public static function defaultNotificationPreferences(): array
+    {
+        return [
+            'task_updates' => true,
+            'deadline_reminders' => true,
+            'daily_digest' => false,
+            'mentions' => true,
+            'comments' => false,
+            'sound' => false,
+        ];
+    }
+
+    /**
+     * Get notification preferences merged with the application defaults.
+     *
+     * @return array<string, bool>
+     */
+    public function notificationPreferences(): array
+    {
+        return array_merge(
+            self::defaultNotificationPreferences(),
+            $this->notification_preferences ?? [],
+        );
     }
 
     /**
@@ -99,6 +133,16 @@ class User extends Authenticatable
     public function projectMemberships(): HasMany
     {
         return $this->hasMany(ProjectMember::class);
+    }
+
+    /**
+     * Get the outbound webhooks registered by this user.
+     *
+     * @return HasMany<Webhook, $this>
+     */
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(Webhook::class);
     }
 
     /**

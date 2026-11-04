@@ -180,16 +180,14 @@ const menuSections = computed<MenuSection[]>(() => [
             },
             {
                 label: 'Integrasi API',
-                icon: 'Shield',
-                isComingSoon: true,
-                badgeLabel: 'Segera',
-                comingSoonDesc:
-                    'Koneksi webhook dan integrasi dengan Slack, GitHub, dan Google Workspace akan hadir segera.',
+                href: '/integrations',
+                icon: 'Cpu',
+                permission: 'settings.view',
             },
             {
                 label: 'Bantuan & Support',
+                href: '/support',
                 icon: 'HelpCircle',
-                isSupport: true,
             },
         ],
     },
@@ -219,19 +217,6 @@ function openComingSoon(item: SidebarItem): void {
 function closeComingSoon(): void {
     comingSoonModal.value.isOpen = false;
 }
-
-const showSupportModal = ref(false);
-
-function openSupport(): void {
-    showSupportModal.value = true;
-}
-
-function closeSupport(): void {
-    showSupportModal.value = false;
-}
-
-const openSupportModal = openSupport;
-const closeSupportModal = closeSupport;
 
 function handleLogout(): void {
     router.post(logout.url(), {}, { preserveScroll: true });
@@ -365,25 +350,9 @@ watch(
 
                     <!-- Items inside this Category -->
                     <template v-for="item in section.items" :key="item.label">
-                        <!-- 1. Support Action Item -->
+                        <!-- 1. Upcoming Feature (Placeholder with informative popup) -->
                         <button
-                            v-if="item.isSupport"
-                            type="button"
-                            class="group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white"
-                            @click="openSupport"
-                        >
-                            <div class="flex items-center gap-3">
-                                <component
-                                    :is="getIcon(item.icon)"
-                                    class="h-4.5 w-4.5 stroke-[2] text-surface-400 group-hover:text-surface-700 dark:text-surface-300 dark:group-hover:text-surface-200"
-                                />
-                                <span>{{ item.label }}</span>
-                            </div>
-                        </button>
-
-                        <!-- 2. Upcoming Feature (Placeholder with informative popup) -->
-                        <button
-                            v-else-if="item.isComingSoon"
+                            v-if="item.isComingSoon"
                             type="button"
                             class="group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white"
                             @click="openComingSoon(item)"
@@ -572,47 +541,5 @@ watch(
             </div>
         </div>
 
-        <!-- Support Modal Popup -->
-        <div
-            v-if="showSupportModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/50 p-4 backdrop-blur-xs"
-            @click.self="closeSupportModal"
-        >
-            <div
-                class="w-full max-w-sm rounded-3xl bg-white p-6 text-surface-900 shadow-2xl dark:bg-surface-900 dark:text-white"
-            >
-                <div class="flex items-center justify-between pb-3">
-                    <h3 class="text-base font-bold">Pusat Bantuan & Support</h3>
-                    <button
-                        type="button"
-                        class="rounded-xl p-1.5 text-surface-400 hover:bg-surface-100 dark:hover:bg-white/10"
-                        @click="closeSupportModal"
-                    >
-                        <X class="h-4 w-4" />
-                    </button>
-                </div>
-                <p
-                    class="text-xs leading-relaxed text-surface-600 dark:text-surface-300"
-                >
-                    Butuh panduan atau mengalami kendala? Hubungi tim support
-                    DigitalCode melalui email resmi:
-                    <a
-                        href="mailto:support@project.local"
-                        class="font-semibold text-primary-600 underline dark:text-primary-400"
-                    >
-                        support@project.local </a
-                    >.
-                </p>
-                <div class="mt-5 flex justify-end">
-                    <button
-                        type="button"
-                        class="rounded-xl bg-surface-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black dark:bg-white dark:text-surface-900"
-                        @click="closeSupportModal"
-                    >
-                        Tutup
-                    </button>
-                </div>
-            </div>
-        </div>
     </aside>
 </template>
