@@ -6,9 +6,14 @@ use App\Http\Controllers\Api\TaskActivityController;
 use App\Http\Controllers\Api\TaskCommentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\InvitationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->group(function () {
+    // Invitation management (admin only)
+    Route::post('invitations', [InvitationController::class, 'store'])
+        ->middleware('can:users.create')
+        ->name('invitations.store');
     Route::get('users', [UserController::class, 'index'])->middleware('can:users.view');
     Route::post('users', [UserController::class, 'store'])->middleware('can:users.create');
     Route::get('users/{user}', [UserController::class, 'show'])->middleware('can:users.view');

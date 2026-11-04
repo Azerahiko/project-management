@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureOnboardingIsComplete;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -20,10 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             EnsureUserIsActive::class,
+            EnsureOnboardingIsComplete::class,
+        ]);
+        $middleware->alias([
+            'onboarding.incomplete' => EnsureOnboardingIsComplete::class,
         ]);
         $middleware->statefulApi();
         $middleware->api(append: [
             EnsureUserIsActive::class,
+            EnsureOnboardingIsComplete::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

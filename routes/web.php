@@ -3,6 +3,8 @@
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TimelineController;
@@ -32,6 +34,27 @@ Route::get('/reset-password/{token}', function (Request $request, string $token)
 })->name('password.reset')->middleware('guest');
 
 // Fortify registers its own POST /login and POST /logout routes automatically.
+
+// Public invitation routes
+Route::get('/invite/{token}', [InvitationController::class, 'show'])
+    ->name('invitations.show')
+    ->middleware(['guest', 'throttle:10,1']);
+
+Route::post('/invite/{token}', [InvitationController::class, 'accept'])
+    ->name('invitations.accept')
+    ->middleware(['guest', 'throttle:10,1']);
+
+// Onboarding routes (requires auth, redirects if complete)
+Route::middleware(['auth', 'onboarding.incomplete'])->prefix('onboarding')->name('onboarding.')->group(function () {
+    Route::get('/', [OnboardingController::class, 'index'])->name('index');
+    Route::get('/password', [OnboardingController::class, 'password'])->name('password');
+    Route::put('/password', [OnboardingController::class, 'updatePassword'])->name('password.update');
+    Route::get('/two-factor', [OnboardingController::class, 'twoFactor'])->name('two-factor');
+    Route::post('/two-factor/confirmed', [OnboardingController::class, 'confirmTwoFactor'])->name('two-factor.confirmed');
+    Route::get('/passkey', [OnboardingController::class, 'passkey'])->name('passkey');
+    Route::post('/passkey/skip', [OnboardingController::class, 'skipPasskey'])->name('passkey.skip');
+    Route::post('/complete', [OnboardingController::class, 'complete'])->name('complete');
+});
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
@@ -151,6 +174,9 @@ Route::middleware(['auth'])->group(function () {
                 'user' => UserResource::make($user)->toArray($request),
             ]);
         })->name('users.edit');
+
+        // Invitation management
+        Route::inertia('/users/invite', 'Users/Invite')->name('users.invite');
     });
 
     // Role & Permission Management (system administrator only)

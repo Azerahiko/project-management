@@ -17,6 +17,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
+use PragmaRX\Google2FA\Google2FA;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -36,7 +37,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection<int, ProjectMember> $projectMemberships
  * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -55,6 +56,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'notification_preferences' => 'array',
+            'onboarding_password_changed_at' => 'datetime',
+            'onboarding_completed_at' => 'datetime',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -177,5 +181,70 @@ class User extends Authenticatable
         $role = $this->getProjectRole($project);
 
         return $role === ProjectRole::OWNER || $role === ProjectRole::MANAGER;
+    }
+
+    /**
+     * Generate a new two-factor authentication secret.
+     */
+    public function generateTwoFactorSecret(): void
+    {
+        $secret = (new Google2FA)->generateSecretKey();
+
+        $this->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_recovery_codes' => encrypt(json_encode([])),
+        ])->save();
+    }
+
+    /**
+     * Get the current onboarding step.
+     */
+    public function onboardingStep(): string
+    {
+        if ($this->onboarding_completed_at !== null) {
+            return 'complete';
+        }
+
+        if ($this->onboarding_password_changed_at === null) {
+            return 'password';
+        }
+
+        if ($this->two_factor_confirmed_at === null) {
+            return 'two_factor';
+        }
+
+        return 'passkey';
+    }
+
+    /**
+     * Check if user has completed onboarding.
+     */
+    public function isOnboarded(): bool
+    {
+        return $this->onboarding_completed_at !== null;
+    }
+
+    /**
+     * Check if user needs to change password as part of onboarding.
+     */
+    public function needsOnboardingPasswordChange(): bool
+    {
+        return $this->onboarding_password_changed_at === null;
+    }
+
+    /**
+     * Check if user needs to enable two-factor authentication.
+     */
+    public function needsTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at === null;
+    }
+
+    /**
+     * Check if user needs to complete onboarding (any step).
+     */
+    public function needsOnboarding(): bool
+    {
+        return ! $this->isOnboarded();
     }
 }
