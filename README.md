@@ -359,6 +359,24 @@ composer run ci:check
 
 ---
 
+## 🛠️ Optional: Laravel Boost
+
+Laravel Boost is installed as a development dependency (`laravel/boost ^2.2`) and provides AI-assisted development tools for Laravel projects.
+
+### Installation (Optional)
+
+```bash
+php artisan boost:install
+```
+
+- This step is **optional** and not required to run the application.
+- It configures Boost's MCP server integration for enhanced AI-assisted development.
+- The `composer.json` includes a `post-update-cmd` hook that runs `php artisan boost:update` automatically after dependency updates.
+
+> **Note**: Laravel Boost is a developer productivity tool. The application runs fully without it.
+
+---
+
 ## 🐛 Troubleshooting
 
 ### Common Setup Issues
