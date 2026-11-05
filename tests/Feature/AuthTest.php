@@ -8,13 +8,13 @@ uses(RefreshDatabase::class);
 describe('Authentication', function () {
     it('allows login with valid credentials', function () {
         $user = User::factory()->create([
-            'email' => 'test@projex.test',
+            'email' => 'test@example.com',
             'password' => 'password',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'test@projex.test',
+            'email' => 'test@example.com',
             'password' => 'password',
         ]);
 
@@ -27,13 +27,13 @@ describe('Authentication', function () {
         $this->post('/logout');
 
         $user = User::factory()->create([
-            'email' => 'test@projex.test',
+            'email' => 'test@example.com',
             'password' => 'password',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'test@projex.test',
+            'email' => 'test@example.com',
             'password' => 'wrongpassword',
         ]);
 
@@ -43,13 +43,13 @@ describe('Authentication', function () {
 
     it('blocks login for inactive user', function () {
         $user = User::factory()->create([
-            'email' => 'inactive@projex.test',
+            'email' => 'inactive@example.com',
             'password' => 'password',
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'inactive@projex.test',
+            'email' => 'inactive@example.com',
             'password' => 'password',
         ]);
 
@@ -59,7 +59,7 @@ describe('Authentication', function () {
 
     it('logs out and redirects to login', function () {
         $user = User::factory()->create([
-            'email' => 'admin@projex.test',
+            'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
@@ -94,12 +94,12 @@ describe('Authentication', function () {
 
     it('handles password reset link requests', function () {
         $user = User::factory()->create([
-            'email' => 'member@project.local',
+            'email' => 'member@example.com',
             'is_active' => true,
         ]);
 
         $response = $this->post('/forgot-password', [
-            'email' => 'member@project.local',
+            'email' => 'member@example.com',
         ]);
 
         $response->assertSessionHas('status');

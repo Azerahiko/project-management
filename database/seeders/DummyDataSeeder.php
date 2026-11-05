@@ -27,20 +27,20 @@ class DummyDataSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::where('email', 'admin@project.local')->first();
+        $admin = User::where('email', 'admin@example.com')->first();
         if (! $admin) {
             $this->command?->warn('Admin user not found, please run AdminUserSeeder first.');
 
             return;
         }
 
-        $budi = User::where('email', 'project.manager@project.local')->first()
-            ?? User::where('email', 'pm@project.local')->first()
+        $budi = User::where('email', 'project.manager@example.com')->first()
+            ?? User::where('email', 'pm@example.com')->first()
             ?? $admin;
 
-        $siti = User::where('email', 'team.leader@project.local')->first() ?? $admin;
-        $andi = User::where('email', 'member@project.local')->first() ?? $admin;
-        $dewi = User::where('email', 'reviewer@project.local')->first() ?? $admin;
+        $siti = User::where('email', 'team.leader@example.com')->first() ?? $admin;
+        $andi = User::where('email', 'member@example.com')->first() ?? $admin;
+        $dewi = User::where('email', 'reviewer@example.com')->first() ?? $admin;
 
         $allUsers = [$admin, $budi, $siti, $andi, $dewi];
 

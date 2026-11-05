@@ -21,15 +21,15 @@ class ProjectSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::where('email', 'admin@project.local')->first();
-        $pm = User::where('email', 'pm@project.local')->first();
-        $member = User::where('email', 'member@project.local')->first();
+        $admin = User::where('email', 'admin@example.com')->first();
+        $pm = User::where('email', 'pm@example.com')->first();
+        $member = User::where('email', 'member@example.com')->first();
 
         // Create PM user if not exists
         if (! $pm) {
             $pm = User::create([
                 'name' => 'Project Manager',
-                'email' => 'pm@project.local',
+                'email' => 'pm@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
                 'email_verified_at' => now(),
@@ -41,7 +41,7 @@ class ProjectSeeder extends Seeder
         if (! $member) {
             $member = User::create([
                 'name' => 'Team Member',
-                'email' => 'member@project.local',
+                'email' => 'member@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
                 'email_verified_at' => now(),

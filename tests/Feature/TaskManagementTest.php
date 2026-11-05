@@ -247,7 +247,7 @@ describe('Task Management', function () {
         it('prevents assignee not member of project', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
-            $outsider = User::factory()->create(['email' => 'outsider@test.com']);
+            $outsider = User::factory()->create(['email' => 'outsider@example.com']);
             $outsider->assignRole('member');
 
             $this->actingAs($admin)

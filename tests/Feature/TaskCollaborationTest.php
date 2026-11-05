@@ -13,7 +13,7 @@ describe('Task Collaboration', function () {
         [$this->admin, $this->pm, $this->member] = createTestUsers();
         // Create an outsider user not in the project
         $this->outsider = User::factory()->create([
-            'email' => 'outsider@projex.test',
+            'email' => 'outsider@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);

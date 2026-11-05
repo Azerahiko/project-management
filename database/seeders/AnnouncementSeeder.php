@@ -13,8 +13,8 @@ class AnnouncementSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::where('email', 'admin@project.local')->first();
-        $pm = User::where('email', 'project.manager@project.local')->first();
+        $admin = User::where('email', 'admin@example.com')->first();
+        $pm = User::where('email', 'project.manager@example.com')->first();
 
         if (! $admin) {
             return;

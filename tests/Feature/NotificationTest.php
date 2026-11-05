@@ -22,35 +22,35 @@ beforeEach(function () {
 
     // Create test users
     $this->admin = User::factory()->create([
-        'email' => 'admin@projex.test',
+        'email' => 'admin@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
     $this->admin->assignRole('administrator');
 
     $this->pm = User::factory()->create([
-        'email' => 'pm@projex.test',
+        'email' => 'pm@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
     $this->pm->assignRole('project_manager');
 
     $this->member1 = User::factory()->create([
-        'email' => 'member1@projex.test',
+        'email' => 'member1@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
     $this->member1->assignRole('member');
 
     $this->member2 = User::factory()->create([
-        'email' => 'member2@projex.test',
+        'email' => 'member2@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
     $this->member2->assignRole('member');
 
     $this->client = User::factory()->create([
-        'email' => 'client@projex.test',
+        'email' => 'client@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
@@ -367,7 +367,7 @@ test('project member added creates notification for new member', function () {
     $this->actingAs($this->pm);
 
     $newUser = User::factory()->create([
-        'email' => 'newmember@projex.test',
+        'email' => 'newmember@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);

@@ -20,7 +20,7 @@ if (! function_exists('createTestUsers')) {
         (new RolePermissionSeeder)->run();
 
         $admin = User::factory()->create([
-            'email' => 'admin@projex.test',
+            'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
             'email_verified_at' => now(),
@@ -30,7 +30,7 @@ if (! function_exists('createTestUsers')) {
         $admin->assignRole('administrator');
 
         $pm = User::factory()->create([
-            'email' => 'pm@projex.test',
+            'email' => 'pm@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
             'email_verified_at' => now(),
@@ -40,7 +40,7 @@ if (! function_exists('createTestUsers')) {
         $pm->assignRole('project_manager');
 
         $member = User::factory()->create([
-            'email' => 'member@projex.test',
+            'email' => 'member@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
             'email_verified_at' => now(),

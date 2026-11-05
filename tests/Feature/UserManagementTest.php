@@ -10,14 +10,14 @@ describe('User Management RBAC', function () {
     beforeEach(function () {
         $this->seed(RolePermissionSeeder::class);
         $this->admin = User::factory()->create([
-            'email' => 'admin@projex.test',
+            'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
         $this->admin->assignRole('administrator');
 
         $this->user = User::factory()->create([
-            'email' => 'user@projex.test',
+            'email' => 'user@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
@@ -53,7 +53,7 @@ describe('User Management RBAC', function () {
             $this->actingAs($this->admin)
                 ->postJson('/api/users', [
                     'name' => 'New User',
-                    'email' => 'new@projex.test',
+                    'email' => 'new@example.com',
                     'password' => 'password123',
                     'password_confirmation' => 'password123',
                     'role' => 'member',
@@ -61,14 +61,14 @@ describe('User Management RBAC', function () {
                 ->assertCreated()
                 ->assertJsonStructure(['data' => ['id', 'name', 'email']]);
 
-            $this->assertDatabaseHas('users', ['email' => 'new@projex.test']);
+            $this->assertDatabaseHas('users', ['email' => 'new@example.com']);
         });
 
         it('denies non-admin creating user via API', function () {
             $this->actingAs($this->user)
                 ->postJson('/api/users', [
                     'name' => 'New User',
-                    'email' => 'new@projex.test',
+                    'email' => 'new@example.com',
                     'password' => 'password123',
                     'password_confirmation' => 'password123',
                     'role' => 'member',
@@ -78,7 +78,7 @@ describe('User Management RBAC', function () {
 
         it('allows admin to update user via API', function () {
             $target = User::factory()->create([
-                'email' => 'target@projex.test',
+                'email' => 'target@example.com',
                 'is_active' => true,
             ]);
             $target->assignRole('member');
@@ -86,7 +86,7 @@ describe('User Management RBAC', function () {
             $this->actingAs($this->admin)
                 ->putJson("/api/users/{$target->id}", [
                     'name' => 'Updated Name',
-                    'email' => 'updated@projex.test',
+                    'email' => 'updated@example.com',
                     'role' => 'project_manager',
                 ])
                 ->assertOk()
@@ -100,7 +100,7 @@ describe('User Management RBAC', function () {
 
         it('denies non-admin updating user via API', function () {
             $target = User::factory()->create([
-                'email' => 'target@projex.test',
+                'email' => 'target@example.com',
                 'is_active' => true,
             ]);
             $target->assignRole('member');
@@ -114,7 +114,7 @@ describe('User Management RBAC', function () {
 
         it('allows admin to delete user via API', function () {
             $target = User::factory()->create([
-                'email' => 'target@projex.test',
+                'email' => 'target@example.com',
                 'is_active' => true,
             ]);
             $target->assignRole('member');
@@ -128,7 +128,7 @@ describe('User Management RBAC', function () {
 
         it('denies non-admin deleting user via API', function () {
             $target = User::factory()->create([
-                'email' => 'target@projex.test',
+                'email' => 'target@example.com',
                 'is_active' => true,
             ]);
             $target->assignRole('member');
@@ -146,7 +146,7 @@ describe('User Management RBAC', function () {
 
         it('blocks deleting last active administrator', function () {
             $otherAdmin = User::factory()->create([
-                'email' => 'admin2@projex.test',
+                'email' => 'admin2@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
             ]);
@@ -163,7 +163,7 @@ describe('User Management RBAC', function () {
 
         it('blocks deactivating last active administrator', function () {
             $otherAdmin = User::factory()->create([
-                'email' => 'admin2@projex.test',
+                'email' => 'admin2@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
             ]);
@@ -187,7 +187,7 @@ describe('User Management RBAC', function () {
             $this->actingAs($this->admin)
                 ->putJson("/api/users/{$this->admin->id}", [
                     'name' => 'Updated Administrator',
-                    'email' => 'updated-admin@projex.test',
+                    'email' => 'updated-admin@example.com',
                     'role' => 'administrator',
                     'is_active' => true,
                 ])
@@ -215,7 +215,7 @@ describe('User Management RBAC', function () {
 
         it('allows demoting an administrator when another active administrator exists', function () {
             $otherAdmin = User::factory()->create([
-                'email' => 'admin2@projex.test',
+                'email' => 'admin2@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
             ]);
