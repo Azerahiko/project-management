@@ -208,7 +208,7 @@ describe('Project Management', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             $inactive = User::factory()->create([
-                'email' => 'inactive@projex.test',
+                'email' => 'inactive@example.com',
                 'is_active' => false,
             ]);
             $inactive->assignRole('project_manager');
@@ -401,12 +401,12 @@ describe('Project Management', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             $candidate = User::factory()->create([
-                'email' => 'candidate@projex.test',
+                'email' => 'candidate@example.com',
                 'is_active' => true,
             ]);
             $candidate->assignRole('member');
             $inactive = User::factory()->create([
-                'email' => 'inactive@projex.test',
+                'email' => 'inactive@example.com',
                 'is_active' => false,
             ]);
             $inactive->assignRole('member');
@@ -437,7 +437,7 @@ describe('Project Management', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             $newUser = User::factory()->create([
-                'email' => 'newmember@projex.test',
+                'email' => 'newmember@example.com',
                 'password' => bcrypt('password'),
             ]);
             $newUser->assignRole('member');
@@ -461,7 +461,7 @@ describe('Project Management', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             $newUser = User::factory()->create([
-                'email' => 'newmember2@projex.test',
+                'email' => 'newmember2@example.com',
                 'password' => bcrypt('password'),
             ]);
             $newUser->assignRole('member');
@@ -478,7 +478,7 @@ describe('Project Management', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             $newUser = User::factory()->create([
-                'email' => 'newmember3@projex.test',
+                'email' => 'newmember3@example.com',
                 'password' => bcrypt('password'),
             ]);
             $newUser->assignRole('member');

@@ -181,7 +181,7 @@ describe('Dashboard Controller', function () {
 
             // Create client user
             $client = User::factory()->create([
-                'email' => 'client@projex.test',
+                'email' => 'client@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
             ]);
@@ -231,7 +231,7 @@ describe('Dashboard Controller', function () {
             [$admin, $pm, $member] = createTestUsers();
 
             $reviewer = User::factory()->create([
-                'email' => 'reviewer@projex.test',
+                'email' => 'reviewer@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
             ]);

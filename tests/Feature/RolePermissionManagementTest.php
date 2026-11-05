@@ -13,14 +13,14 @@ describe('Role & Permission Management', function () {
         $this->seed(RolePermissionSeeder::class);
 
         $this->admin = User::factory()->create([
-            'email' => 'admin@projex.test',
+            'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
         $this->admin->assignRole('administrator');
 
         $this->user = User::factory()->create([
-            'email' => 'user@projex.test',
+            'email' => 'user@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
