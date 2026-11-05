@@ -505,16 +505,35 @@ describe('Project Management', function () {
 
         it('allows admin to update member role', function () {
             [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            $project = Project::create([
+                'name' => 'Test Project',
+                'description' => 'Test project',
+                'status' => 'active',
+                'priority' => 'high',
+                'owner_id' => $admin->id,
+            ]);
+
+            ProjectMember::create([
+                'project_id' => $project->id,
+                'user_id' => $admin->id,
+                'role' => 'owner',
+            ]);
+
+            ProjectMember::create([
+                'project_id' => $project->id,
+                'user_id' => $pm->id,
+                'role' => 'member',
+            ]);
+
             $this->actingAs($admin)
-                ->putJson("/api/projects/{$project->id}/members/{$member->id}", [
+                ->putJson("/api/projects/{$project->id}/members/{$pm->id}", [
                     'role' => 'manager',
                 ])
                 ->assertOk();
 
             $this->assertDatabaseHas('project_members', [
                 'project_id' => $project->id,
-                'user_id' => $member->id,
+                'user_id' => $pm->id,
                 'role' => 'manager',
             ]);
         });
