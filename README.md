@@ -6,23 +6,23 @@ A modern project management application built with **Laravel 13**, **Inertia.js 
 
 ## 📋 Technology Stack
 
-| Layer | Technology | Version |
-|-------|------------|---------|
-| **Backend** | Laravel Framework | ^13.17 |
-| **PHP** | PHP | ^8.3 |
-| **Frontend** | Vue 3 + TypeScript | ^3.5 / ^5.2 |
-| **SPA Bridge** | Inertia.js (SSR) | ^3.0 |
-| **Authentication** | Laravel Fortify + Sanctum | ^1.41 / ^4.3 |
-| **Authorization** | Spatie Laravel Permission | ^8.3 |
-| **Styling** | Tailwind CSS | ^4.1 |
-| **Build Tool** | Vite (via vite-plus) | ^1.3 |
-| **Testing** | Pest PHP | ^5.3 |
-| **Static Analysis** | PHPStan (Larastan) | ^3.9 |
-| **Code Style** | Laravel Pint | ^1.27 |
-| **Database** | PostgreSQL (primary) / SQLite (testing) | - |
-| **Queue** | Database driver | - |
-| **Cache** | Database driver | - |
-| **Mail** | Log driver (development) | - |
+| Layer               | Technology                              | Version      |
+| ------------------- | --------------------------------------- | ------------ |
+| **Backend**         | Laravel Framework                       | ^13.17       |
+| **PHP**             | PHP                                     | ^8.3         |
+| **Frontend**        | Vue 3 + TypeScript                      | ^3.5 / ^5.2  |
+| **SPA Bridge**      | Inertia.js (SSR)                        | ^3.0         |
+| **Authentication**  | Laravel Fortify + Sanctum               | ^1.41 / ^4.3 |
+| **Authorization**   | Spatie Laravel Permission               | ^8.3         |
+| **Styling**         | Tailwind CSS                            | ^4.1         |
+| **Build Tool**      | Vite (via vite-plus)                    | ^1.3         |
+| **Testing**         | Pest PHP                                | ^5.3         |
+| **Static Analysis** | PHPStan (Larastan)                      | ^3.9         |
+| **Code Style**      | Laravel Pint                            | ^1.27        |
+| **Database**        | PostgreSQL (primary) / SQLite (testing) | -            |
+| **Queue**           | Database driver                         | -            |
+| **Cache**           | Database driver                         | -            |
+| **Mail**            | Log driver (development)                | -            |
 
 ---
 
@@ -30,14 +30,14 @@ A modern project management application built with **Laravel 13**, **Inertia.js 
 
 Before you begin, ensure you have the following installed:
 
-| Software | Minimum Version | Installation Guide |
-|----------|----------------|-------------------|
-| **PHP** | 8.3+ | [php.net](https://www.php.net/downloads) |
-| **Composer** | 2.x | [getcomposer.org](https://getcomposer.org/download/) |
-| **Node.js** | 20+ (LTS) | [nodejs.org](https://nodejs.org/) |
-| **npm** | 11+ (bundled with Node) | - |
-| **PostgreSQL** | 14+ | [postgresql.org](https://www.postgresql.org/download/) |
-| **Git** | 2.x | [git-scm.com](https://git-scm.com/downloads) |
+| Software       | Minimum Version         | Installation Guide                                     |
+| -------------- | ----------------------- | ------------------------------------------------------ |
+| **PHP**        | 8.3+                    | [php.net](https://www.php.net/downloads)               |
+| **Composer**   | 2.x                     | [getcomposer.org](https://getcomposer.org/download/)   |
+| **Node.js**    | 20+ (LTS)               | [nodejs.org](https://nodejs.org/)                      |
+| **npm**        | 11+ (bundled with Node) | -                                                      |
+| **PostgreSQL** | 14+                     | [postgresql.org](https://www.postgresql.org/download/) |
+| **Git**        | 2.x                     | [git-scm.com](https://git-scm.com/downloads)           |
 
 > **Note**: The project uses SQLite for testing (configured in `phpunit.xml`). PostgreSQL is the recommended production database as defined in `.env.example`.
 
@@ -104,21 +104,23 @@ DB_PASSWORD=your_secure_password
 ```
 
 > **Development Alternative**: For quick local setup without PostgreSQL, you can use SQLite:
+>
 > ```env
 > DB_CONNECTION=sqlite
 > DB_DATABASE=database/database.sqlite
 > ```
+>
 > Then create the file: `touch database/database.sqlite`
 
 ### 4. Configure Other Services (Optional)
 
-| Service | Variables | Notes |
-|---------|-----------|-------|
-| **Mail** | `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` | Defaults to `log` driver (writes to `storage/logs`) |
-| **Redis** | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Used for caching/queues if configured |
-| **Queue** | `QUEUE_CONNECTION` | Defaults to `database` |
-| **Cache** | `CACHE_STORE` | Defaults to `database` |
-| **Session** | `SESSION_DRIVER` | Defaults to `database` |
+| Service     | Variables                                                                                      | Notes                                               |
+| ----------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Mail**    | `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` | Defaults to `log` driver (writes to `storage/logs`) |
+| **Redis**   | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`                                                   | Used for caching/queues if configured               |
+| **Queue**   | `QUEUE_CONNECTION`                                                                             | Defaults to `database`                              |
+| **Cache**   | `CACHE_STORE`                                                                                  | Defaults to `database`                              |
+| **Session** | `SESSION_DRIVER`                                                                               | Defaults to `database`                              |
 
 ### 5. Frontend URL (Vite)
 
@@ -152,6 +154,7 @@ php artisan migrate
 ```
 
 This creates all 19 migration tables including:
+
 - `users`, `projects`, `project_members`, `tasks`
 - `task_comments`, `task_activities`, `notifications`
 - `announcements`, `webhooks`, `invitations`, `passkeys`
@@ -164,11 +167,13 @@ php artisan db:seed
 ```
 
 This runs all seeders including:
+
 - `RolePermissionSeeder` — Creates roles (`administrator`, `project_manager`) and permissions
 - `AdminUserSeeder` — Creates an admin user (`admin@example.com` / `password`)
 - `UserSeeder`, `ProjectSeeder`, `DummyDataSeeder` — Sample data for development
 
 > **Default Admin Credentials** (after seeding):
+>
 > - Email: `admin@example.com`
 > - Password: `password`
 
@@ -185,6 +190,7 @@ composer run dev
 ```
 
 This runs:
+
 - `php artisan dev` — Laravel server on `http://localhost:8000`
 - `npm run dev` — Vite dev server on `http://localhost:5173` with HMR
 
@@ -197,6 +203,7 @@ npm run build
 ```
 
 This runs `vp build` (vite-plus) which:
+
 - Compiles TypeScript and Vue SFCs
 - Processes Tailwind CSS
 - Generates optimized bundles in `public/build/`
@@ -245,6 +252,7 @@ Access the application at **http://localhost:8000**
 ## ⚡ Queue Workers & Background Services
 
 The application uses the **database queue driver** for:
+
 - Notification delivery (via `NotificationSender` service)
 - Webhook dispatching (via `WebhookDispatcher` service)
 - Other async jobs
@@ -271,12 +279,12 @@ stdout_logfile=/var/log/laravel-queue.log
 
 ### Other Useful Queue Commands
 
-| Command | Description |
-|---------|-------------|
-| `php artisan queue:listen` | Listen for jobs (development) |
-| `php artisan queue:failed` | List failed jobs |
-| `php artisan queue:retry all` | Retry all failed jobs |
-| `php artisan queue:clear` | Clear all jobs |
+| Command                       | Description                   |
+| ----------------------------- | ----------------------------- |
+| `php artisan queue:listen`    | Listen for jobs (development) |
+| `php artisan queue:failed`    | List failed jobs              |
+| `php artisan queue:retry all` | Retry all failed jobs         |
+| `php artisan queue:clear`     | Clear all jobs                |
 
 ---
 
@@ -295,6 +303,7 @@ composer test
 ```
 
 This runs:
+
 1. `php artisan config:clear`
 2. `pint --parallel --test` (code style check)
 3. `phpstan analyse` (static analysis)
@@ -302,12 +311,12 @@ This runs:
 
 ### Test Types
 
-| Command | Description |
-|---------|-------------|
-| `php artisan test --filter=Feature` | Run feature tests only |
-| `php artisan test --filter=Unit` | Run unit tests only |
+| Command                                                    | Description            |
+| ---------------------------------------------------------- | ---------------------- |
+| `php artisan test --filter=Feature`                        | Run feature tests only |
+| `php artisan test --filter=Unit`                           | Run unit tests only    |
 | `php artisan test tests/Feature/ProjectManagementTest.php` | Run specific test file |
-| `php artisan test --compact` | Compact output format |
+| `php artisan test --compact`                               | Compact output format  |
 
 ### Testing Database
 
@@ -381,19 +390,19 @@ php artisan boost:install
 
 ### Common Setup Issues
 
-| Issue | Solution |
-|-------|----------|
-| **"No application encryption key has been specified"** | Run `php artisan key:generate` |
-| **Database connection refused** | Verify PostgreSQL is running and credentials in `.env` are correct. Check `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`. |
-| **Migration fails: "relation already exists"** | Database may have existing tables. Run `php artisan migrate:fresh` (⚠️ destroys data) or manually drop tables. |
-| **Vite dev server not connecting** | Ensure port 5173 is free. Check `vite.config.ts` server config. Try `npm run dev` separately to see errors. |
-| **"npm run dev" fails with "vp: not found"** | Run `npm install` first. `vp` is provided by `vite-plus` package. |
-| **TypeScript errors in IDE but not in build** | Restart TypeScript server in your IDE. Run `npm run types:check` to verify. |
-| **Pest tests fail with "database locked"** | Ensure no other process is using the SQLite test database. Tests run in parallel by default; the project disables parallel execution in `pint.json` / test config. |
-| **Permission denied on storage/ or bootstrap/cache/** | Run: `chmod -R 775 storage bootstrap/cache` and ensure web server user owns these directories. |
-| **Mail not sending in production** | Configure `MAIL_MAILER=smtp` (or your provider) with valid credentials in `.env`. |
-| **Webhook delivery fails** | Check `webhooks` table for `last_delivery_error`. Ensure target URL is accessible and accepts POST with JSON. |
-| **Inertia SSR not working** | Ensure `npm run build` was run (creates SSR bundle). Check `resources/js/ssr.ts` exists. |
+| Issue                                                  | Solution                                                                                                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **"No application encryption key has been specified"** | Run `php artisan key:generate`                                                                                                                                     |
+| **Database connection refused**                        | Verify PostgreSQL is running and credentials in `.env` are correct. Check `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.                       |
+| **Migration fails: "relation already exists"**         | Database may have existing tables. Run `php artisan migrate:fresh` (⚠️ destroys data) or manually drop tables.                                                     |
+| **Vite dev server not connecting**                     | Ensure port 5173 is free. Check `vite.config.ts` server config. Try `npm run dev` separately to see errors.                                                        |
+| **"npm run dev" fails with "vp: not found"**           | Run `npm install` first. `vp` is provided by `vite-plus` package.                                                                                                  |
+| **TypeScript errors in IDE but not in build**          | Restart TypeScript server in your IDE. Run `npm run types:check` to verify.                                                                                        |
+| **Pest tests fail with "database locked"**             | Ensure no other process is using the SQLite test database. Tests run in parallel by default; the project disables parallel execution in `pint.json` / test config. |
+| **Permission denied on storage/ or bootstrap/cache/**  | Run: `chmod -R 775 storage bootstrap/cache` and ensure web server user owns these directories.                                                                     |
+| **Mail not sending in production**                     | Configure `MAIL_MAILER=smtp` (or your provider) with valid credentials in `.env`.                                                                                  |
+| **Webhook delivery fails**                             | Check `webhooks` table for `last_delivery_error`. Ensure target URL is accessible and accepts POST with JSON.                                                      |
+| **Inertia SSR not working**                            | Ensure `npm run build` was run (creates SSR bundle). Check `resources/js/ssr.ts` exists.                                                                           |
 
 ### Useful Debug Commands
 
