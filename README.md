@@ -485,23 +485,3 @@ project-management/
 ├── vite.config.ts             # Vite configuration
 └── README.md                  # This file
 ```
-
----
-
-## 📄 License
-
-This project is open-sourced software licensed under the **MIT License**.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Make your changes
-4. Run quality checks: `composer run ci:check`
-5. Commit: `git commit -m "feat: your feature description"`
-6. Push: `git push origin feature/your-feature`
-7. Open a Pull Request
-
-Please ensure all tests pass and code style checks pass before submitting.
