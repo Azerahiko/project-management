@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Inertia\Response;
 
 class InvitationController extends Controller
 {
@@ -77,7 +78,7 @@ class InvitationController extends Controller
     /**
      * Show the invitation acceptance page.
      */
-    public function show(string $token): \Inertia\Response
+    public function show(string $token): Response
     {
         $invitation = Invitation::findByToken($token);
 
