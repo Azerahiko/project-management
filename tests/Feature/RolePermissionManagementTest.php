@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\User;
+use App\Support\Permissions;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -43,6 +45,26 @@ describe('Role & Permission Management', function () {
         it('denies unauthenticated access to role permission management', function () {
             $this->get('/roles/permissions')
                 ->assertRedirect('/login');
+        });
+
+        it('returns role counts and permission summaries', function () {
+            $expectedAssignments = collect(Permissions::rolePermissions())
+                ->flatten()
+                ->count();
+
+            $this->actingAs($this->admin)
+                ->get('/roles/permissions')
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('Roles/Permissions')
+                    ->where('summary.roles_count', 6)
+                    ->where('summary.permissions_count', count(Permissions::slugs()))
+                    ->where('summary.assignments_count', $expectedAssignments)
+                    ->where('summary.members_count', 2)
+                    ->where('roles.0.name', 'administrator')
+                    ->where('roles.0.users_count', 1)
+                    ->has('roles', 6)
+                );
         });
     });
 

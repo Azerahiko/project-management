@@ -19,8 +19,15 @@ class RolePermissionController extends Controller
     {
         $roles = Role::query()
             ->where('guard_name', 'web')
-            ->orderBy('name')
-            ->get();
+            ->with('permissions')
+            ->withCount('users')
+            ->get()
+            ->sortBy(function (Role $role): int {
+                $position = array_search($role->name, Roles::slugs(), true);
+
+                return $position === false ? 99 : $position;
+            })
+            ->values();
 
         $permissions = Permission::query()
             ->where('guard_name', 'web')
@@ -37,11 +44,13 @@ class RolePermissionController extends Controller
         }
 
         return Inertia::render('Roles/Permissions', [
-            'roles' => $roles->map(fn ($role) => [
+            'roles' => $roles->map(fn (Role $role) => [
                 'id' => $role->id,
                 'name' => $role->name,
                 'label' => Roles::all()[$role->name] ?? $role->name,
                 'permissions_count' => $role->permissions->count(),
+                'users_count' => $role->users_count,
+                'is_system' => $role->name === Roles::ADMINISTRATOR,
             ]),
             'permissions' => $permissions->map(fn ($permission) => [
                 'id' => $permission->id,
@@ -49,11 +58,23 @@ class RolePermissionController extends Controller
             ]),
             'grouped_permissions' => $groupedPermissions,
             'role_permissions' => $rolePermissions,
+            'summary' => [
+                'roles_count' => $roles->count(),
+                'permissions_count' => $permissions->count(),
+                'assignments_count' => $roles->sum(
+                    fn (Role $role): int => $role->permissions->count(),
+                ),
+                'members_count' => $roles->sum('users_count'),
+            ],
         ]);
     }
 
     public function update(RolePermissionRequest $request, Role $role): RedirectResponse
     {
+        if ($role->guard_name !== 'web') {
+            abort(404);
+        }
+
         // Prevent modification of the system administrator role
         if ($role->name === Roles::ADMINISTRATOR) {
             return redirect()

@@ -54,6 +54,12 @@ class FortifyServiceProvider extends ServiceProvider
                 ]);
             }
 
+            if (! $user->email_verified_at) {
+                throw ValidationException::withMessages([
+                    'email' => ['Email belum diverifikasi. Silakan verifikasi email terlebih dahulu.'],
+                ]);
+            }
+
             return $user;
         });
 

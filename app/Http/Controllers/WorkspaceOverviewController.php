@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProjectStatus;
 use App\Enums\TaskStatus;
 use App\Models\Project;
 use App\Models\ProjectMember;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Support\Permissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -87,12 +89,26 @@ class WorkspaceOverviewController extends Controller
     {
         Gate::authorize(Permissions::DOCUMENTS_VIEW);
 
-        $projects = Project::accessibleBy($request->user())
+        $accessibleProjects = Project::accessibleBy($request->user());
+        $totalAccessibleProjects = (clone $accessibleProjects)->count();
+
+        $projects = (clone $accessibleProjects)
             ->whereNotNull('description')
             ->where('description', '!=', '')
-            ->withCount('tasks')
+            ->withCount([
+                'tasks',
+                'tasks as completed_tasks_count' => fn ($query) => $query->where('status', TaskStatus::DONE),
+            ])
             ->orderBy('name')
             ->get(['id', 'name', 'description', 'owner_id', 'status', 'updated_at']);
+
+        $totalTasksCount = $projects->sum('tasks_count');
+        $completedTasksCount = $projects->sum('completed_tasks_count');
+
+        $recentlyUpdated = (clone $projects)
+            ->sortByDesc('updated_at')
+            ->take(4)
+            ->values();
 
         return Inertia::render('Documents/Index', [
             'project_notes' => $projects->map(fn (Project $project): array => [
@@ -101,7 +117,28 @@ class WorkspaceOverviewController extends Controller
                 'description' => $project->description,
                 'status' => $project->status->value,
                 'status_label' => $project->status->label(),
-                'tasks_count' => $project->tasks_count,
+                'tasks_count' => (int) $project->tasks_count,
+                'completed_tasks_count' => (int) $project->completed_tasks_count,
+                'progress_percent' => $project->tasks_count > 0
+                    ? (int) round(($project->completed_tasks_count / $project->tasks_count) * 100)
+                    : 0,
+                'updated_at' => $project->updated_at?->toISOString(),
+            ]),
+            'document_stats' => [
+                'total_projects' => $totalAccessibleProjects,
+                'documented_projects' => $projects->count(),
+                'active_documented' => $projects->whereNotIn('status', [ProjectStatus::COMPLETED, ProjectStatus::ARCHIVED])->count(),
+                'archived_documented' => $projects->whereIn('status', [ProjectStatus::COMPLETED, ProjectStatus::ARCHIVED])->count(),
+                'total_tasks' => (int) $totalTasksCount,
+                'completed_tasks' => (int) $completedTasksCount,
+                'documentation_rate' => $totalAccessibleProjects > 0
+                    ? (int) round(($projects->count() / $totalAccessibleProjects) * 100)
+                    : 0,
+            ],
+            'recently_updated' => $recentlyUpdated->map(fn (Project $project): array => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'tasks_count' => (int) $project->tasks_count,
                 'updated_at' => $project->updated_at?->toISOString(),
             ]),
             'can_view_projects' => $request->user()->can('projects.view'),
@@ -204,9 +241,21 @@ class WorkspaceOverviewController extends Controller
         Gate::authorize(Permissions::TASK_COLLABORATION_VIEW);
 
         $accessibleProjects = Project::accessibleBy($request->user());
+        $search = trim((string) $request->query('search', ''));
 
         $comments = TaskComment::whereHas('task.project', fn ($query) => $query->accessibleBy($request->user()))
             ->with(['user:id,name,avatar', 'task.project:id,name'])
+            ->when($search !== '', function ($query) use ($search): void {
+                $like = '%'.mb_strtolower($search).'%';
+
+                $query->where(function ($query) use ($like): void {
+                    $query->whereRaw('LOWER(content) LIKE ?', [$like])
+                        ->orWhereHas('user', fn ($query) => $query->whereRaw('LOWER(name) LIKE ?', [$like]))
+                        ->orWhereHas('task', fn ($query) => $query
+                            ->whereRaw('LOWER(title) LIKE ?', [$like])
+                            ->orWhereHas('project', fn ($query) => $query->whereRaw('LOWER(name) LIKE ?', [$like])));
+                });
+            })
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(15)
@@ -247,7 +296,41 @@ class WorkspaceOverviewController extends Controller
             ->where('status', TaskStatus::REVIEW)
             ->count();
 
+        $topCommenters = TaskComment::whereHas('task.project', fn ($q) => $q->accessibleBy($request->user()))
+            ->select('user_id', DB::raw('count(*) as comments_count'))
+            ->groupBy('user_id')
+            ->orderByDesc('comments_count')
+            ->with('user:id,name,avatar')
+            ->take(5)
+            ->get();
+
+        $mostDiscussedTasks = Task::whereHas('project', fn ($q) => $q->accessibleBy($request->user()))
+            ->has('comments')
+            ->withCount('comments')
+            ->orderByDesc('comments_count')
+            ->with('project:id,name')
+            ->take(4)
+            ->get();
+
+        $discussionTasks = $request->user()->can(Permissions::TASKS_VIEW)
+            ? Task::whereHas('project', fn ($q) => $q->accessibleBy($request->user()))
+                ->with('project:id,name')
+                ->orderByDesc('updated_at')
+                ->take(30)
+                ->get(['id', 'title', 'project_id', 'status'])
+                ->map(fn (Task $task): array => [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'project_name' => $task->project->name,
+                    'status' => $task->status->value,
+                    'status_label' => $task->status->label(),
+                ])
+            : collect();
+
         return Inertia::render('Collaboration/Index', [
+            'filters' => [
+                'search' => $search,
+            ],
             'stats' => [
                 'total_discussions' => $totalCommentsCount,
                 'active_members' => $collaboratingUsers->count(),
@@ -311,6 +394,20 @@ class WorkspaceOverviewController extends Controller
                 'avatar' => $u->avatar,
                 'initials' => $u->initials,
             ]),
+            'top_commenters' => $topCommenters->map(fn ($tc): array => [
+                'id' => $tc->user_id,
+                'name' => $tc->user->name,
+                'avatar' => $tc->user->avatar,
+                'initials' => $tc->user->initials,
+                'comments_count' => (int) $tc->getAttribute('comments_count'),
+            ]),
+            'most_discussed_tasks' => $mostDiscussedTasks->map(fn (Task $t): array => [
+                'id' => $t->id,
+                'title' => $t->title,
+                'project_name' => $t->project->name,
+                'comments_count' => (int) $t->getAttribute('comments_count'),
+            ]),
+            'discussion_tasks' => $discussionTasks,
             'can_view_tasks' => $request->user()->can('tasks.view'),
             'can_view_projects' => $request->user()->can('projects.view'),
         ]);

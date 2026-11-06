@@ -30,6 +30,8 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ];
     }
 
@@ -40,6 +42,17 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has not completed onboarding.
+     */
+    public function incompleteOnboarding(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'onboarding_password_changed_at' => null,
+            'onboarding_completed_at' => null,
         ]);
     }
 }

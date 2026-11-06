@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\WorkspaceOverviewController;
 use App\Http\Resources\ProjectResource;
@@ -14,7 +18,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Laravel\Passkeys\Passkey;
 
 // Public login page (Inertia)
 Route::inertia('/login', 'Auth/Login')->name('login')->middleware('guest');
@@ -31,6 +34,27 @@ Route::get('/reset-password/{token}', function (Request $request, string $token)
 })->name('password.reset')->middleware('guest');
 
 // Fortify registers its own POST /login and POST /logout routes automatically.
+
+// Public invitation routes
+Route::get('/invite/{token}', [InvitationController::class, 'show'])
+    ->name('invitations.show')
+    ->middleware(['guest', 'throttle:10,1']);
+
+Route::post('/invite/{token}', [InvitationController::class, 'accept'])
+    ->name('invitations.accept')
+    ->middleware(['guest', 'throttle:10,1']);
+
+// Onboarding routes (requires auth, redirects if complete)
+Route::middleware(['auth', 'onboarding.incomplete'])->prefix('onboarding')->name('onboarding.')->group(function () {
+    Route::get('/', [OnboardingController::class, 'index'])->name('index');
+    Route::get('/password', [OnboardingController::class, 'password'])->name('password');
+    Route::put('/password', [OnboardingController::class, 'updatePassword'])->name('password.update');
+    Route::get('/two-factor', [OnboardingController::class, 'twoFactor'])->name('two-factor');
+    Route::post('/two-factor/confirmed', [OnboardingController::class, 'confirmTwoFactor'])->name('two-factor.confirmed');
+    Route::get('/passkey', [OnboardingController::class, 'passkey'])->name('passkey');
+    Route::post('/passkey/skip', [OnboardingController::class, 'skipPasskey'])->name('passkey.skip');
+    Route::post('/complete', [OnboardingController::class, 'complete'])->name('complete');
+});
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
@@ -54,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/projects/{project}', function (Project $project, Request $request) {
             abort_unless($request->user()->can('view', $project), 403);
 
-            $project->load(['owner', 'projectMembers.user']);
+            $project->load(['owner', 'projectMembers.user', 'tasks.assignee']);
             $project->can_update = $request->user()->can('update', $project);
             $project->can_delete = $request->user()->can('delete', $project);
             $project->can_manage_members = $request->user()->can('manageMembers', $project);
@@ -69,7 +93,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/projects/{project}/edit', function (Project $project, Request $request) {
             abort_unless($request->user()->can('update', $project), 403);
 
-            $project->load(['owner', 'projectMembers.user']);
+            $project->load(['owner', 'projectMembers.user', 'tasks.assignee']);
             $project->can_update = $request->user()->can('update', $project);
             $project->can_delete = $request->user()->can('delete', $project);
             $project->can_manage_members = $request->user()->can('manageMembers', $project);
@@ -150,6 +174,9 @@ Route::middleware(['auth'])->group(function () {
                 'user' => UserResource::make($user)->toArray($request),
             ]);
         })->name('users.edit');
+
+        // Invitation management
+        Route::inertia('/users/invite', 'Users/Invite')->name('users.invite');
     });
 
     // Role & Permission Management (system administrator only)
@@ -162,22 +189,26 @@ Route::middleware(['auth'])->group(function () {
 
     // Settings route (accessible to all authenticated users)
     Route::middleware('can:settings.view')->group(function () {
-        Route::get('/settings', function (Request $request) {
-            $user = $request->user();
-
-            return Inertia::render('Settings/Index', [
-                'account' => [
-                    'is_active' => (bool) $user->is_active,
-                    'email_verified' => $user->email_verified_at !== null,
-                    'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
-                    'passkeys_count' => Passkey::query()
-                        ->where('user_id', $user->id)
-                        ->count(),
-                    'member_since' => $user->created_at?->toISOString(),
-                ],
-            ]);
-        })->name('settings');
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+        Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+        Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+        Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
     });
+
+    // API & Webhook Integrations
+    Route::middleware('can:settings.view')->group(function () {
+        Route::get('/integrations', [ApiIntegrationController::class, 'index'])->name('integrations.index');
+        Route::post('/integrations/tokens', [ApiIntegrationController::class, 'storeToken'])->name('integrations.tokens.store');
+        Route::delete('/integrations/tokens/{token}', [ApiIntegrationController::class, 'destroyToken'])->name('integrations.tokens.destroy');
+        Route::post('/integrations/webhooks', [ApiIntegrationController::class, 'storeWebhook'])->name('integrations.webhooks.store');
+        Route::put('/integrations/webhooks/{webhook}', [ApiIntegrationController::class, 'updateWebhook'])->name('integrations.webhooks.update');
+        Route::patch('/integrations/webhooks/{webhook}/toggle', [ApiIntegrationController::class, 'toggleWebhook'])->name('integrations.webhooks.toggle');
+        Route::delete('/integrations/webhooks/{webhook}', [ApiIntegrationController::class, 'destroyWebhook'])->name('integrations.webhooks.destroy');
+        Route::post('/integrations/webhooks/{webhook}/test', [ApiIntegrationController::class, 'testWebhook'])->name('integrations.webhooks.test');
+    });
+
+    // Support & Help Center (accessible to all authenticated users)
+    Route::inertia('/support', 'Support/Index')->name('support');
 });
 
 // Root redirects to dashboard if authenticated, else login

@@ -12,14 +12,12 @@ use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskStatusChanged;
 use App\Services\NotificationSender;
 use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 uses()->group('notifications');
 
 beforeEach(function () {
-    Artisan::call('migrate', ['--force' => true]);
     (new RolePermissionSeeder)->run();
 
     // Create test users
@@ -389,6 +387,7 @@ test('project member added creates notification for new member', function () {
     $this->assertEquals($this->project->id, $notification->data['project_id']);
     $this->assertEquals('member', $notification->data['role']);
     $this->assertEquals($this->pm->name, $notification->data['added_by_name']);
+    $this->assertSame("/projects/{$this->project->id}", $notification->data['url']);
 });
 
 test('project member added notification is idempotent', function () {
@@ -441,6 +440,55 @@ test('can list notifications with pagination', function () {
         'meta',
     ]);
     $this->assertEquals(1, count($response->json('data')));
+});
+
+test('filters notifications by tab', function () {
+    $createNotification = function (string $action, bool $isRead = false) {
+        return $this->member1->notifications()->create([
+            'id' => Str::uuid(),
+            'type' => TaskAssigned::class,
+            'notifiable_type' => User::class,
+            'notifiable_id' => $this->member1->id,
+            'data' => ['action' => $action, 'task_id' => $this->task->id, 'event_id' => Str::uuid()],
+            'read_at' => $isRead ? now() : null,
+        ]);
+    };
+
+    $assigned = $createNotification('assigned');
+    $comment = $createNotification('comment');
+    $statusChanged = $createNotification('status_changed');
+    $projectAdded = $createNotification('project_member_added');
+    $readAssigned = $createNotification('assigned', true);
+
+    $this->actingAs($this->member1);
+
+    $this->getJson('/api/notifications?filter=unread')
+        ->assertOk()
+        ->assertJsonCount(4, 'data')
+        ->assertJsonMissing(['id' => (string) $readAssigned->id]);
+
+    $taskIds = collect(
+        $this->getJson('/api/notifications?filter=tasks')->assertOk()->json('data'),
+    )->pluck('id');
+
+    expect($taskIds)
+        ->toHaveCount(4)
+        ->toContain(
+            (string) $assigned->id,
+            (string) $comment->id,
+            (string) $statusChanged->id,
+            (string) $readAssigned->id,
+        )
+        ->not->toContain((string) $projectAdded->id);
+
+    $this->getJson('/api/notifications?filter=projects')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', (string) $projectAdded->id);
+
+    $this->getJson('/api/notifications')
+        ->assertOk()
+        ->assertJsonCount(5, 'data');
 });
 
 test('clamps invalid notification pagination parameters', function () {
@@ -667,7 +715,7 @@ test('notification data contains required fields', function () {
     $this->assertArrayHasKey('action', $data);
     $this->assertArrayHasKey('event_id', $data);
     $this->assertArrayHasKey('url', $data);
-    $this->assertStringContainsString("/tasks/{$this->task->id}", $data['url']);
+    $this->assertSame("/tasks/{$this->task->id}", $data['url']);
 });
 
 test('comment notification data contains comment preview', function () {

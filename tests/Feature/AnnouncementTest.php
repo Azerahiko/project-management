@@ -3,16 +3,9 @@
 require_once __DIR__.'/helpers.php';
 
 use App\Models\Announcement;
-use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 
 uses(RefreshDatabase::class);
-
-beforeEach(function () {
-    Artisan::call('migrate', ['--force' => true]);
-    (new RolePermissionSeeder)->run();
-});
 
 it('allows members to read announcements but not manage them', function () {
     [$admin, , $member] = createTestUsers();

@@ -36,7 +36,6 @@ const form = reactive({
     password_confirmation: '',
     role: 'member' as string,
     is_active: true,
-    avatar: '',
 });
 
 const originalData = reactive<Record<string, any>>({});
@@ -50,13 +49,11 @@ function loadUser(): void {
     form.email = initialUser.email;
     form.role = initialUser.roles[0] || 'member';
     form.is_active = initialUser.is_active;
-    form.avatar = initialUser.avatar || '';
 
     originalData.name = initialUser.name;
     originalData.email = initialUser.email;
     originalData.role = initialUser.roles[0] || 'member';
     originalData.is_active = initialUser.is_active;
-    originalData.avatar = initialUser.avatar || '';
 }
 
 onMounted(loadUser);
@@ -77,7 +74,6 @@ function isDirty(): boolean {
         form.email !== originalData.email ||
         form.role !== originalData.role ||
         form.is_active !== originalData.is_active ||
-        form.avatar !== originalData.avatar ||
         form.password !== ''
     );
 }
@@ -97,7 +93,6 @@ async function handleSubmit(): Promise<void> {
             email: form.email,
             role: form.role,
             is_active: form.is_active,
-            avatar: form.avatar,
         };
 
         if (form.password) {
@@ -204,15 +199,6 @@ function goBack(): void {
                         :disabled="!isAdmin"
                         :error="errors.role?.[0]"
                         @change="clearError('role')"
-                    />
-
-                    <Input
-                        v-model="form.avatar"
-                        type="url"
-                        label="URL Avatar (Opsional)"
-                        placeholder="https://example.com/avatar.png"
-                        :error="errors.avatar?.[0]"
-                        @input="clearError('avatar')"
                     />
                 </div>
 

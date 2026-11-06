@@ -36,7 +36,7 @@ class TaskStatusChanged extends Notification
             'old_status' => $this->oldStatus,
             'new_status' => $this->newStatus,
             'action' => 'status_changed',
-            'url' => route('tasks.show', $this->taskId),
+            'url' => route('tasks.show', $this->taskId, false),
         ];
     }
 }

@@ -31,6 +31,8 @@ class DummyUserSeeder extends Seeder
                     'password' => Hash::make('password'),
                     'is_active' => true,
                     'email_verified_at' => now(),
+                    'onboarding_password_changed_at' => now(),
+                    'onboarding_completed_at' => now(),
                 ]
             );
 

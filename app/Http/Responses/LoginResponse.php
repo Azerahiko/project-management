@@ -21,6 +21,12 @@ class LoginResponse implements LoginResponseContract
             return response()->json(['two_factor' => false]);
         }
 
+        $user = $request->user();
+
+        if ($user && ! $user->isOnboarded()) {
+            return redirect()->route('onboarding.index');
+        }
+
         return redirect()->intended(Fortify::redirects('login'));
     }
 }

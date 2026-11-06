@@ -15,6 +15,7 @@ import Modal from '@/components/ui/Modal.vue';
 import Table from '@/components/ui/Table.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
+import DeadlineBadge from '@/components/tasks/DeadlineBadge.vue';
 import type { Project, ProjectMember, ProjectFilters } from '@/types';
 
 defineOptions({
@@ -28,6 +29,12 @@ const { fetchAvailableUsers, addMember, updateMember, removeMember } =
 
 const project = page.props.project as Project;
 const projectId = project.id;
+
+const projectStatusForBadge = computed(() => {
+    if (project.status === 'completed') return 'done';
+    if (project.status === 'archived') return 'done';
+    return 'todo';
+});
 
 const memberRoleOptions = [
     { value: 'manager', label: 'Manajer' },
@@ -362,10 +369,19 @@ function formatDateShort(dateString: string | null): string {
                 >
                     Deadline
                 </h3>
-                <p
-                    class="mt-2 font-medium text-surface-900 dark:text-surface-100"
-                >
-                    {{ formatDate(project.end_date) }}
+                <p class="mt-2">
+                    <DeadlineBadge
+                        :due-date="project.end_date"
+                        :status="projectStatusForBadge"
+                        :is-overdue="
+                            Boolean(
+                                project.end_date &&
+                                new Date(project.end_date) < new Date() &&
+                                project.status !== 'completed',
+                            )
+                        "
+                        size="md"
+                    />
                 </p>
             </div>
 

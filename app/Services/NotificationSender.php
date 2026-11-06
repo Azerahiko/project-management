@@ -195,8 +195,8 @@ class NotificationSender
         return match ($type) {
             TaskAssigned::class,
             TaskCommentAdded::class,
-            TaskStatusChanged::class => route('tasks.show', $data['task_id']),
-            ProjectMemberAdded::class => route('projects.show', $data['project_id']),
+            TaskStatusChanged::class => route('tasks.show', $data['task_id'], false),
+            ProjectMemberAdded::class => route('projects.show', $data['project_id'], false),
             default => '#',
         };
     }

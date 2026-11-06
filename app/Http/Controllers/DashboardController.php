@@ -96,8 +96,46 @@ class DashboardController extends Controller
                 ]
             ));
 
+        $completedTasksCount = (int) ($tasksByStatus[TaskStatus::DONE->value] ?? 0);
+        $reviewTasksCount = (int) ($tasksByStatus[TaskStatus::REVIEW->value] ?? 0);
+        $totalTasksCount = (int) array_sum($tasksByStatus);
+        $activeTasksCount = $stats['active_tasks_count'];
+        $overdueCount = $stats['overdue_count'];
+        $onTimeTasks = max(0, $activeTasksCount - $overdueCount);
+        $onTimeRate = $activeTasksCount > 0 ? (int) round(($onTimeTasks / $activeTasksCount) * 100) : 100;
+
+        $focusAggregates = (clone $accessibleTasks)
+            ->selectRaw("
+                SUM(CASE WHEN priority IN ('urgent', 'high') AND status != 'done' THEN 1 ELSE 0 END) as urgent_count,
+                SUM(CASE WHEN status != 'done' AND due_date BETWEEN ? AND ? THEN 1 ELSE 0 END) as due_this_week_count
+            ", [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
+            ->first();
+
+        $urgentCount = 0;
+        $dueThisWeekCount = 0;
+
+        if ($focusAggregates) {
+            $urgentCount = (int) ($focusAggregates->urgent_count ?? 0);
+            $dueThisWeekCount = (int) ($focusAggregates->due_this_week_count ?? 0);
+        }
+
+        $focusMetrics = [
+            'on_time_rate' => $onTimeRate,
+            'urgent_tasks_count' => $urgentCount,
+            'review_tasks_count' => $reviewTasksCount,
+            'due_this_week_count' => $dueThisWeekCount,
+            'completed_tasks_count' => $completedTasksCount,
+            'total_tasks_count' => $totalTasksCount,
+            'completion_rate' => $totalTasksCount > 0
+                ? (int) round(($completedTasksCount / $totalTasksCount) * 100)
+                : 0,
+            'my_tasks_count' => $stats['my_tasks_count'],
+            'overdue_count' => $overdueCount,
+        ];
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
+            'focus_metrics' => $focusMetrics,
             'tasks_by_status' => $tasksByStatus,
             'upcoming_deadlines' => $upcomingDeadlines,
             'recent_activities' => $recentActivities,

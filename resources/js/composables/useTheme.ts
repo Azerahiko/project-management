@@ -1,6 +1,6 @@
-import { ref, type Ref } from 'vue';
+import { computed, ref, type Ref } from 'vue';
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system';
 
 const THEME_KEY = 'project-theme';
 
@@ -8,8 +8,18 @@ function applyTheme(theme: Theme): void {
     const root = document.documentElement;
     if (theme === 'dark') {
         root.setAttribute('data-theme', 'dark');
-    } else {
+    } else if (theme === 'light') {
         root.removeAttribute('data-theme');
+    } else {
+        // system: use prefers-color-scheme
+        const prefersDark = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+        ).matches;
+        if (prefersDark) {
+            root.setAttribute('data-theme', 'dark');
+        } else {
+            root.removeAttribute('data-theme');
+        }
     }
 }
 
@@ -26,22 +36,26 @@ function persistTheme(theme: Theme): void {
 
 function readStoredTheme(): Theme {
     if (typeof window === 'undefined' || !window.localStorage) {
-        return 'light';
+        return 'system';
     }
     try {
         const stored = localStorage.getItem(THEME_KEY);
-        if (stored === 'light' || stored === 'dark') {
+        if (stored === 'light' || stored === 'dark' || stored === 'system') {
             return stored;
         }
     } catch {
         // localStorage unavailable
     }
-    // Legacy 'system' or invalid value: fall back to Light and persist the valid value.
-    persistTheme('light');
-    return 'light';
+    return 'system';
 }
 
-const currentTheme = ref<Theme>('light');
+function getSystemTheme(): 'light' | 'dark' {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+}
+
+const currentTheme = ref<Theme>('system');
 const isInitialized = ref(false);
 
 export function useTheme() {
@@ -51,8 +65,16 @@ export function useTheme() {
         persistTheme(theme);
     }
 
+    const nextTheme = computed<Theme>(() => {
+        const isDark =
+            currentTheme.value === 'dark' ||
+            (currentTheme.value === 'system' && getSystemTheme() === 'dark');
+
+        return isDark ? 'light' : 'dark';
+    });
+
     function toggleTheme(): void {
-        setTheme(currentTheme.value === 'dark' ? 'light' : 'dark');
+        setTheme(nextTheme.value);
     }
 
     function initTheme(): void {
@@ -65,6 +87,13 @@ export function useTheme() {
         isInitialized.value = true;
     }
 
+    const resolvedTheme = computed(() => {
+        if (currentTheme.value === 'system') {
+            return getSystemTheme();
+        }
+        return currentTheme.value;
+    });
+
     // Initialize immediately if not already done
     if (!isInitialized.value && typeof window !== 'undefined') {
         initTheme();
@@ -72,6 +101,8 @@ export function useTheme() {
 
     return {
         currentTheme: currentTheme as Ref<Theme>,
+        resolvedTheme,
+        nextTheme,
         isInitialized: isInitialized as Ref<boolean>,
         setTheme,
         toggleTheme,
@@ -84,4 +115,13 @@ if (typeof window !== 'undefined') {
     // Apply immediately to prevent flash
     currentTheme.value = readStoredTheme();
     applyTheme(currentTheme.value);
+
+    // Keep the system theme in sync when the OS preference changes.
+    window
+        .matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', () => {
+            if (currentTheme.value === 'system') {
+                applyTheme('system');
+            }
+        });
 }

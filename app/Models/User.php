@@ -16,6 +16,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
+use PragmaRX\Google2FA\Google2FA;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -26,19 +28,21 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $password
  * @property bool $is_active
  * @property string|null $avatar
+ * @property array<string, bool>|null $notification_preferences
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Project> $ownedProjects
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, ProjectMember> $projectMemberships
+ * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -51,7 +55,41 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'notification_preferences' => 'array',
+            'onboarding_password_changed_at' => 'datetime',
+            'onboarding_completed_at' => 'datetime',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Default notification preferences for users who have not customised them.
+     *
+     * @return array<string, bool>
+     */
+    public static function defaultNotificationPreferences(): array
+    {
+        return [
+            'task_updates' => true,
+            'deadline_reminders' => true,
+            'daily_digest' => false,
+            'mentions' => true,
+            'comments' => false,
+            'sound' => false,
+        ];
+    }
+
+    /**
+     * Get notification preferences merged with the application defaults.
+     *
+     * @return array<string, bool>
+     */
+    public function notificationPreferences(): array
+    {
+        return array_merge(
+            self::defaultNotificationPreferences(),
+            $this->notification_preferences ?? [],
+        );
     }
 
     /**
@@ -102,6 +140,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the outbound webhooks registered by this user.
+     *
+     * @return HasMany<Webhook, $this>
+     */
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany(Webhook::class);
+    }
+
+    /**
      * Check if user is a member of a project.
      */
     public function isMemberOf(Project $project): bool
@@ -133,5 +181,70 @@ class User extends Authenticatable
         $role = $this->getProjectRole($project);
 
         return $role === ProjectRole::OWNER || $role === ProjectRole::MANAGER;
+    }
+
+    /**
+     * Generate a new two-factor authentication secret.
+     */
+    public function generateTwoFactorSecret(): void
+    {
+        $secret = (new Google2FA)->generateSecretKey();
+
+        $this->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_recovery_codes' => encrypt(json_encode([])),
+        ])->save();
+    }
+
+    /**
+     * Get the current onboarding step.
+     */
+    public function onboardingStep(): string
+    {
+        if ($this->onboarding_completed_at !== null) {
+            return 'complete';
+        }
+
+        if ($this->onboarding_password_changed_at === null) {
+            return 'password';
+        }
+
+        if ($this->two_factor_confirmed_at === null) {
+            return 'two_factor';
+        }
+
+        return 'passkey';
+    }
+
+    /**
+     * Check if user has completed onboarding.
+     */
+    public function isOnboarded(): bool
+    {
+        return $this->onboarding_completed_at !== null;
+    }
+
+    /**
+     * Check if user needs to change password as part of onboarding.
+     */
+    public function needsOnboardingPasswordChange(): bool
+    {
+        return $this->onboarding_password_changed_at === null;
+    }
+
+    /**
+     * Check if user needs to enable two-factor authentication.
+     */
+    public function needsTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at === null;
+    }
+
+    /**
+     * Check if user needs to complete onboarding (any step).
+     */
+    public function needsOnboarding(): bool
+    {
+        return ! $this->isOnboarded();
     }
 }

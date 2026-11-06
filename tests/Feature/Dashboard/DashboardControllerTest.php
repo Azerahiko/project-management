@@ -14,14 +14,12 @@ use App\Models\TaskActivity;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 describe('Dashboard Controller', function () {
     beforeEach(function () {
-        Artisan::call('migrate', ['--force' => true]);
         (new RolePermissionSeeder)->run();
     });
 

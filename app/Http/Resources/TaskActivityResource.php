@@ -31,7 +31,7 @@ class TaskActivityResource extends JsonResource
                 'id' => $activity->task->id,
                 'title' => $activity->task->title,
                 'project_id' => $activity->task->project_id,
-                'url' => route('tasks.show', $activity->task),
+                'url' => route('tasks.show', $activity->task, false),
             ] : null,
         ];
     }

@@ -34,7 +34,7 @@ class TaskAssigned extends Notification
             'project_name' => $this->projectName,
             'action' => 'assigned',
             'event_id' => $this->eventId,
-            'url' => route('tasks.show', $this->taskId),
+            'url' => route('tasks.show', $this->taskId, false),
         ];
     }
 }

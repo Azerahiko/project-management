@@ -19,10 +19,22 @@ class NotificationController extends Controller
     {
         $perPage = Pagination::perPage($request, 15, 50);
         $page = Pagination::page($request);
+        $filter = $request->string('filter')->toString();
 
-        $notifications = $request->user()->notifications()
-            ->latest()
-            ->paginate($perPage, ['*'], 'page', $page);
+        $query = $request->user()->notifications()->latest();
+
+        match ($filter) {
+            'unread' => $query->whereNull('read_at'),
+            'tasks' => $query->whereIn('data->action', [
+                'assigned',
+                'comment',
+                'status_changed',
+            ]),
+            'projects' => $query->where('data->action', 'project_member_added'),
+            default => null,
+        };
+
+        $notifications = $query->paginate($perPage, ['*'], 'page', $page);
 
         return NotificationResource::collection($notifications);
     }

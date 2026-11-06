@@ -10,13 +10,11 @@ use App\Models\ProjectMember;
 use App\Models\Task;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
-use Illuminate\Support\Facades\Artisan;
 
 if (! function_exists('createTestUsers')) {
     function createTestUsers()
     {
         // Ensure migrations run
-        Artisan::call('migrate', ['--force' => true]);
 
         // Seed roles and permissions
         (new RolePermissionSeeder)->run();
@@ -25,6 +23,9 @@ if (! function_exists('createTestUsers')) {
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ]);
         $admin->assignRole('administrator');
 
@@ -32,6 +33,9 @@ if (! function_exists('createTestUsers')) {
             'email' => 'pm@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ]);
         $pm->assignRole('project_manager');
 
@@ -39,6 +43,9 @@ if (! function_exists('createTestUsers')) {
             'email' => 'member@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
         ]);
         $member->assignRole('member');
 

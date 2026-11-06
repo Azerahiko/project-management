@@ -31,7 +31,6 @@ const form = reactive({
     password_confirmation: '',
     role: 'member' as string,
     is_active: true,
-    avatar: '',
 });
 
 const errors = ref<Record<string, string[]>>({});
@@ -152,15 +151,6 @@ function goBack(): void {
                         required
                         :error="errors.role?.[0]"
                         @change="clearError('role')"
-                    />
-
-                    <Input
-                        v-model="form.avatar"
-                        type="url"
-                        label="URL Avatar (Opsional)"
-                        placeholder="https://example.com/avatar.png"
-                        :error="errors.avatar?.[0]"
-                        @input="clearError('avatar')"
                     />
                 </div>
 

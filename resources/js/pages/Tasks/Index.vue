@@ -19,6 +19,7 @@ import Select from '@/components/ui/Select.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Avatar from '@/components/ui/Avatar.vue';
+import DeadlineBadge from '@/components/tasks/DeadlineBadge.vue';
 import type { Task, TaskFilters, TaskStatus } from '@/types';
 
 defineOptions({
@@ -93,14 +94,6 @@ const hasActiveFilters = computed(
         sortValue.value !== 'created_at:desc',
 );
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-
-interface DeadlineInfo {
-    label: string;
-    tone: 'overdue' | 'soon';
-}
-
 const statusIcons: Record<TaskStatus, string> = {
     todo: 'CheckSquare',
     in_progress: 'Clock',
@@ -135,53 +128,36 @@ function formatDate(value: string | null): string {
     });
 }
 
-function deadlineInfo(task: Task): DeadlineInfo | null {
-    if (!task.due_date || task.status === 'done') {
-        return null;
+function deadlineBoxClass(task: Task): string {
+    if (task.status === 'done') {
+        return 'border-primary-200/80 bg-primary-50 dark:border-primary-700/60 dark:bg-primary-950/40';
     }
+    if (!task.due_date) {
+        return 'border-surface-200/60 bg-surface-50/50 dark:border-surface-800 dark:bg-surface-800/30';
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const due = new Date(task.due_date);
     due.setHours(0, 0, 0, 0);
 
-    const diffDays = Math.round((due.getTime() - today.getTime()) / 86_400_000);
+    const diffMs = due.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / 86_400_000);
 
-    if (diffDays < 0) {
-        return {
-            label:
-                diffDays === -1
-                    ? 'Kemarin'
-                    : `${Math.abs(diffDays)} hari lewat`,
-            tone: 'overdue',
-        };
+    if (diffDays < 0 || task.is_overdue) {
+        return 'border-rose-200 bg-rose-50 dark:border-rose-800/50 dark:bg-rose-950/40';
     }
 
     if (diffDays === 0) {
-        return { label: 'Hari ini', tone: 'soon' };
+        return 'border-emerald-200 bg-emerald-50 dark:border-emerald-800/50 dark:bg-emerald-950/40';
     }
 
-    if (diffDays === 1) {
-        return { label: 'Besok', tone: 'soon' };
+    if (diffDays <= 3) {
+        return 'border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/40';
     }
 
-    if (diffDays <= 7) {
-        return { label: `${diffDays} hari lagi`, tone: 'soon' };
-    }
-
-    return null;
-}
-
-function deadlineBoxClass(task: Task): string {
-    const info = deadlineInfo(task);
-
-    if (info?.tone === 'overdue') {
-        return 'border-accent-300 bg-accent-50/70 dark:border-accent-700/40 dark:bg-accent-900/20';
-    }
-
-    if (info?.tone === 'soon') {
-        return 'border-accent-200 bg-accent-50/50 dark:border-accent-800/40 dark:bg-accent-900/10';
-    }
-
-    return 'border-surface-100 bg-surface-50/70 dark:border-surface-800 dark:bg-surface-800/40';
+    return 'border-surface-200/80 bg-surface-50 dark:border-surface-700/60 dark:bg-surface-800/50';
 }
 
 function setStatus(value: string): void {
@@ -684,46 +660,13 @@ watch(
                                 class="flex items-center gap-2 rounded-xl border px-2.5 py-1.5"
                                 :class="deadlineBoxClass(task)"
                             >
-                                <component
-                                    :is="getIcon('Calendar')"
-                                    class="h-3.5 w-3.5 shrink-0"
-                                    :class="
-                                        deadlineInfo(task)?.tone === 'overdue'
-                                            ? 'text-accent-700 dark:text-accent-300'
-                                            : deadlineInfo(task)?.tone ===
-                                                'soon'
-                                              ? 'text-accent-600 dark:text-accent-400'
-                                              : 'text-surface-400 dark:text-surface-500'
-                                    "
+                                <DeadlineBadge
+                                    :due-date="task.due_date"
+                                    :status="task.status"
+                                    :is-overdue="task.is_overdue"
+                                    size="xs"
+                                    :show-date="false"
                                 />
-                                <div class="min-w-0">
-                                    <p
-                                        class="text-[9px] font-bold tracking-wider text-surface-400 uppercase dark:text-surface-500"
-                                    >
-                                        Tenggat
-                                    </p>
-                                    <p
-                                        class="flex flex-wrap items-baseline gap-x-1 text-[11px] font-semibold text-surface-700 dark:text-surface-200"
-                                    >
-                                        {{
-                                            task.due_date
-                                                ? formatDate(task.due_date)
-                                                : 'Tanpa tenggat'
-                                        }}
-                                        <span
-                                            v-if="deadlineInfo(task)"
-                                            class="text-[10px] font-bold"
-                                            :class="
-                                                deadlineInfo(task)?.tone ===
-                                                'overdue'
-                                                    ? 'text-accent-700 dark:text-accent-300'
-                                                    : 'text-accent-600 dark:text-accent-400'
-                                            "
-                                        >
-                                            · {{ deadlineInfo(task)?.label }}
-                                        </span>
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </div>

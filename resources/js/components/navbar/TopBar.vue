@@ -5,6 +5,7 @@ import UserDropdown from './UserDropdown.vue';
 import NotificationDropdown from './NotificationDropdown.vue';
 import { getIcon } from '@/components/sidebar/icons';
 import { useTheme } from '@/composables/useTheme';
+import { useToast } from '@/composables/useToast';
 import tasks from '@/routes/tasks';
 
 interface Props {
@@ -20,7 +21,15 @@ defineEmits<Emits>();
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
-const { currentTheme, toggleTheme } = useTheme();
+const { nextTheme, toggleTheme } = useTheme();
+
+const themeToggle = computed(() => {
+    if (nextTheme.value === 'dark') {
+        return { title: 'Ubah ke Mode Gelap', icon: 'Moon' };
+    }
+
+    return { title: 'Ubah ke Mode Terang', icon: 'Sun' };
+});
 
 const searchQuery = ref('');
 const searchInputRef = ref<HTMLInputElement | null>(null);
@@ -41,11 +50,16 @@ const pageTitle = computed(() => {
     if (p.startsWith('/reports')) return 'Laporan & KPI';
     if (p.startsWith('/activity-log')) return 'Log Aktivitas';
     if (p.startsWith('/notifications')) return 'Notifikasi';
+    if (p.startsWith('/announcements')) return 'Pengumuman Tim';
+    if (p.startsWith('/roles')) return 'Role & Permission';
     if (p.startsWith('/teams') || p.startsWith('/users')) return 'Anggota Tim';
     if (p.startsWith('/collaboration')) return 'Papan Kolaborasi';
+    if (p.startsWith('/integrations')) return 'Integrasi API';
     if (p.startsWith('/settings')) return 'Pengaturan Akun';
     return 'Ruang Kerja';
 });
+
+const toast = useToast();
 
 function handleSearchSubmit(): void {
     if (!searchQuery.value.trim()) return;
@@ -54,10 +68,104 @@ function handleSearchSubmit(): void {
     );
 }
 
+let pendingG = false;
+let gTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function isInputFocused(): boolean {
+    const el = document.activeElement;
+    if (!el) return false;
+    const tag = el.tagName.toLowerCase();
+    return (
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        (el as HTMLElement).isContentEditable
+    );
+}
+
 function handleGlobalKeydown(e: KeyboardEvent): void {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        searchInputRef.value?.focus();
+        const supportSearch = document.getElementById(
+            'support-search-input',
+        ) as HTMLInputElement | null;
+        if (supportSearch) {
+            supportSearch.focus();
+            supportSearch.select();
+            supportSearch.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        } else {
+            searchInputRef.value?.focus();
+            searchInputRef.value?.select();
+        }
+        return;
+    }
+
+    if (isInputFocused()) {
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        pendingG = false;
+        if (gTimeout) clearTimeout(gTimeout);
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+
+    if (pendingG) {
+        pendingG = false;
+        if (gTimeout) clearTimeout(gTimeout);
+
+        if (key === 'd') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Dashboard (G + D)');
+            router.visit('/dashboard');
+        } else if (key === 't') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Papan Tugas (G + T)');
+            router.visit('/tasks');
+        } else if (key === 'p') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Daftar Proyek (G + P)');
+            router.visit('/projects');
+        } else if (key === 'c') {
+            e.preventDefault();
+            toast.info(
+                'Pintasan Keyboard',
+                'Beralih ke Kalender Kerja (G + C)',
+            );
+            router.visit('/calendar');
+        } else if (key === 's') {
+            e.preventDefault();
+            toast.info(
+                'Pintasan Keyboard',
+                'Beralih ke Pengaturan Akun (G + S)',
+            );
+            router.visit('/settings');
+        } else if (key === 'i') {
+            e.preventDefault();
+            toast.info('Pintasan Keyboard', 'Beralih ke Integrasi API (G + I)');
+            router.visit('/integrations');
+        } else if (key === 'h' || key === '?') {
+            e.preventDefault();
+            toast.info(
+                'Pintasan Keyboard',
+                'Beralih ke Pusat Bantuan & Support (G + H)',
+            );
+            router.visit('/support');
+        }
+        return;
+    }
+
+    if (key === 'g' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        pendingG = true;
+        if (gTimeout) clearTimeout(gTimeout);
+        gTimeout = setTimeout(() => {
+            pendingG = false;
+        }, 1500);
     }
 }
 
@@ -67,6 +175,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeydown);
+    if (gTimeout) clearTimeout(gTimeout);
 });
 </script>
 
@@ -89,7 +198,7 @@ onUnmounted(() => {
             <nav class="flex min-w-0 items-center gap-2.5 text-xs">
                 <Link
                     href="/dashboard"
-                    class="hidden items-center gap-1.5 font-serif text-sm font-normal text-surface-800 transition hover:text-primary-700 sm:flex dark:text-surface-200 dark:hover:text-primary-300"
+                    class="hidden items-center gap-1.5 font-serif text-sm font-normal whitespace-nowrap text-surface-800 transition hover:text-primary-700 lg:flex dark:text-surface-200 dark:hover:text-primary-300"
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full bg-primary-700 dark:bg-primary-300"
@@ -97,7 +206,7 @@ onUnmounted(() => {
                     Tasks Flow
                 </Link>
                 <span
-                    class="hidden text-surface-300 sm:inline dark:text-surface-700"
+                    class="hidden text-surface-300 lg:inline dark:text-surface-700"
                 >
                     /
                 </span>
@@ -114,7 +223,7 @@ onUnmounted(() => {
             <!-- Sleek Global Search Pill with Kbd shortcut badge (Calm System 04 INPUT FIELD) -->
             <form
                 @submit.prevent="handleSearchSubmit"
-                class="relative hidden sm:block"
+                class="relative hidden md:block"
             >
                 <div
                     class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
@@ -126,7 +235,7 @@ onUnmounted(() => {
                     v-model="searchQuery"
                     type="search"
                     placeholder="Cari tugas, proyek..."
-                    class="h-9 w-48 rounded-full border border-surface-300 bg-surface-50/90 pr-10 pl-8 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition-all duration-200 focus:w-64 focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden md:w-60 md:focus:w-72 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100 dark:placeholder-surface-400 dark:focus:border-primary-400"
+                    class="h-9 w-40 rounded-full border border-surface-300 bg-surface-50/90 pr-10 pl-8 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition-all duration-200 focus:w-56 focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden lg:w-52 lg:focus:w-64 xl:w-64 xl:focus:w-72 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100 dark:placeholder-surface-400 dark:focus:border-primary-400"
                 />
                 <div
                     class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5"
@@ -149,27 +258,24 @@ onUnmounted(() => {
                     :is="getIcon('Plus')"
                     class="h-3.5 w-3.5 stroke-[2.5]"
                 />
-                <span class="hidden sm:inline">Tugas Baru</span>
+                <span class="hidden md:inline">Tugas Baru</span>
             </Link>
 
             <!-- Theme Toggle Icon Button -->
             <button
                 type="button"
                 class="flex h-9 w-9 items-center justify-center rounded-full border border-surface-200/80 bg-white text-surface-500 shadow-2xs transition hover:border-surface-300 hover:bg-surface-50 hover:text-surface-900 active:scale-95 dark:border-surface-800/20 dark:bg-surface-900 dark:text-surface-400 dark:hover:border-surface-700 dark:hover:bg-white/10 dark:hover:text-white"
-                :title="
-                    currentTheme === 'light'
-                        ? 'Ubah ke Mode Gelap'
-                        : 'Ubah ke Mode Terang'
-                "
+                :title="themeToggle.title"
+                :aria-label="themeToggle.title"
                 @click="toggleTheme"
             >
                 <component
-                    :is="getIcon(currentTheme === 'light' ? 'Moon' : 'Sun')"
+                    :is="getIcon(themeToggle.icon)"
                     class="h-4 w-4"
                     :class="
-                        currentTheme === 'light'
-                            ? 'text-surface-600'
-                            : 'text-amber-400'
+                        nextTheme === 'light'
+                            ? 'text-amber-400'
+                            : 'text-surface-600 dark:text-surface-300'
                     "
                 />
             </button>

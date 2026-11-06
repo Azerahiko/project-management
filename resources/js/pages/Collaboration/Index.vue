@@ -1,11 +1,36 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
-import { usePage, Link, router } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import Pagination from '@/components/ui/Pagination.vue';
+import Select from '@/components/ui/Select.vue';
 import { getIcon } from '@/components/sidebar/icons';
 import { useToast } from '@/composables/useToast';
+import api from '@/lib/api';
+import { collaboration as collaborationRoute } from '@/routes';
+import projectRoutes from '@/routes/projects';
+import taskRoutes from '@/routes/tasks';
+import users from '@/routes/users';
+import {
+    Activity,
+    ArrowRight,
+    ArrowUpRight,
+    Check,
+    ClipboardCheck,
+    Copy,
+    ExternalLink,
+    FolderKanban,
+    Hash,
+    Inbox,
+    Info,
+    ListChecks,
+    MessageSquare,
+    Search,
+    Send,
+    Sparkles,
+    Users,
+} from '@lucide/vue';
 
 defineOptions({
     layout: AppLayout,
@@ -73,8 +98,31 @@ interface ReviewTaskItem {
     } | null;
 }
 
+interface DiscussionTaskItem {
+    id: number;
+    title: string;
+    project_name: string;
+    status: string;
+    status_label: string;
+}
+
+interface TopCommenterItem {
+    id: number;
+    name: string;
+    avatar?: string | null;
+    initials: string;
+    comments_count: number;
+}
+
+interface MostDiscussedTaskItem {
+    id: number;
+    title: string;
+    project_name: string;
+    comments_count: number;
+}
+
 const page = usePage();
-const { success } = useToast();
+const { success, error } = useToast();
 
 const comments = computed<CommentItem[]>(() => {
     const raw = page.props.comments as any;
@@ -107,6 +155,15 @@ const teamMembers = computed(
 const reviewTasks = computed(
     () => (page.props.review_tasks as ReviewTaskItem[]) ?? [],
 );
+const discussionTasks = computed(
+    () => (page.props.discussion_tasks as DiscussionTaskItem[]) ?? [],
+);
+const topCommenters = computed(
+    () => (page.props.top_commenters as TopCommenterItem[]) ?? [],
+);
+const mostDiscussedTasks = computed(
+    () => (page.props.most_discussed_tasks as MostDiscussedTaskItem[]) ?? [],
+);
 const stats = computed(
     () =>
         (page.props.stats as any) ?? {
@@ -116,104 +173,171 @@ const stats = computed(
             pending_reviews: reviewTasks.value.length,
         },
 );
+const canViewTasks = computed(() => Boolean(page.props.can_view_tasks));
+const canViewProjects = computed(() => Boolean(page.props.can_view_projects));
 
-const searchQuery = ref('');
-const activeChannel = ref('all');
-const quickCommentText = ref('');
+const initialSearch = (page.props.filters as { search?: string } | undefined)
+    ?.search;
+const searchQuery = ref(initialSearch ?? '');
+const activeFeed = ref<'discussions' | 'activity'>('discussions');
+
+const composerTaskId = ref('');
+const composerContent = ref('');
+const composerError = ref<string | null>(null);
 const postingComment = ref(false);
 
-// Interactive emoji reactions map per comment id
-const commentReactions = reactive<
-    Record<
-        number,
-        { thumbs: number; rocket: number; heart: number; userLiked?: boolean }
-    >
->({});
+const selectedComposerTask = computed(() =>
+    discussionTasks.value.find(
+        (task) => String(task.id) === composerTaskId.value,
+    ),
+);
 
-function getReactions(id: number) {
-    if (!commentReactions[id]) {
-        commentReactions[id] = {
-            thumbs: ((id * 3) % 7) + 1,
-            rocket: ((id * 2) % 4) + 1,
-            heart: id % 3,
-            userLiked: false,
-        };
+const discussionTaskOptions = computed(() => [
+    { value: '', label: 'Pilih tugas tujuan...' },
+    ...discussionTasks.value.map((task) => ({
+        value: String(task.id),
+        label: `${task.project_name} — ${task.title}`,
+    })),
+]);
+
+const visibleTeamMembers = computed(() => teamMembers.value.slice(0, 7));
+const remainingTeamMembers = computed(() =>
+    Math.max(0, teamMembers.value.length - visibleTeamMembers.value.length),
+);
+
+const summaryCards = computed(() => [
+    {
+        label: 'Diskusi',
+        value: stats.value.total_discussions,
+        hint: 'Catatan di seluruh tugas',
+        icon: MessageSquare,
+        tone: 'text-primary-700 dark:text-primary-300',
+        surface:
+            'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+    },
+    {
+        label: 'Rekan kerja',
+        value: teamMembers.value.length,
+        hint: 'Anggota aktif di proyek',
+        icon: Users,
+        tone: 'text-accent-700 dark:text-accent-300',
+        surface:
+            'bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300',
+    },
+    {
+        label: 'Proyek',
+        value: activeProjects.value.length,
+        hint: 'Ruang kerja terhubung',
+        icon: FolderKanban,
+        tone: 'text-primary-700 dark:text-primary-300',
+        surface:
+            'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
+    },
+    {
+        label: 'Perlu review',
+        value: stats.value.pending_reviews,
+        hint: 'Menunggu persetujuan',
+        icon: ClipboardCheck,
+        tone: 'text-rose-600 dark:text-rose-300',
+        surface:
+            'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-300',
+    },
+]);
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(searchQuery, (value) => {
+    if (searchTimer) {
+        clearTimeout(searchTimer);
     }
-    return commentReactions[id];
-}
 
-function toggleReaction(id: number, type: 'thumbs' | 'rocket' | 'heart') {
-    const r = getReactions(id);
-    r[type] += 1;
-}
-
-function handleQuickPost() {
-    if (!quickCommentText.value.trim()) return;
-    postingComment.value = true;
-    setTimeout(() => {
-        success(
-            'Catatan Terkirim',
-            'Catatan kolaborasi tim telah disiarkan ke papan diskusi.',
+    searchTimer = setTimeout(() => {
+        router.get(
+            collaborationRoute.url({
+                query: {
+                    search: value.trim() || undefined,
+                },
+            }),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: ['comments', 'filters'],
+            },
         );
-        quickCommentText.value = '';
-        postingComment.value = false;
-    }, 400);
-}
-
-const channels = [
-    {
-        id: 'all',
-        name: 'Semua Diskusi',
-        icon: 'MessagesSquare',
-        count: comments.value.length,
-    },
-    { id: 'general', name: 'Koordinasi Umum', icon: 'Hash', count: 12 },
-    {
-        id: 'review',
-        name: 'Tinjauan & Feedback',
-        icon: 'CheckCheck',
-        count: reviewTasks.value.length || 4,
-    },
-    { id: 'releases', name: 'Pengumuman Rilis', icon: 'Sparkles', count: 3 },
-];
-
-const sharedFiles = [
-    {
-        name: 'Design-System-Spec-v2.4.fig',
-        size: '14.2 MB',
-        ext: 'FIG',
-        date: 'Hari ini',
-    },
-    {
-        name: 'API-Contract-Swagger-v1.yaml',
-        size: '280 KB',
-        ext: 'YAML',
-        date: 'Kemarin',
-    },
-    {
-        name: 'Dokumen-Kebutuhan-Klien.pdf',
-        size: '3.1 MB',
-        ext: 'PDF',
-        date: '2 hari lalu',
-    },
-];
-
-const filteredComments = computed(() => {
-    if (!searchQuery.value.trim()) return comments.value;
-    const q = searchQuery.value.toLowerCase();
-    return comments.value.filter(
-        (c) =>
-            c.content.toLowerCase().includes(q) ||
-            c.author_name.toLowerCase().includes(q) ||
-            c.task_title.toLowerCase().includes(q) ||
-            (c.project_name && c.project_name.toLowerCase().includes(q)),
-    );
+    }, 350);
 });
 
+onBeforeUnmount(() => {
+    if (searchTimer) {
+        clearTimeout(searchTimer);
+    }
+});
+
+async function submitDiscussion(): Promise<void> {
+    composerError.value = null;
+
+    const task = selectedComposerTask.value;
+    const content = composerContent.value.trim();
+
+    if (!task) {
+        composerError.value =
+            'Pilih tugas yang ingin didiskusikan terlebih dahulu.';
+        return;
+    }
+
+    if (!content) {
+        composerError.value = 'Tulis isi diskusi sebelum mengirim.';
+        return;
+    }
+
+    postingComment.value = true;
+
+    try {
+        await api.post(`/tasks/${task.id}/comments`, { content });
+        success(
+            'Diskusi terkirim',
+            `Catatan Anda sudah dibagikan di ${task.project_name}.`,
+        );
+        composerContent.value = '';
+        router.reload({
+            only: ['comments', 'stats', 'recent_activities'],
+        });
+    } catch (requestError: any) {
+        composerError.value =
+            requestError?.response?.data?.message ??
+            'Diskusi gagal dikirim. Periksa koneksi lalu coba lagi.';
+    } finally {
+        postingComment.value = false;
+    }
+}
+
+async function copyTaskLink(comment: CommentItem): Promise<void> {
+    const url = `${window.location.origin}/tasks/${comment.task_id}`;
+
+    try {
+        await navigator.clipboard.writeText(url);
+        success('Tautan disalin', 'Tautan thread tugas siap dibagikan ke tim.');
+    } catch {
+        error(
+            'Gagal menyalin tautan',
+            'Salin tautan langsung dari bilah alamat browser.',
+        );
+    }
+}
+
 function changePage(pageNumber: number): void {
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', String(pageNumber));
-    router.get(url.toString(), {}, { replace: true, preserveScroll: true });
+    router.get(
+        collaborationRoute.url({
+            query: {
+                page: pageNumber,
+                search: searchQuery.value.trim() || undefined,
+            },
+        }),
+        {},
+        { preserveScroll: true },
+    );
 }
 
 function formatRelativeTime(dateString: string): string {
@@ -236,738 +360,1075 @@ function formatRelativeTime(dateString: string): string {
         year: 'numeric',
     });
 }
+
+function activityIcon(type: string): string {
+    if (type.startsWith('comment')) {
+        return 'MessageSquare';
+    }
+
+    if (type === 'task.created') {
+        return 'Plus';
+    }
+
+    if (type === 'task.updated') {
+        return 'Pencil';
+    }
+
+    if (type === 'task.deleted') {
+        return 'Trash2';
+    }
+
+    return 'Activity';
+}
+
+function priorityDot(priority: string): string {
+    switch (priority) {
+        case 'urgent':
+            return 'bg-rose-500';
+        case 'high':
+            return 'bg-accent-500';
+        case 'medium':
+            return 'bg-primary-500';
+        default:
+            return 'bg-surface-300 dark:bg-surface-500';
+    }
+}
+
+function projectInitials(name: string): string {
+    return name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0])
+        .join('')
+        .toUpperCase();
+}
 </script>
 
 <template>
     <div class="space-y-6">
-        <!-- 1. Header Section -->
+        <!-- Editorial header -->
         <div
             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <div
-                    class="flex items-center gap-2 text-xs font-medium text-surface-500"
+                <span
+                    class="inline-flex h-6 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-[10px] font-bold tracking-wider text-primary-700 uppercase dark:border-primary-700/40 dark:bg-primary-900/25 dark:text-primary-200"
                 >
-                    <span
-                        class="h-2 w-2 animate-pulse rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
-                    />
-                    <span>Pusat Kolaborasi Tim</span>
-                    <span class="text-surface-300 dark:text-surface-700"
-                        >·</span
-                    >
-                    <span>Ruang Kerja Terpadu</span>
-                </div>
+                    <Users class="h-3 w-3" />
+                    Ruang Kolaborasi
+                </span>
                 <h1
-                    class="mt-1 font-serif text-2xl font-normal tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
+                    class="mt-2 text-2xl font-semibold tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
                 >
-                    Papan Kolaborasi & Koordinasi
+                    Kolaborasi Tim
                 </h1>
                 <p
-                    class="mt-1 max-w-xl text-xs text-surface-600 sm:text-sm dark:text-surface-400"
+                    class="mt-1 max-w-xl text-sm leading-6 text-surface-600 dark:text-surface-300"
                 >
-                    Sinkronisasi tugas langsung, pertukaran berkas tim, dan
-                    umpan balik tugas harian secara terpusat tanpa jeda.
+                    Satu ruang untuk diskusi tugas, keputusan proyek, dan
+                    koordinasi harian. Semua percakapan tetap menempel pada
+                    pekerjaan yang relevan.
                 </p>
             </div>
 
-            <div class="flex items-center gap-3">
-                <Link
-                    href="/tasks"
-                    class="inline-flex items-center gap-2 rounded-full border border-surface-300 bg-white px-5 py-2.5 text-xs font-medium text-surface-800 shadow-2xs transition hover:bg-surface-50 active:scale-95 sm:text-sm dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:hover:bg-surface-700"
-                >
-                    <component :is="getIcon('CheckSquare')" class="h-4 w-4" />
-                    <span>Daftar Tugas</span>
+            <div class="flex flex-wrap items-center gap-2">
+                <Link :href="taskRoutes.index.url()" class="btn btn-secondary">
+                    <ListChecks class="h-4 w-4" />
+                    Daftar Tugas
                 </Link>
-                <Link
-                    href="/projects"
-                    class="inline-flex items-center gap-2 rounded-full bg-[#0F5132] px-5 py-2.5 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 sm:text-sm dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
-                >
-                    <component :is="getIcon('FolderKanban')" class="h-4 w-4" />
-                    <span>Jelajahi Proyek</span>
+                <Link :href="projectRoutes.index.url()" class="btn btn-primary">
+                    <FolderKanban class="h-4 w-4" />
+                    Semua Proyek
                 </Link>
             </div>
         </div>
 
-        <!-- 2. KPI Summary Cards: Eliminating Top Blank Space -->
-        <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-4 sm:gap-4">
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Diskusi Tercatat</span
-                    >
-                    <component
-                        :is="getIcon('MessageSquare')"
-                        class="h-4 w-4 text-[#0F5132] dark:text-[#b7d9c1]"
-                    />
-                </div>
-                <div
-                    class="mt-2 font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50"
-                >
-                    {{ stats.total_discussions }}
-                </div>
-                <p class="mt-1 text-[11px] text-surface-500">
-                    Komentar & umpan balik tugas
-                </p>
-            </div>
-
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Rekan Kolaboratif</span
-                    >
-                    <component
-                        :is="getIcon('Users')"
-                        class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
-                    />
-                </div>
-                <div
-                    class="mt-2 font-serif text-2xl font-normal text-emerald-700 sm:text-3xl dark:text-emerald-400"
-                >
-                    {{ teamMembers.length }}
-                </div>
-                <p class="mt-1 text-[11px] text-surface-500">
-                    Anggota aktif terhubung
-                </p>
-            </div>
-
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Proyek Terkoordinasi</span
-                    >
-                    <component
-                        :is="getIcon('FolderOpen')"
-                        class="h-4 w-4 text-primary-700 dark:text-primary-300"
-                    />
-                </div>
-                <div
-                    class="mt-2 font-serif text-2xl font-normal text-surface-950 sm:text-3xl dark:text-surface-50"
-                >
-                    {{ activeProjects.length }}
-                </div>
-                <p class="mt-1 text-[11px] text-surface-500">
-                    Ruang kerja dengan aktivitas
-                </p>
-            </div>
-
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-4.5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Perlu Review</span
-                    >
-                    <component
-                        :is="getIcon('Clock')"
-                        class="h-4 w-4 text-amber-600 dark:text-amber-400"
-                    />
-                </div>
-                <div
-                    class="mt-2 font-serif text-2xl font-normal text-amber-700 sm:text-3xl dark:text-amber-400"
-                >
-                    {{ reviewTasks.length }}
-                </div>
-                <p class="mt-1 text-[11px] text-surface-500">
-                    Tugas menunggu persetujuan
-                </p>
-            </div>
-        </div>
-
-        <!-- 3. Active Collaborators Strip with Live Presence -->
+        <!-- Pulse strip -->
         <section
-            class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+            class="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] border border-surface-200/80 bg-surface-200/60 shadow-xs sm:grid-cols-4 dark:border-surface-800 dark:bg-surface-800"
         >
             <div
-                class="flex flex-col gap-2 border-b border-surface-100 pb-3.5 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
+                v-for="card in summaryCards"
+                :key="card.label"
+                class="bg-white p-4 dark:bg-surface-900"
             >
-                <div class="flex items-center gap-2">
-                    <h2
-                        class="font-serif text-base font-normal text-surface-950 sm:text-lg dark:text-surface-50"
+                <div class="flex items-center justify-between gap-2">
+                    <p
+                        class="text-[10px] font-bold tracking-[0.14em] text-surface-400 uppercase dark:text-surface-500"
                     >
-                        Rekan Kerja Sedang Aktif
-                    </h2>
+                        {{ card.label }}
+                    </p>
                     <span
-                        class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        class="grid h-7 w-7 place-items-center rounded-lg"
+                        :class="card.surface"
                     >
-                        {{ teamMembers.length }} Online
+                        <component :is="card.icon" class="h-3.5 w-3.5" />
                     </span>
                 </div>
-                <Link
-                    href="/users"
-                    class="inline-flex items-center gap-1 text-xs font-medium text-[#0F5132] hover:underline dark:text-[#b7d9c1]"
+                <p
+                    class="mt-2 text-2xl leading-none font-bold text-surface-950 dark:text-surface-50"
                 >
-                    <span>Direktori Lengkap Pengguna</span>
-                    <span>→</span>
-                </Link>
-            </div>
-
-            <div class="mt-4 flex flex-wrap items-center gap-3">
-                <div
-                    v-for="userItem in teamMembers"
-                    :key="userItem.id"
-                    class="group flex items-center gap-2.5 rounded-2xl border border-surface-200/80 bg-[#FAF9F4]/80 px-3.5 py-2 transition hover:bg-white hover:shadow-xs dark:border-surface-800 dark:bg-surface-800/40 dark:hover:bg-surface-800"
+                    {{ card.value }}
+                </p>
+                <p
+                    class="mt-1.5 text-[10px] text-surface-400 dark:text-surface-500"
                 >
-                    <div class="relative shrink-0">
-                        <Avatar
-                            :initials="userItem.initials"
-                            :src="userItem.avatar"
-                            :alt="userItem.name"
-                            size="sm"
-                        />
-                        <span
-                            class="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-900"
-                            title="Aktif bekerja"
-                        />
-                    </div>
-                    <div>
-                        <p
-                            class="text-xs font-semibold text-surface-900 group-hover:text-[#0F5132] dark:text-surface-100 dark:group-hover:text-[#b7d9c1]"
-                        >
-                            {{ userItem.name }}
-                        </p>
-                        <p class="text-[10px] text-surface-400">
-                            Siap berdiskusi
-                        </p>
-                    </div>
-                </div>
-
-                <div
-                    v-if="teamMembers.length === 0"
-                    class="text-xs text-surface-400"
-                >
-                    Belum ada anggota tim terdaftar.
-                </div>
+                    {{ card.hint }}
+                </p>
             </div>
         </section>
 
-        <!-- 4. Main 2-Column Responsive Layout (8 cols + 4 cols) -->
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <!-- ================= LEFT COLUMN: Discussion Channels & Feed (8 cols) ================= -->
-            <div class="space-y-5 lg:col-span-8">
-                <!-- Interactive Quick Discussion Composer -->
-                <div
-                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+        <div class="grid items-start gap-6 lg:grid-cols-12">
+            <!-- Main column -->
+            <div class="min-w-0 space-y-5 lg:col-span-8">
+                <!-- Composer -->
+                <section
+                    class="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
                 >
                     <div
-                        class="mb-3 flex items-center gap-2.5 text-xs font-medium text-surface-500"
+                        class="flex flex-col gap-2 border-b border-surface-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
                     >
-                        <component
-                            :is="getIcon('Edit3')"
-                            class="h-4 w-4 text-[#0F5132] dark:text-[#b7d9c1]"
-                        />
-                        <span>Mulai Diskusi atau Siarkan Catatan Tim</span>
-                    </div>
-
-                    <div class="relative">
-                        <textarea
-                            v-model="quickCommentText"
-                            rows="3"
-                            placeholder="Tulis pembaruan progres, pertanyaan blocker, atau catatan untuk tim di sini..."
-                            class="w-full rounded-2xl border border-surface-200 bg-surface-50/60 p-3.5 text-xs text-surface-900 placeholder-surface-400 focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden sm:text-sm dark:border-surface-700 dark:bg-surface-800/60 dark:text-surface-100 dark:placeholder-surface-500"
-                        />
-                    </div>
-
-                    <div
-                        class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-surface-100 pt-3 dark:border-surface-800"
-                    >
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2.5">
                             <span
-                                class="rounded-full bg-surface-100 px-3 py-1 text-xs text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                                class="grid h-8 w-8 place-items-center rounded-xl bg-primary-50 text-primary-700 ring-1 ring-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:ring-primary-800/50"
                             >
-                                @Mention Rekan
+                                <MessageSquare class="h-4 w-4" />
                             </span>
-                            <span
-                                class="rounded-full bg-surface-100 px-3 py-1 text-xs text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                            >
-                                #Tag Tugas
-                            </span>
-                        </div>
-
-                        <button
-                            type="button"
-                            :disabled="
-                                !quickCommentText.trim() || postingComment
-                            "
-                            class="inline-flex items-center gap-2 rounded-full bg-[#0F5132] px-5 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
-                            @click="handleQuickPost"
-                        >
-                            <component
-                                :is="getIcon('Send')"
-                                class="h-3.5 w-3.5"
-                            />
-                            <span>{{
-                                postingComment
-                                    ? 'Mengirim...'
-                                    : 'Siarkan Catatan'
-                            }}</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Channel & Filter Bar -->
-                <div
-                    class="flex flex-col gap-3 rounded-3xl border border-surface-200/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-surface-800 dark:bg-surface-900"
-                >
-                    <!-- Channel pills -->
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <button
-                            v-for="ch in channels"
-                            :key="ch.id"
-                            type="button"
-                            class="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition active:scale-95"
-                            :class="
-                                activeChannel === ch.id
-                                    ? 'bg-[#0F5132] text-white shadow-2xs'
-                                    : 'bg-surface-100 text-surface-600 hover:bg-surface-200 hover:text-surface-900 dark:bg-surface-800 dark:text-surface-300 dark:hover:text-white'
-                            "
-                            @click="activeChannel = ch.id"
-                        >
-                            <component
-                                :is="getIcon(ch.icon)"
-                                class="h-3.5 w-3.5"
-                            />
-                            <span>{{ ch.name }}</span>
-                            <span
-                                class="py-0.2 rounded-md px-1.5 text-[10px] font-bold"
-                                :class="
-                                    activeChannel === ch.id
-                                        ? 'bg-white/20 text-white'
-                                        : 'bg-surface-200 text-surface-600 dark:bg-surface-700 dark:text-surface-300'
-                                "
-                            >
-                                {{ ch.count }}
-                            </span>
-                        </button>
-                    </div>
-
-                    <!-- Search Input -->
-                    <div class="relative w-full sm:w-56">
-                        <div
-                            class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
-                        >
-                            <component
-                                :is="getIcon('Search')"
-                                class="h-3.5 w-3.5"
-                            />
-                        </div>
-                        <input
-                            v-model="searchQuery"
-                            type="search"
-                            placeholder="Cari percakapan..."
-                            class="h-8.5 w-full rounded-full border border-surface-300 bg-surface-50/80 pr-3 pl-8 text-xs text-surface-900 placeholder-surface-400 focus:border-primary-600 focus:bg-white focus:outline-hidden dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:placeholder-surface-500"
-                        />
-                    </div>
-                </div>
-
-                <!-- Rich Feed of Conversation Cards -->
-                <div v-if="filteredComments.length > 0" class="space-y-4">
-                    <article
-                        v-for="comment in filteredComments"
-                        :key="comment.id"
-                        class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs transition hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
-                    >
-                        <!-- Author & Task Context Header -->
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <Avatar
-                                    :initials="comment.author_initials"
-                                    :src="comment.author_avatar"
-                                    :alt="comment.author_name"
-                                    size="md"
-                                />
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3
-                                            class="font-serif text-sm font-normal text-surface-950 sm:text-base dark:text-surface-50"
-                                        >
-                                            {{ comment.author_name }}
-                                        </h3>
-                                        <span
-                                            class="rounded-md bg-surface-100 px-2 py-0.5 text-[10px] font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                                        >
-                                            Kolaborator
-                                        </span>
-                                    </div>
-                                    <div
-                                        class="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-surface-500"
-                                    >
-                                        <span
-                                            v-if="comment.project_name"
-                                            class="font-medium text-[#0F5132] dark:text-[#b7d9c1]"
-                                        >
-                                            {{ comment.project_name }}
-                                        </span>
-                                        <span
-                                            v-if="comment.project_name"
-                                            class="text-surface-300 dark:text-surface-700"
-                                            >·</span
-                                        >
-                                        <span>{{
-                                            formatRelativeTime(
-                                                comment.created_at,
-                                            )
-                                        }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Link
-                                :href="`/tasks/${comment.task_id}`"
-                                class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-surface-200 bg-surface-50/80 px-3 py-1 text-xs font-medium text-surface-700 transition hover:bg-surface-100 hover:text-surface-900 dark:border-surface-700 dark:bg-surface-800/60 dark:text-surface-300 dark:hover:bg-surface-800"
-                            >
-                                <component
-                                    :is="getIcon('ExternalLink')"
-                                    class="h-3 w-3"
-                                />
-                                <span
-                                    class="max-w-[130px] truncate sm:max-w-[180px]"
-                                    >{{ comment.task_title }}</span
+                            <div>
+                                <p
+                                    class="text-base font-bold text-surface-950 dark:text-surface-50"
                                 >
-                            </Link>
+                                    Mulai diskusi
+                                </p>
+                                <p
+                                    class="text-[11px] text-surface-400 dark:text-surface-500"
+                                >
+                                    Diskusi akan tersimpan di thread tugas
+                                    terkait.
+                                </p>
+                            </div>
+                        </div>
+                        <span
+                            class="inline-flex w-fit items-center gap-1.5 rounded-full bg-surface-100 px-2.5 py-1 text-[10px] font-semibold text-surface-500 dark:bg-surface-800 dark:text-surface-400"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-primary-500"
+                            />
+                            Tersinkron dengan tugas
+                        </span>
+                    </div>
+
+                    <form
+                        v-if="canViewTasks && discussionTasks.length > 0"
+                        class="p-5"
+                        @submit.prevent="submitDiscussion"
+                    >
+                        <div
+                            class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_15rem] sm:items-end"
+                        >
+                            <Select
+                                v-model="composerTaskId"
+                                :options="discussionTaskOptions"
+                                label="Tugas tujuan"
+                            />
+
+                            <div
+                                v-if="selectedComposerTask"
+                                class="rounded-2xl border border-surface-200 bg-surface-50/80 px-3 py-2 dark:border-surface-700 dark:bg-surface-800/50"
+                            >
+                                <div class="flex items-center gap-1.5">
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full bg-primary-600 dark:bg-primary-300"
+                                    />
+                                    <p
+                                        class="truncate text-[10px] font-bold tracking-[0.12em] text-surface-500 uppercase dark:text-surface-400"
+                                    >
+                                        {{ selectedComposerTask.project_name }}
+                                    </p>
+                                </div>
+                                <p
+                                    class="mt-1 truncate text-[11px] font-medium text-surface-700 dark:text-surface-200"
+                                >
+                                    {{ selectedComposerTask.status_label }}
+                                </p>
+                            </div>
+                            <div
+                                v-else
+                                class="rounded-2xl border border-surface-100 bg-surface-50/60 px-3 py-2 text-[11px] text-surface-500 dark:border-surface-800 dark:bg-surface-800/40 dark:text-surface-400"
+                            >
+                                Pilih tugas tujuan untuk mengaitkan percakapan.
+                            </div>
                         </div>
 
-                        <!-- Comment Content Bubble -->
+                        <textarea
+                            v-model="composerContent"
+                            rows="3"
+                            maxlength="1000"
+                            placeholder="Tulis pembaruan progres, pertanyaan blocker, atau keputusan yang perlu diketahui tim..."
+                            class="mt-3 w-full resize-none rounded-2xl border border-surface-200 bg-surface-50/60 p-3.5 text-sm leading-6 text-surface-900 placeholder-surface-400 transition focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden dark:border-surface-700 dark:bg-surface-800/50 dark:text-surface-100 dark:placeholder-surface-500 dark:focus:border-primary-400 dark:focus:bg-surface-800"
+                        />
+
                         <div
-                            class="mt-3.5 pl-0 text-xs leading-relaxed text-surface-800 sm:pl-12 sm:text-sm dark:text-surface-200"
+                            class="mt-1.5 flex items-center justify-between text-[10px] text-surface-400 dark:text-surface-500"
                         >
-                            <div
-                                class="rounded-2xl border border-surface-100 bg-[#FAF9F4]/70 p-4 dark:border-surface-800 dark:bg-surface-800/40"
+                            <span>Maksimal 1000 karakter.</span>
+                            <span>{{ composerContent.length }}/1000</span>
+                        </div>
+
+                        <div
+                            v-if="composerError"
+                            class="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+                        >
+                            {{ composerError }}
+                        </div>
+
+                        <div
+                            class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-surface-100 pt-3 dark:border-surface-800"
+                        >
+                            <p
+                                class="inline-flex items-center gap-1.5 text-[10px] text-surface-400 dark:text-surface-500"
                             >
-                                <p class="whitespace-pre-line">
-                                    {{ comment.content }}
+                                <Info class="h-3.5 w-3.5" />
+                                Anggota proyek akan menerima notifikasi.
+                            </p>
+                            <button
+                                type="submit"
+                                :disabled="
+                                    postingComment ||
+                                    !composerTaskId ||
+                                    !composerContent.trim()
+                                "
+                                class="btn btn-primary btn-sm"
+                            >
+                                <Send class="h-3.5 w-3.5" />
+                                {{
+                                    postingComment
+                                        ? 'Mengirim...'
+                                        : 'Kirim diskusi'
+                                }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div v-else class="px-5 py-8 text-center">
+                        <p
+                            class="text-xs leading-6 text-surface-500 dark:text-surface-400"
+                        >
+                            {{
+                                canViewTasks
+                                    ? 'Belum ada tugas yang bisa didiskusikan. Buat tugas terlebih dahulu agar percakapan punya konteks.'
+                                    : 'Anda belum memiliki akses untuk memulai diskusi tugas.'
+                            }}
+                        </p>
+                        <Link
+                            v-if="canViewTasks"
+                            :href="taskRoutes.index.url()"
+                            class="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-primary-700 hover:underline dark:text-primary-300"
+                        >
+                            Buka daftar tugas
+                            <ArrowRight class="h-3 w-3" />
+                        </Link>
+                    </div>
+                </section>
+
+                <!-- Feed -->
+                <section
+                    class="overflow-hidden rounded-[28px] border border-surface-200/80 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                >
+                    <div
+                        class="flex flex-col gap-3 border-b border-surface-100 px-5 py-4 xl:flex-row xl:items-center xl:justify-between dark:border-surface-800"
+                    >
+                        <div class="flex items-center gap-2.5">
+                            <span
+                                class="grid h-8 w-8 place-items-center rounded-xl bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+                            >
+                                <Activity class="h-4 w-4" />
+                            </span>
+                            <div>
+                                <p
+                                    class="text-base font-bold text-surface-950 dark:text-surface-50"
+                                >
+                                    Ruang diskusi
+                                </p>
+                                <p
+                                    class="text-[11px] text-surface-400 dark:text-surface-500"
+                                >
+                                    {{ meta.total }} percakapan tercatat
                                 </p>
                             </div>
                         </div>
 
-                        <!-- Interactive Footer: Reactions & Reply -->
                         <div
-                            class="mt-3.5 flex flex-wrap items-center justify-between gap-3 pl-0 sm:pl-12"
+                            class="flex flex-col gap-2 sm:flex-row sm:items-center"
                         >
-                            <div class="flex items-center gap-2">
+                            <div
+                                class="inline-flex rounded-full border border-surface-200 bg-surface-100 p-1 dark:border-surface-700 dark:bg-surface-800"
+                            >
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-1.5 rounded-full border border-surface-200 bg-surface-50 px-2.5 py-1 text-xs font-medium text-surface-600 transition hover:bg-surface-100 active:scale-90 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
-                                    @click="
-                                        toggleReaction(comment.id, 'thumbs')
+                                    class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition"
+                                    :class="
+                                        activeFeed === 'discussions'
+                                            ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-white'
+                                            : 'text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
                                     "
+                                    :aria-pressed="activeFeed === 'discussions'"
+                                    @click="activeFeed = 'discussions'"
                                 >
-                                    <span>👍</span>
-                                    <span>{{
-                                        getReactions(comment.id).thumbs
-                                    }}</span>
+                                    <MessageSquare class="h-3 w-3" />
+                                    Diskusi
                                 </button>
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-1.5 rounded-full border border-surface-200 bg-surface-50 px-2.5 py-1 text-xs font-medium text-surface-600 transition hover:bg-surface-100 active:scale-90 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
-                                    @click="
-                                        toggleReaction(comment.id, 'rocket')
+                                    class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition"
+                                    :class="
+                                        activeFeed === 'activity'
+                                            ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-900 dark:text-white'
+                                            : 'text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
                                     "
+                                    :aria-pressed="activeFeed === 'activity'"
+                                    @click="activeFeed = 'activity'"
                                 >
-                                    <span>🚀</span>
-                                    <span>{{
-                                        getReactions(comment.id).rocket
-                                    }}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center gap-1.5 rounded-full border border-surface-200 bg-surface-50 px-2.5 py-1 text-xs font-medium text-surface-600 transition hover:bg-surface-100 active:scale-90 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
-                                    @click="toggleReaction(comment.id, 'heart')"
-                                >
-                                    <span>❤️</span>
-                                    <span>{{
-                                        getReactions(comment.id).heart
-                                    }}</span>
+                                    <Activity class="h-3 w-3" />
+                                    Aktivitas
                                 </button>
                             </div>
 
-                            <Link
-                                :href="`/tasks/${comment.task_id}`"
-                                class="inline-flex items-center gap-1 text-xs font-medium text-[#0F5132] hover:underline dark:text-[#b7d9c1]"
+                            <div
+                                v-if="activeFeed === 'discussions'"
+                                class="relative w-full min-w-0 sm:w-56"
                             >
-                                <span>Buka Thread Komentar</span>
-                                <span>→</span>
-                            </Link>
+                                <Search
+                                    class="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-surface-400"
+                                />
+                                <input
+                                    v-model="searchQuery"
+                                    type="search"
+                                    placeholder="Cari diskusi..."
+                                    class="h-8 w-full rounded-full border border-surface-200 bg-surface-50/80 pr-3 pl-8 text-xs text-surface-900 placeholder-surface-400 transition focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:placeholder-surface-500 dark:focus:border-primary-400 dark:focus:bg-surface-800"
+                                />
+                            </div>
                         </div>
-                    </article>
-                </div>
-
-                <!-- Empty State -->
-                <div
-                    v-else
-                    class="flex flex-col items-center justify-center rounded-3xl border border-surface-200/80 bg-white p-14 text-center shadow-xs dark:border-surface-800 dark:bg-surface-900"
-                >
-                    <div
-                        class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0F5132]/10 text-[#0F5132] dark:bg-[#b7d9c1]/10 dark:text-[#b7d9c1]"
-                    >
-                        <component
-                            :is="getIcon('MessageSquare')"
-                            class="h-7 w-7"
-                        />
                     </div>
-                    <h3
-                        class="mt-4 font-serif text-lg font-normal text-surface-950 dark:text-surface-50"
-                    >
-                        Belum Ada Percakapan
-                    </h3>
-                    <p class="mt-1 max-w-sm text-xs text-surface-500">
-                        Mulai kolaborasi tim dengan memberikan komentar pada
-                        detail tugas yang sedang dikerjakan.
-                    </p>
-                    <Link
-                        href="/tasks"
-                        class="mt-4 inline-flex items-center gap-2 rounded-full bg-[#0F5132] px-5 py-2 text-xs font-medium text-white shadow-xs"
-                    >
-                        <span>Lihat Tugas Tim</span>
-                        <span>→</span>
-                    </Link>
-                </div>
 
-                <!-- Pagination -->
-                <Pagination
-                    v-if="meta.last_page > 1"
-                    :current-page="meta.current_page"
-                    :last-page="meta.last_page"
-                    :from="meta.from"
-                    :to="meta.to"
-                    :total="meta.total"
-                    @change="changePage"
-                />
+                    <!-- Discussions -->
+                    <div v-if="activeFeed === 'discussions'">
+                        <div v-if="comments.length > 0">
+                            <article
+                                v-for="comment in comments"
+                                :key="comment.id"
+                                class="border-b border-surface-100 px-5 py-5 last:border-b-0 dark:border-surface-800"
+                            >
+                                <div class="flex gap-3.5">
+                                    <Avatar
+                                        :initials="comment.author_initials"
+                                        :src="comment.author_avatar"
+                                        :alt="comment.author_name"
+                                        size="md"
+                                        class="shrink-0"
+                                    />
+
+                                    <div class="min-w-0 flex-1">
+                                        <div
+                                            class="flex flex-wrap items-start justify-between gap-2"
+                                        >
+                                            <div class="min-w-0">
+                                                <div
+                                                    class="flex flex-wrap items-center gap-2"
+                                                >
+                                                    <h3
+                                                        class="text-sm font-semibold text-surface-950 dark:text-surface-50"
+                                                    >
+                                                        {{
+                                                            comment.author_name
+                                                        }}
+                                                    </h3>
+                                                    <span
+                                                        class="text-[10px] text-surface-400 dark:text-surface-500"
+                                                    >
+                                                        ·
+                                                        {{
+                                                            formatRelativeTime(
+                                                                comment.created_at,
+                                                            )
+                                                        }}
+                                                    </span>
+                                                </div>
+
+                                                <div
+                                                    class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]"
+                                                >
+                                                    <span
+                                                        v-if="
+                                                            comment.project_name
+                                                        "
+                                                        class="rounded-full bg-primary-50 px-2 py-0.5 font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                                                    >
+                                                        {{
+                                                            comment.project_name
+                                                        }}
+                                                    </span>
+                                                    <span
+                                                        class="text-surface-300 dark:text-surface-600"
+                                                        >/</span
+                                                    >
+                                                    <Link
+                                                        :href="
+                                                            taskRoutes.show.url(
+                                                                comment.task_id,
+                                                            )
+                                                        "
+                                                        class="inline-flex min-w-0 items-center gap-1 text-surface-500 transition hover:text-primary-700 dark:text-surface-400 dark:hover:text-primary-300"
+                                                    >
+                                                        <Hash
+                                                            class="h-3 w-3 shrink-0"
+                                                        />
+                                                        <span
+                                                            class="max-w-[180px] truncate sm:max-w-[280px]"
+                                                            >{{
+                                                                comment.task_title
+                                                            }}</span
+                                                        >
+                                                    </Link>
+                                                </div>
+                                            </div>
+
+                                            <Link
+                                                :href="
+                                                    taskRoutes.show.url(
+                                                        comment.task_id,
+                                                    )
+                                                "
+                                                class="inline-flex shrink-0 items-center gap-1 rounded-full border border-surface-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-surface-600 transition hover:border-surface-300 hover:bg-surface-50 hover:text-surface-900 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-white"
+                                            >
+                                                Buka tugas
+                                                <ArrowUpRight class="h-3 w-3" />
+                                            </Link>
+                                        </div>
+
+                                        <div
+                                            class="mt-3 rounded-r-2xl border-l-2 border-primary-300 bg-surface-50/70 py-3 pr-3 pl-3.5 dark:border-primary-600 dark:bg-surface-800/40"
+                                        >
+                                            <p
+                                                class="text-[13px] leading-relaxed whitespace-pre-line text-surface-700 dark:text-surface-200"
+                                            >
+                                                {{ comment.content }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="mt-2.5 flex flex-wrap items-center gap-3 text-[10px] font-medium text-surface-400 dark:text-surface-500"
+                                        >
+                                            <button
+                                                type="button"
+                                                class="inline-flex items-center gap-1 transition hover:text-primary-700 dark:hover:text-primary-300"
+                                                @click="copyTaskLink(comment)"
+                                            >
+                                                <Copy class="h-3 w-3" />
+                                                Salin tautan
+                                            </button>
+                                            <span
+                                                class="h-3 w-px bg-surface-200 dark:bg-surface-700"
+                                            />
+                                            <Link
+                                                :href="
+                                                    taskRoutes.show.url(
+                                                        comment.task_id,
+                                                    )
+                                                "
+                                                class="inline-flex items-center gap-1 transition hover:text-primary-700 dark:hover:text-primary-300"
+                                            >
+                                                <MessageSquare
+                                                    class="h-3 w-3"
+                                                />
+                                                Buka thread komentar
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div v-else class="px-5 py-12 text-center">
+                            <span
+                                class="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-surface-100 text-surface-400 dark:bg-surface-800 dark:text-surface-500"
+                            >
+                                <Inbox class="h-5 w-5" />
+                            </span>
+                            <p
+                                class="mt-3 text-lg font-bold text-surface-900 dark:text-surface-100"
+                            >
+                                {{
+                                    searchQuery
+                                        ? 'Diskusi tidak ditemukan'
+                                        : 'Belum ada diskusi'
+                                }}
+                            </p>
+                            <p
+                                class="mx-auto mt-1 max-w-sm text-xs leading-5 text-surface-500 dark:text-surface-400"
+                            >
+                                {{
+                                    searchQuery
+                                        ? 'Coba kata kunci lain atau hapus pencarian untuk melihat semua percakapan.'
+                                        : 'Mulai percakapan pertama melalui kolom diskusi di atas.'
+                                }}
+                            </p>
+                            <button
+                                v-if="searchQuery"
+                                type="button"
+                                class="mt-3 rounded-full border border-surface-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-surface-600 transition hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
+                                @click="searchQuery = ''"
+                            >
+                                Hapus pencarian
+                            </button>
+                        </div>
+
+                        <Pagination
+                            v-if="meta.total > 0"
+                            :current-page="meta.current_page"
+                            :last-page="meta.last_page"
+                            :from="meta.from"
+                            :to="meta.to"
+                            :total="meta.total"
+                            @change="changePage"
+                        />
+
+                        <!-- Topik Diskusi Alur Kerja Terkait -->
+                        <div
+                            v-if="mostDiscussedTasks.length > 0"
+                            class="border-t border-surface-100 bg-surface-50/60 p-5 dark:border-surface-800 dark:bg-surface-800/40"
+                        >
+                            <div
+                                class="flex items-center justify-between gap-2 pb-3"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="grid h-6 w-6 place-items-center rounded-lg bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
+                                    >
+                                        <Hash class="h-3.5 w-3.5" />
+                                    </span>
+                                    <p
+                                        class="text-xs font-bold text-surface-900 dark:text-surface-100"
+                                    >
+                                        Thread Tugas Sedang Aktif
+                                    </p>
+                                </div>
+                                <span class="text-[10px] text-surface-400">
+                                    Diskusi terbanyak di proyek
+                                </span>
+                            </div>
+
+                            <div class="grid gap-2.5 sm:grid-cols-2">
+                                <Link
+                                    v-for="task in mostDiscussedTasks"
+                                    :key="task.id"
+                                    :href="taskRoutes.show.url(task.id)"
+                                    class="group flex items-center justify-between rounded-xl border border-surface-200/80 bg-white p-3 shadow-xs transition hover:border-primary-300 hover:shadow-xs dark:border-surface-700 dark:bg-surface-900 dark:hover:border-primary-600"
+                                >
+                                    <div class="min-w-0 flex-1 pr-2">
+                                        <p
+                                            class="truncate text-xs font-semibold text-surface-800 transition group-hover:text-primary-700 dark:text-surface-200 dark:group-hover:text-primary-300"
+                                        >
+                                            {{ task.title }}
+                                        </p>
+                                        <p
+                                            class="mt-0.5 truncate text-[10px] text-surface-400"
+                                        >
+                                            {{ task.project_name }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                                    >
+                                        <MessageSquare class="h-2.5 w-2.5" />
+                                        {{ task.comments_count }}
+                                    </span>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity -->
+                    <div v-else>
+                        <div
+                            v-if="recentActivities.length > 0"
+                            class="relative px-5 py-5"
+                        >
+                            <div
+                                class="absolute top-8 bottom-8 left-[2.6rem] w-px bg-surface-200 dark:bg-surface-700"
+                                aria-hidden="true"
+                            />
+
+                            <div
+                                v-for="activity in recentActivities"
+                                :key="activity.id"
+                                class="relative flex gap-3.5 pb-5 last:pb-0"
+                            >
+                                <div class="relative z-10 shrink-0">
+                                    <Avatar
+                                        v-if="activity.user"
+                                        :initials="activity.user.initials"
+                                        :src="activity.user.avatar"
+                                        :alt="activity.user.name"
+                                        size="sm"
+                                    />
+                                    <span
+                                        v-else
+                                        class="grid h-8 w-8 place-items-center rounded-full border border-surface-200 bg-white text-surface-500 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-400"
+                                    >
+                                        <component
+                                            :is="
+                                                getIcon(
+                                                    activityIcon(
+                                                        activity.activity_type,
+                                                    ),
+                                                )
+                                            "
+                                            class="h-3.5 w-3.5"
+                                        />
+                                    </span>
+                                    <span
+                                        class="absolute -right-0.5 -bottom-0.5 grid h-4 w-4 place-items-center rounded-full border border-surface-200 bg-white text-surface-500 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-400"
+                                    >
+                                        <component
+                                            :is="
+                                                getIcon(
+                                                    activityIcon(
+                                                        activity.activity_type,
+                                                    ),
+                                                )
+                                            "
+                                            class="h-2.5 w-2.5"
+                                        />
+                                    </span>
+                                </div>
+
+                                <div class="min-w-0 pt-0.5">
+                                    <p
+                                        class="text-xs leading-5 text-surface-700 dark:text-surface-200"
+                                    >
+                                        {{ activity.description }}
+                                    </p>
+                                    <div
+                                        class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-surface-400 dark:text-surface-500"
+                                    >
+                                        <span>{{
+                                            formatRelativeTime(
+                                                activity.created_at,
+                                            )
+                                        }}</span>
+                                        <template v-if="activity.task">
+                                            <span>·</span>
+                                            <Link
+                                                :href="
+                                                    taskRoutes.show.url(
+                                                        activity.task.id,
+                                                    )
+                                                "
+                                                class="inline-flex min-w-0 items-center gap-1 transition hover:text-primary-700 dark:hover:text-primary-300"
+                                            >
+                                                <Hash
+                                                    class="h-3 w-3 shrink-0"
+                                                />
+                                                <span class="truncate">{{
+                                                    activity.task.title
+                                                }}</span>
+                                            </Link>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else class="px-5 py-12 text-center">
+                            <span
+                                class="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-surface-100 text-surface-400 dark:bg-surface-800 dark:text-surface-500"
+                            >
+                                <Activity class="h-5 w-5" />
+                            </span>
+                            <p
+                                class="mt-3 text-lg font-bold text-surface-900 dark:text-surface-100"
+                            >
+                                Belum ada aktivitas
+                            </p>
+                            <p
+                                class="mx-auto mt-1 max-w-sm text-xs leading-5 text-surface-500 dark:text-surface-400"
+                            >
+                                Aktivitas tugas dan komentar terbaru akan muncul
+                                di sini.
+                            </p>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <!-- ================= RIGHT COLUMN: Collaboration Hub & Side Widgets (4 cols) ================= -->
-            <div class="space-y-5 lg:col-span-4">
-                <!-- Card 1: Tugas Butuh Review Tim -->
-                <div
-                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+            <!-- Sidebar -->
+            <aside
+                class="sticky top-6 min-w-0 space-y-4 self-start lg:col-span-4"
+            >
+                <!-- Review queue -->
+                <section
+                    class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
                 >
-                    <div
-                        class="flex items-center justify-between border-b border-surface-100 pb-3 dark:border-surface-800"
-                    >
+                    <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
-                            <component
-                                :is="getIcon('Eye')"
-                                class="h-4 w-4 text-amber-600 dark:text-amber-400"
-                            />
-                            <h2
-                                class="font-serif text-sm font-normal text-surface-950 sm:text-base dark:text-surface-50"
+                            <span
+                                class="grid h-7 w-7 place-items-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300"
                             >
-                                Butuh Review Tim
+                                <ClipboardCheck class="h-3.5 w-3.5" />
+                            </span>
+                            <h2
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
+                            >
+                                Antrean review
                             </h2>
                         </div>
                         <span
-                            class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                            class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600 dark:bg-rose-950/40 dark:text-rose-300"
                         >
-                            {{ reviewTasks.length }} Tugas
+                            {{ reviewTasks.length }}
                         </span>
                     </div>
 
-                    <div v-if="reviewTasks.length > 0" class="mt-3 space-y-2.5">
+                    <div v-if="reviewTasks.length > 0" class="mt-3 space-y-2">
                         <Link
                             v-for="task in reviewTasks"
                             :key="task.id"
-                            :href="`/tasks/${task.id}`"
-                            class="group block rounded-2xl border border-surface-200/70 bg-[#FAF9F4]/60 p-3 transition hover:bg-white hover:shadow-xs dark:border-surface-800 dark:bg-surface-800/40 dark:hover:bg-surface-800"
+                            :href="taskRoutes.show.url(task.id)"
+                            class="group block rounded-2xl border border-surface-100 bg-surface-50/60 p-3 transition hover:border-surface-200 hover:bg-white hover:shadow-xs dark:border-surface-800 dark:bg-surface-800/30 dark:hover:border-surface-700 dark:hover:bg-surface-800/60"
                         >
-                            <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-start gap-2">
+                                <span
+                                    class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full"
+                                    :class="priorityDot(task.priority)"
+                                />
                                 <p
-                                    class="line-clamp-1 text-xs font-medium text-surface-900 group-hover:text-[#0F5132] dark:text-surface-100 dark:group-hover:text-[#b7d9c1]"
+                                    class="line-clamp-2 text-xs leading-5 font-semibold text-surface-800 group-hover:text-surface-950 dark:text-surface-100 dark:group-hover:text-white"
                                 >
                                     {{ task.title }}
                                 </p>
-                                <span
-                                    class="py-0.2 shrink-0 rounded-md bg-amber-100 px-1.5 text-[9px] font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
-                                >
-                                    {{ task.priority_label }}
-                                </span>
                             </div>
+
                             <div
-                                class="mt-2 flex items-center justify-between text-[11px] text-surface-500"
+                                class="mt-2 flex items-center justify-between gap-2 text-[10px] text-surface-400 dark:text-surface-500"
                             >
-                                <span>{{ task.project_name }}</span>
-                                <span
+                                <span class="truncate">{{
+                                    task.project_name
+                                }}</span>
+                                <div
                                     v-if="task.assignee"
-                                    class="flex items-center gap-1 text-[10px]"
+                                    class="flex shrink-0 items-center gap-1.5"
                                 >
                                     <Avatar
-                                        :src="task.assignee.avatar"
                                         :initials="task.assignee.initials"
+                                        :src="task.assignee.avatar"
                                         :alt="task.assignee.name"
                                         size="xs"
                                     />
-                                    <span>{{ task.assignee.name }}</span>
-                                </span>
+                                    <span class="max-w-20 truncate">{{
+                                        task.assignee.name
+                                    }}</span>
+                                </div>
+                                <span v-else>Belum ditugaskan</span>
                             </div>
                         </Link>
                     </div>
 
-                    <div v-else class="mt-3 text-xs text-surface-400">
-                        Tidak ada tugas tertunda untuk ditinjau saat ini.
-                    </div>
-                </div>
+                    <p
+                        v-else
+                        class="mt-3 rounded-2xl border border-dashed border-surface-200 px-3 py-4 text-center text-[11px] text-surface-400 dark:border-surface-700 dark:text-surface-500"
+                    >
+                        Tidak ada tugas yang menunggu review.
+                    </p>
+                </section>
 
-                <!-- Card 2: Live Activity Feed -->
-                <div
-                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                <!-- Kontributor Teraktif -->
+                <section
+                    v-if="topCommenters.length > 0"
+                    class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
                 >
-                    <div
-                        class="flex items-center justify-between border-b border-surface-100 pb-3 dark:border-surface-800"
-                    >
-                        <h2
-                            class="font-serif text-sm font-normal text-surface-950 sm:text-base dark:text-surface-50"
-                        >
-                            Aktivitas Kolaboratif
-                        </h2>
-                        <span class="text-[11px] font-medium text-surface-400"
-                            >Real-Time</span
-                        >
-                    </div>
-
-                    <div
-                        v-if="recentActivities.length > 0"
-                        class="mt-3.5 space-y-3"
-                    >
-                        <div
-                            v-for="act in recentActivities.slice(0, 5)"
-                            :key="act.id"
-                            class="flex items-start gap-2.5 text-xs"
-                        >
-                            <div
-                                class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300"
-                            >
-                                <component
-                                    :is="getIcon('Activity')"
-                                    class="h-3.5 w-3.5"
-                                />
-                            </div>
-                            <div class="min-w-0 flex-1 leading-snug">
-                                <p
-                                    class="line-clamp-2 text-surface-800 dark:text-surface-200"
-                                >
-                                    {{ act.description }}
-                                </p>
-                                <span class="text-[10px] text-surface-400">
-                                    {{ formatRelativeTime(act.created_at) }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else class="mt-3 text-xs text-surface-400">
-                        Belum ada aktivitas kolaboratif tercatat.
-                    </div>
-                </div>
-
-                <!-- Card 3: Berkas & Aset Proyek Bersama -->
-                <div
-                    class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-                >
-                    <div
-                        class="flex items-center justify-between border-b border-surface-100 pb-3 dark:border-surface-800"
-                    >
+                    <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
-                            <component
-                                :is="getIcon('Paperclip')"
-                                class="h-4 w-4 text-[#0F5132] dark:text-[#b7d9c1]"
-                            />
-                            <h2
-                                class="font-serif text-sm font-normal text-surface-950 sm:text-base dark:text-surface-50"
+                            <span
+                                class="grid h-7 w-7 place-items-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
                             >
-                                Berkas & Dokumen Bersama
+                                <Users class="h-3.5 w-3.5" />
+                            </span>
+                            <h2
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
+                            >
+                                Kontributor Teraktif
                             </h2>
                         </div>
-                        <Link
-                            href="/documents"
-                            class="text-xs font-medium text-[#0F5132] hover:underline dark:text-[#b7d9c1]"
-                        >
-                            Semua →
-                        </Link>
+                        <span class="text-[10px] text-surface-400">
+                            Aktivitas Diskusi
+                        </span>
                     </div>
 
-                    <div class="mt-3 space-y-2">
+                    <div class="mt-3 space-y-1.5">
                         <div
-                            v-for="file in sharedFiles"
-                            :key="file.name"
-                            class="flex items-center justify-between rounded-2xl border border-surface-200/70 bg-[#FAF9F4]/70 p-2.5 transition hover:bg-white dark:border-surface-800 dark:bg-surface-800/40 dark:hover:bg-surface-800"
+                            v-for="commenter in topCommenters"
+                            :key="commenter.id"
+                            class="flex items-center justify-between rounded-xl px-2 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
                         >
-                            <div class="flex min-w-0 items-center gap-2.5">
-                                <span
-                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-surface-200/80 text-[10px] font-bold text-surface-700 dark:bg-surface-700 dark:text-surface-200"
-                                >
-                                    {{ file.ext }}
-                                </span>
-                                <div class="min-w-0">
+                            <div
+                                class="flex min-w-0 flex-1 items-center gap-2.5"
+                            >
+                                <Avatar
+                                    :initials="commenter.initials"
+                                    :src="commenter.avatar"
+                                    :alt="commenter.name"
+                                    size="sm"
+                                />
+                                <div class="min-w-0 flex-1">
                                     <p
-                                        class="truncate text-xs font-medium text-surface-900 dark:text-surface-100"
+                                        class="truncate text-xs font-semibold text-surface-800 dark:text-surface-100"
                                     >
-                                        {{ file.name }}
+                                        {{ commenter.name }}
                                     </p>
-                                    <span class="text-[10px] text-surface-400"
-                                        >{{ file.size }} · {{ file.date }}</span
-                                    >
+                                    <p class="text-[10px] text-surface-400">
+                                        Anggota aktif
+                                    </p>
                                 </div>
                             </div>
                             <span
-                                class="cursor-pointer p-1 text-surface-400 hover:text-surface-900"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
                             >
-                                <component
-                                    :is="getIcon('Download')"
-                                    class="h-3.5 w-3.5"
-                                />
+                                {{ commenter.comments_count }} pesan
                             </span>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Card 4: Daily Standup & Jadwal Sinkronisasi Tim -->
-                <div
-                    class="rounded-3xl border border-[#0F5132]/20 bg-[#0F5132]/5 p-5 dark:border-[#b7d9c1]/20 dark:bg-[#0F5132]/10"
+                <!-- Active projects -->
+                <section
+                    class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
                 >
-                    <div class="flex items-center justify-between">
-                        <div
-                            class="flex items-center gap-2 text-[#0F5132] dark:text-[#b7d9c1]"
-                        >
-                            <component
-                                :is="getIcon('Calendar')"
-                                class="h-4 w-4"
-                            />
-                            <h2 class="font-serif text-sm font-semibold">
-                                Daily Sync Standup
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="grid h-7 w-7 place-items-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                            >
+                                <FolderKanban class="h-3.5 w-3.5" />
+                            </span>
+                            <h2
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
+                            >
+                                Proyek terhubung
                             </h2>
                         </div>
-                        <span
-                            class="rounded-full bg-[#0F5132] px-2 py-0.5 text-[10px] font-bold text-white"
+                        <Link
+                            v-if="canViewProjects"
+                            :href="projectRoutes.index.url()"
+                            class="text-[10px] font-semibold text-primary-700 hover:underline dark:text-primary-300"
                         >
-                            14:00 WIB
-                        </span>
+                            Lihat semua
+                        </Link>
                     </div>
-                    <p
-                        class="mt-2 text-xs leading-relaxed text-surface-700 dark:text-surface-300"
-                    >
-                        Pertemuan koordinasi harian 15 menit untuk menyelaraskan
-                        prioritas deployment dan mengatasi hambatan tim.
-                    </p>
+
                     <div
-                        class="mt-3 flex items-center justify-between border-t border-[#0F5132]/10 pt-2.5 text-[11px] text-surface-500"
+                        v-if="activeProjects.length > 0"
+                        class="mt-2 divide-y divide-surface-100 dark:divide-surface-800"
                     >
-                        <span>Platform: Google Meet</span>
-                        <a
-                            href="#"
-                            class="font-semibold text-[#0F5132] hover:underline dark:text-[#b7d9c1]"
+                        <component
+                            :is="canViewProjects ? Link : 'div'"
+                            v-for="project in activeProjects"
+                            :key="project.id"
+                            :href="
+                                canViewProjects
+                                    ? projectRoutes.show.url(project.id)
+                                    : undefined
+                            "
+                            class="group flex items-center gap-3 py-3 transition"
                         >
-                            Masuk Ruang →
-                        </a>
+                            <span
+                                class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-100 text-xs font-bold text-surface-700 transition group-hover:bg-primary-50 group-hover:text-primary-700 dark:bg-surface-800 dark:text-surface-200 dark:group-hover:bg-primary-900/30 dark:group-hover:text-primary-300"
+                            >
+                                {{ projectInitials(project.name) }}
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="truncate text-xs font-semibold text-surface-800 transition group-hover:text-surface-950 dark:text-surface-100 dark:group-hover:text-white"
+                                >
+                                    {{ project.name }}
+                                </p>
+                                <p
+                                    class="mt-0.5 text-[10px] text-surface-400 dark:text-surface-500"
+                                >
+                                    {{ project.tasks_count }} tugas ·
+                                    {{ project.members_count }} anggota
+                                </p>
+                            </div>
+                            <div
+                                v-if="project.members.length > 0"
+                                class="flex shrink-0 items-center -space-x-2"
+                            >
+                                <Avatar
+                                    v-for="member in project.members.slice(
+                                        0,
+                                        3,
+                                    )"
+                                    :key="member.id"
+                                    :initials="member.initials"
+                                    :src="member.avatar"
+                                    :alt="member.name"
+                                    size="xs"
+                                    class="ring-2 ring-white dark:ring-surface-900"
+                                />
+                                <span
+                                    v-if="project.members.length > 3"
+                                    class="ml-2 text-[10px] font-semibold text-surface-400 dark:text-surface-500"
+                                >
+                                    +{{ project.members.length - 3 }}
+                                </span>
+                            </div>
+                        </component>
                     </div>
-                </div>
-            </div>
+
+                    <p
+                        v-else
+                        class="mt-3 rounded-2xl border border-dashed border-surface-200 px-3 py-4 text-center text-[11px] text-surface-400 dark:border-surface-700 dark:text-surface-500"
+                    >
+                        Belum ada proyek yang bisa diakses.
+                    </p>
+                </section>
+
+                <!-- Team -->
+                <section
+                    class="rounded-[28px] border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+                >
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="grid h-7 w-7 place-items-center rounded-lg bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                            >
+                                <Users class="h-3.5 w-3.5" />
+                            </span>
+                            <h2
+                                class="text-base font-bold text-surface-950 dark:text-surface-50"
+                            >
+                                Rekan kerja
+                            </h2>
+                        </div>
+                        <Link
+                            :href="users.index.url()"
+                            class="text-[10px] font-semibold text-primary-700 hover:underline dark:text-primary-300"
+                        >
+                            Direktori
+                        </Link>
+                    </div>
+
+                    <div v-if="teamMembers.length > 0" class="mt-3 space-y-1">
+                        <div
+                            v-for="member in visibleTeamMembers"
+                            :key="member.id"
+                            class="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                        >
+                            <div
+                                class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900"
+                            >
+                                <Avatar
+                                    :initials="member.initials"
+                                    :src="member.avatar"
+                                    :alt="member.name"
+                                    size="sm"
+                                />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="truncate text-xs font-medium text-surface-800 dark:text-surface-100"
+                                >
+                                    {{ member.name }}
+                                </p>
+                                <p
+                                    class="text-[10px] text-surface-400 dark:text-surface-500"
+                                >
+                                    Anggota tim
+                                </p>
+                            </div>
+                            <span
+                                class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary-400"
+                                title="Terhubung ke proyek"
+                            />
+                        </div>
+                    </div>
+
+                    <p
+                        v-else
+                        class="mt-3 text-[11px] text-surface-400 dark:text-surface-500"
+                    >
+                        Belum ada anggota tim terdaftar.
+                    </p>
+
+                    <Link
+                        v-if="remainingTeamMembers > 0"
+                        :href="users.index.url()"
+                        class="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-surface-500 transition hover:text-primary-700 dark:text-surface-400 dark:hover:text-primary-300"
+                    >
+                        +{{ remainingTeamMembers }} rekan lainnya
+                        <ArrowRight class="h-3 w-3" />
+                    </Link>
+                </section>
+
+                <!-- Collaboration tip -->
+                <section
+                    class="relative overflow-hidden rounded-[28px] bg-primary-950 p-5 text-white shadow-sm dark:bg-primary-950"
+                >
+                    <div
+                        class="pointer-events-none absolute -top-8 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl lg:-top-16 lg:-right-12 lg:h-40 lg:w-40"
+                    />
+                    <div
+                        class="pointer-events-none absolute -bottom-8 -left-6 h-28 w-28 rounded-full bg-accent-400/20 blur-2xl lg:-bottom-16 lg:-left-10 lg:h-36 lg:w-36"
+                    />
+
+                    <div class="relative">
+                        <span
+                            class="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-accent-200 ring-1 ring-white/15"
+                        >
+                            <Sparkles class="h-4 w-4" />
+                        </span>
+                        <p
+                            class="mt-4 text-base leading-snug font-bold text-white"
+                        >
+                            Ritme kolaborasi yang sehat.
+                        </p>
+                        <ul class="mt-3 space-y-2">
+                            <li
+                                class="flex items-start gap-2 text-[11px] leading-5 text-primary-100/90"
+                            >
+                                <Check
+                                    class="mt-0.5 h-3 w-3 shrink-0 text-accent-300"
+                                />
+                                Tulis konteks, bukan hanya status.
+                            </li>
+                            <li
+                                class="flex items-start gap-2 text-[11px] leading-5 text-primary-100/90"
+                            >
+                                <Check
+                                    class="mt-0.5 h-3 w-3 shrink-0 text-accent-300"
+                                />
+                                Tutup diskusi dengan keputusan yang jelas.
+                            </li>
+                            <li
+                                class="flex items-start gap-2 text-[11px] leading-5 text-primary-100/90"
+                            >
+                                <Check
+                                    class="mt-0.5 h-3 w-3 shrink-0 text-accent-300"
+                                />
+                                Kembalikan percakapan ke tugas terkait.
+                            </li>
+                        </ul>
+                        <Link
+                            :href="taskRoutes.index.url()"
+                            class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/15"
+                        >
+                            Lihat tugas tim
+                            <ExternalLink class="h-3 w-3" />
+                        </Link>
+                    </div>
+                </section>
+            </aside>
         </div>
     </div>
 </template>
