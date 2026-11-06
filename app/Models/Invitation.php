@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read User|null $invitedBy
+ * @property string|null $token
+ * @property string|null $activation_code
  */
 class Invitation extends Model
 {

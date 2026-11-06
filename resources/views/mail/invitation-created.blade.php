@@ -28,10 +28,22 @@
             <span style="word-break: break-all;">{{ $invitationUrl }}</span>
         </p>
 
+        @if($activationCode)
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <p style="margin: 0 0 10px; font-weight: 600; color: #0369a1;">Kode Aktivasi Anda:</p>
+            <div style="background: white; border: 1px solid #bae6fd; border-radius: 6px; padding: 15px; text-align: center; font-family: monospace; font-size: 24px; letter-spacing: 4px; color: #0369a1;">
+                {{ $activationCode }}
+            </div>
+            <p style="margin: 10px 0 0; font-size: 13px; color: #0369a1;">Simpan kode ini! Anda akan memasukkannya saat mengaktifkan akun.</p>
+        </div>
+        @endif
+
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
         <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-            Tautan ini akan kedaluwarsa dalam {{ config('invitations.expiry_hours', 72) }} jam.
+            Tautan ini akan kedaluwarsa dalam {{ config('activation.expiry_hours', 72) }} jam.
             Jika Anda tidak meminta undangan ini, abaikan email ini.
         </p>
     </div>

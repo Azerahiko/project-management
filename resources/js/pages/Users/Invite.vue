@@ -34,7 +34,7 @@ const form = reactive({
 const errors = ref<Record<string, string[]>>({});
 const processing = ref(false);
 const inviteResult = ref<{
-    temp_password: string;
+    activation_code: string;
     invitation_url: string;
     user: { name: string; email: string; role: string };
 } | null>(null);
@@ -62,7 +62,7 @@ async function handleSubmit(): Promise<void> {
         showResult.value = true;
         success(
             'Undangan berhasil dikirim',
-            'Password sementara ditampilkan di bawah.',
+            'Kode aktivasi ditampilkan di bawah dan dikirim via email.',
         );
     } catch (err: any) {
         if (err.response?.data?.errors) {
@@ -102,7 +102,8 @@ function copyToClipboard(text: string): void {
                     class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
                     Kirim undangan melalui email untuk mendaftarkan pengguna
-                    baru
+                    baru. Kode aktivasi akan dikirim via email dan ditampilkan
+                    di sini.
                 </p>
             </div>
             <Link :href="users.index.url()">
@@ -143,7 +144,7 @@ function copyToClipboard(text: string): void {
                         <p
                             class="mt-1 text-sm text-green-700 dark:text-green-300"
                         >
-                            Password sementara untuk
+                            Kode aktivasi untuk
                             <strong>{{ inviteResult.user.name }}</strong> ({{
                                 inviteResult.user.email
                             }})
@@ -153,23 +154,25 @@ function copyToClipboard(text: string): void {
                     <div class="space-y-2">
                         <div class="flex items-center gap-2">
                             <code
-                                class="flex-1 rounded bg-white px-3 py-2 font-mono text-sm dark:bg-green-950"
+                                class="flex-1 rounded bg-white px-3 py-2 font-mono text-2xl tracking-widest text-green-800 dark:bg-green-950 dark:text-green-200"
                             >
-                                {{ inviteResult.temp_password }}
+                                {{ inviteResult.activation_code }}
                             </code>
                             <Button
                                 variant="secondary"
                                 size="sm"
                                 @click="
-                                    copyToClipboard(inviteResult.temp_password)
+                                    copyToClipboard(
+                                        inviteResult.activation_code,
+                                    )
                                 "
                             >
                                 Salin
                             </Button>
                         </div>
                         <p class="text-xs text-green-600 dark:text-green-400">
-                            Simpan password ini! Password tidak akan ditampilkan
-                            lagi.
+                            Simpan kode ini! Kode hanya berlaku sekali dan akan
+                            kedaluwarsa dalam 72 jam.
                         </p>
                     </div>
 

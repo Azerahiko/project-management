@@ -9,6 +9,11 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\InvitationController;
 use Illuminate\Support\Facades\Route;
 
+// Guest activation endpoint (rate limited)
+Route::post('/invite/{token}/activate', [InvitationController::class, 'activate'])
+    ->middleware(['guest', 'throttle:activation'])
+    ->name('api.invitations.activate');
+
 Route::middleware(['auth:sanctum'])->group(function () {
     // Invitation management (admin only)
     Route::post('invitations', [InvitationController::class, 'store'])

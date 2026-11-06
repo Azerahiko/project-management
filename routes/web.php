@@ -40,10 +40,6 @@ Route::get('/invite/{token}', [InvitationController::class, 'show'])
     ->name('invitations.show')
     ->middleware(['guest', 'throttle:10,1']);
 
-Route::post('/invite/{token}', [InvitationController::class, 'accept'])
-    ->name('invitations.accept')
-    ->middleware(['guest', 'throttle:10,1']);
-
 // Onboarding routes (requires auth, redirects if complete)
 Route::middleware(['auth', 'onboarding.incomplete'])->prefix('onboarding')->name('onboarding.')->group(function () {
     Route::get('/', [OnboardingController::class, 'index'])->name('index');
@@ -169,11 +165,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('can:users.view')->group(function () {
         Route::inertia('/users', 'Users/Index')->name('users.index');
         Route::inertia('/users/create', 'Users/Create')->name('users.create');
-        Route::get('/users/{user}/edit', function (User $user, Request $request) {
-            return Inertia::render('Users/Edit', [
-                'user' => UserResource::make($user)->toArray($request),
+        Route::get('/users/{user}/details', function (User $user, Request $request) {
+            abort_unless($request->user()->can('view', $user), 403);
+
+            return Inertia::render('Users/Details', [
+                'user' => UserResource::make($user->load('roles'))->toArray($request),
             ]);
-        })->name('users.edit');
+        })->name('users.details')->middleware('can:users.view');
 
         // Invitation management
         Route::inertia('/users/invite', 'Users/Invite')->name('users.invite');
