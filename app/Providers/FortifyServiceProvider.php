@@ -80,5 +80,12 @@ class FortifyServiceProvider extends ServiceProvider
                 ($credentialId ?: $request->session()->getId()).'|'.$request->ip()
             );
         });
+
+        RateLimiter::for('activation', function (Request $request) {
+            $email = Str::lower(trim($request->input('email', '')));
+            $key = "activation:{$email}:{$request->ip()}";
+
+            return Limit::perMinutes(config('activation.lockout_minutes', 15), config('activation.max_attempts', 5))->by($key);
+        });
     }
 }

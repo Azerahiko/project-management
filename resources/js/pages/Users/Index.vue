@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import Modal from '@/components/ui/Modal.vue';
 import Avatar from '@/components/ui/Avatar.vue';
+import Dropdown from '@/components/ui/Dropdown.vue';
 import type { User } from '@/types';
 
 defineOptions({
@@ -156,6 +157,20 @@ function formatDate(dateString: string): string {
         month: 'short',
         year: 'numeric',
     });
+}
+
+// Permission checks
+const canViewDetails = computed(() =>
+    page.props.auth.user?.permissions.includes('users.view'),
+);
+
+function canDeleteUser(user: User): boolean {
+    const currentUser = page.props.auth.user;
+    if (!currentUser) return false;
+    return (
+        currentUser.permissions.includes('users.delete') &&
+        currentUser.id !== user.id
+    );
 }
 
 onMounted(() => {
@@ -522,36 +537,47 @@ watch(
                             />
                         </div>
 
-                        <!-- Action Buttons -->
-                        <div
-                            class="flex items-center gap-1 opacity-80 group-hover:opacity-100"
-                        >
-                            <Link
-                                :href="users.edit.url({ user: userItem.id })"
-                                class="flex h-8 w-8 items-center justify-center rounded-xl text-surface-400 transition hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-100"
-                                title="Edit Pengguna"
+                        <!-- Action Dropdown -->
+                        <div class="flex items-center justify-end">
+                            <Dropdown
+                                v-if="canViewDetails || canDeleteUser(userItem)"
+                                align="right"
+                                triggerClass="p-1"
                             >
-                                <component
-                                    :is="getIcon('Pencil')"
-                                    class="h-4 w-4"
-                                />
-                            </Link>
-                            <button
-                                v-if="
-                                    page.props.auth.user?.permissions.includes(
-                                        'users.delete',
-                                    ) && page.props.auth.user.id !== userItem.id
-                                "
-                                type="button"
-                                class="flex h-8 w-8 items-center justify-center rounded-xl text-surface-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400"
-                                title="Hapus Pengguna"
-                                @click="confirmDelete(userItem)"
-                            >
-                                <component
-                                    :is="getIcon('Trash2')"
-                                    class="h-4 w-4"
-                                />
-                            </button>
+                                <template #trigger>
+                                    <component
+                                        :is="getIcon('MoreHorizontal')"
+                                        class="h-4 w-4 text-surface-400"
+                                    />
+                                </template>
+
+                                <Link
+                                    v-if="canViewDetails"
+                                    :href="
+                                        users.details.url({ user: userItem.id })
+                                    "
+                                    class="dropdown-item flex items-center gap-2 px-3 py-2 text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
+                                >
+                                    <component
+                                        :is="getIcon('Eye')"
+                                        class="h-4 w-4"
+                                    />
+                                    Lihat Detail
+                                </Link>
+
+                                <button
+                                    v-if="canDeleteUser(userItem)"
+                                    type="button"
+                                    class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/20"
+                                    @click="confirmDelete(userItem)"
+                                >
+                                    <component
+                                        :is="getIcon('Trash2')"
+                                        class="h-4 w-4"
+                                    />
+                                    Hapus
+                                </button>
+                            </Dropdown>
                         </div>
                     </div>
 
@@ -717,42 +743,50 @@ watch(
                                 {{ formatDate(userItem.created_at) }}
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <div
-                                    class="flex items-center justify-end gap-1"
+                                <Dropdown
+                                    v-if="
+                                        canViewDetails ||
+                                        canDeleteUser(userItem)
+                                    "
+                                    align="right"
+                                    triggerClass="p-1"
                                 >
+                                    <template #trigger>
+                                        <component
+                                            :is="getIcon('MoreHorizontal')"
+                                            class="h-4 w-4 text-surface-400"
+                                        />
+                                    </template>
+
                                     <Link
+                                        v-if="canViewDetails"
                                         :href="
-                                            users.edit.url({
+                                            users.details.url({
                                                 user: userItem.id,
                                             })
                                         "
-                                        class="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 transition hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-800 dark:hover:text-surface-100"
-                                        title="Edit"
+                                        class="dropdown-item flex items-center gap-2 px-3 py-2 text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
                                     >
                                         <component
-                                            :is="getIcon('Pencil')"
+                                            :is="getIcon('Eye')"
                                             class="h-4 w-4"
                                         />
+                                        Lihat Detail
                                     </Link>
+
                                     <button
-                                        v-if="
-                                            page.props.auth.user?.permissions.includes(
-                                                'users.delete',
-                                            ) &&
-                                            page.props.auth.user.id !==
-                                                userItem.id
-                                        "
+                                        v-if="canDeleteUser(userItem)"
                                         type="button"
-                                        class="flex h-8 w-8 items-center justify-center rounded-lg text-surface-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400"
-                                        title="Hapus"
+                                        class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/20"
                                         @click="confirmDelete(userItem)"
                                     >
                                         <component
                                             :is="getIcon('Trash2')"
                                             class="h-4 w-4"
                                         />
+                                        Hapus
                                     </button>
-                                </div>
+                                </Dropdown>
                             </td>
                         </tr>
                     </tbody>

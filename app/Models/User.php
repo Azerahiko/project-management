@@ -32,12 +32,15 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property string|null $activation_code_hash
+ * @property Carbon|null $activation_code_expires_at
+ * @property int $activation_code_attempts
  * @property-read Collection<int, Project> $ownedProjects
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, ProjectMember> $projectMemberships
  * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at', 'activation_code_hash', 'activation_code_expires_at', 'activation_code_attempts'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -59,6 +62,7 @@ class User extends Authenticatable
             'onboarding_password_changed_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
+            'activation_code_expires_at' => 'datetime',
         ];
     }
 
@@ -246,5 +250,35 @@ class User extends Authenticatable
     public function needsOnboarding(): bool
     {
         return ! $this->isOnboarded();
+    }
+
+    /**
+     * Increment the activation code attempts counter.
+     */
+    public function incrementActivationAttempts(): void
+    {
+        $this->increment('activation_code_attempts');
+    }
+
+    /**
+     * Clear the activation code data (permanently invalidate).
+     */
+    public function clearActivationCode(): void
+    {
+        $this->forceFill([
+            'activation_code_hash' => null,
+            'activation_code_expires_at' => null,
+            'activation_code_attempts' => 0,
+        ])->save();
+    }
+
+    /**
+     * Check if the user has a valid activation code.
+     */
+    public function hasValidActivationCode(): bool
+    {
+        return $this->activation_code_hash !== null
+            && $this->activation_code_expires_at !== null
+            && $this->activation_code_expires_at->isFuture();
     }
 }

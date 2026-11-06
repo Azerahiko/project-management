@@ -90,7 +90,12 @@ describe('Invitation System', function () {
             'expires_at' => now()->subHour(),
         ]);
 
-        $response = $this->post("/invite/{$token}");
+        $response = $this->post("/api/invite/{$token}/activate", [
+            'email' => 'expired@example.com',
+            'activation_code' => '00000000',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
 
         $response->assertStatus(410);
     });
@@ -116,14 +121,17 @@ describe('Invitation System', function () {
     it('accepts valid invitation and verifies email', function () {
         $token = Str::random(64);
         $tokenHash = hash('sha256', $token);
-        $tempPassword = 'temppassword123';
+        $activationCode = '12345678';
 
         $user = User::create([
             'name' => 'Test User',
             'email' => 'accept@example.com',
-            'password' => Hash::make($tempPassword),
+            'password' => Hash::make(str()->password(32)),
             'is_active' => true,
             'email_verified_at' => null,
+            'activation_code_hash' => Hash::make($activationCode),
+            'activation_code_expires_at' => now()->addHours(72),
+            'activation_code_attempts' => 0,
         ]);
 
         Invitation::create([
@@ -134,9 +142,17 @@ describe('Invitation System', function () {
             'expires_at' => now()->addHours(72),
         ]);
 
-        $response = $this->post("/invite/{$token}");
+        $response = $this->post("/api/invite/{$token}/activate", [
+            'email' => 'accept@example.com',
+            'activation_code' => $activationCode,
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ]);
 
-        $response->assertRedirect('/login');
+        $response->assertJson([
+            'message' => 'Aktivasi berhasil. Silakan masuk dengan kredensial baru Anda.',
+            'redirect' => route('login'),
+        ]);
 
         $user->refresh();
         expect($user->email_verified_at)->not->toBeNull();

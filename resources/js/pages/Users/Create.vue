@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import users from '@/routes/users';
@@ -27,14 +27,14 @@ const roleOptions = [
 const form = reactive({
     name: '',
     email: '',
-    password: '',
-    password_confirmation: '',
     role: 'member' as string,
     is_active: true,
 });
 
 const errors = ref<Record<string, string[]>>({});
 const processing = ref(false);
+const activationCode = ref<string>('');
+const showCode = ref(false);
 
 function setErrors(err: Record<string, string[]>): void {
     errors.value = err;
@@ -51,9 +51,13 @@ async function handleSubmit(): Promise<void> {
     errors.value = {};
 
     try {
-        await api.post('/users', form);
-        success('Pengguna dibuat', 'Pengguna baru telah ditambahkan.');
-        router.visit(users.index.url());
+        const response = await api.post('/users', form);
+        activationCode.value = response.data.activation_code;
+        showCode.value = true;
+        success(
+            'Pengguna dibuat',
+            'Pengguna baru telah ditambahkan. Bagikan kode aktivasi ke pengguna.',
+        );
     } catch (err: any) {
         if (err.response?.data?.errors) {
             setErrors(err.response.data.errors);
@@ -61,6 +65,29 @@ async function handleSubmit(): Promise<void> {
     } finally {
         processing.value = false;
     }
+}
+
+async function regenerateCode(): Promise<void> {
+    if (!activationCode.value) return;
+    processing.value = true;
+    try {
+        const response = await api.post(
+            `/users/${activationCode.value}/regenerate-code`,
+        );
+        activationCode.value = response.data.activation_code;
+        success('Kode diperbarui', 'Kode aktivasi baru telah dibuat.');
+    } catch (err: any) {
+        if (err.response?.data?.errors) {
+            setErrors(err.response.data.errors);
+        }
+    } finally {
+        processing.value = false;
+    }
+}
+
+async function copyCode(): Promise<void> {
+    await navigator.clipboard.writeText(activationCode.value);
+    success('Disalin', 'Kode aktivasi disalin ke papan klip.');
 }
 
 function goBack(): void {
@@ -80,7 +107,8 @@ function goBack(): void {
                 <p
                     class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
-                    Isi formulir di bawah untuk membuat pengguna baru
+                    Isi formulir di bawah untuk membuat pengguna baru. Kode
+                    aktivasi akan dibuat otomatis.
                 </p>
             </div>
             <Link :href="users.index.url()">
@@ -120,30 +148,6 @@ function goBack(): void {
                 </div>
 
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <Input
-                        v-model="form.password"
-                        type="password"
-                        label="Kata Sandi"
-                        placeholder="Masukkan kata sandi"
-                        required
-                        :error="errors.password?.[0]"
-                        autocomplete="new-password"
-                        @input="clearError('password')"
-                    />
-
-                    <Input
-                        v-model="form.password_confirmation"
-                        type="password"
-                        label="Konfirmasi Kata Sandi"
-                        placeholder="Masukkan ulang kata sandi"
-                        required
-                        :error="errors.password_confirmation?.[0]"
-                        autocomplete="new-password"
-                        @input="clearError('password_confirmation')"
-                    />
-                </div>
-
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <Select
                         v-model="form.role"
                         :options="roleOptions"
@@ -171,6 +175,45 @@ function goBack(): void {
             </div>
 
             <div
+                v-if="showCode"
+                class="card space-y-4 border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
+            >
+                <h3
+                    class="text-lg font-semibold text-emerald-900 dark:text-emerald-100"
+                >
+                    Kode Aktivasi Pengguna
+                </h3>
+                <p class="text-sm text-emerald-700 dark:text-emerald-300">
+                    Bagikan kode ini kepada pengguna. Kode ini hanya berlaku
+                    sekali dan akan kedaluwarsa dalam 72 jam.
+                </p>
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex-1 rounded-lg border border-emerald-300 bg-white p-4 font-mono text-2xl tracking-widest text-emerald-900 select-all dark:border-emerald-700 dark:bg-surface-900 dark:text-emerald-100"
+                        :class="{ 'opacity-50': !showCode }"
+                    >
+                        {{ activationCode }}
+                    </div>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        @click="copyCode"
+                        :disabled="!showCode"
+                    >
+                        Salin
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        @click="regenerateCode"
+                        :disabled="processing"
+                    >
+                        Buat Ulang
+                    </Button>
+                </div>
+            </div>
+
+            <div
                 v-if="errors.form"
                 class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
             >
@@ -181,8 +224,13 @@ function goBack(): void {
                 <Link :href="users.index.url()">
                     <Button type="button" variant="secondary">Batal</Button>
                 </Link>
-                <Button type="submit" variant="primary" :loading="processing">
-                    Simpan Pengguna
+                <Button
+                    type="submit"
+                    variant="primary"
+                    :loading="processing"
+                    :disabled="showCode"
+                >
+                    {{ showCode ? 'Pengguna Dibuat' : 'Buat Pengguna' }}
                 </Button>
             </div>
         </form>
