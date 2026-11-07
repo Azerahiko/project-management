@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Webhook;
 use App\Services\WebhookDispatcher;
 use App\Support\Permissions;
@@ -47,14 +48,19 @@ class ApiIntegrationController extends Controller
             'created_at' => $token->created_at?->translatedFormat('d M Y'),
         ]);
 
-        $webhooks = Webhook::query()
+        $perPage = (int) $request->query('webhooks_per_page', 15);
+        $perPage = min(max($perPage, 5), 50); // Clamp between 5 and 50
+
+        $webhooksPaginator = Webhook::query()
             ->with('user:id,name')
             ->latest()
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         $canManageWebhooks = $user->can(Permissions::ROLES_MANAGE);
 
         $activeTokens = $tokenData->reject(fn (array $token): bool => $token['is_expired']);
+        $webhooks = $webhooksPaginator->getCollection();
         $activeWebhooks = $webhooks->where('is_active', true);
         $deliveredWebhooks = $webhooks->whereNotNull('last_delivery_status');
         $successfulWebhooks = $webhooks->where('last_delivery_status', 'success');
@@ -90,7 +96,7 @@ class ApiIntegrationController extends Controller
                 ],
             ],
             'endpoints_summary' => $this->endpointSummaries(),
-            'webhooks' => $webhooks->map(fn (Webhook $webhook): array => [
+            'webhooks' => $webhooksPaginator->through(fn (Webhook $webhook): array => [
                 'id' => $webhook->id,
                 'name' => $webhook->name,
                 'url' => $webhook->url,
@@ -112,7 +118,7 @@ class ApiIntegrationController extends Controller
                 'tokens_count' => $tokens->count(),
                 'active_tokens_count' => $activeTokens->count(),
                 'expired_tokens_count' => $tokens->count() - $activeTokens->count(),
-                'webhooks_count' => $webhooks->count(),
+                'webhooks_count' => $webhooksPaginator->total(),
                 'active_webhooks_count' => $activeWebhooks->count(),
                 'successful_deliveries_count' => $successfulWebhooks->count(),
                 'failed_deliveries_count' => $deliveredWebhooks->where('last_delivery_status', 'failed')->count(),
@@ -141,9 +147,20 @@ class ApiIntegrationController extends Controller
             'abilities.*.in' => 'Cakupan izin token tidak valid.',
         ]);
 
-        $abilities = $validated['abilities'] ?? ['*'];
-        if ($abilities === [] || in_array('*', $abilities, true)) {
-            $abilities = ['*'];
+        $requestedAbilities = array_values($validated['abilities'] ?? ['*']);
+        if ($requestedAbilities === [] || in_array('*', $requestedAbilities, true)) {
+            $requestedAbilities = ['*'];
+        }
+
+        // Validate requested abilities against user's actual permissions
+        $authorizedAbilities = $this->filterAuthorizedAbilities($request->user(), $requestedAbilities);
+
+        if ($authorizedAbilities !== $requestedAbilities) {
+            $unauthorized = array_diff($requestedAbilities, $authorizedAbilities);
+
+            return redirect()->back()
+                ->with('error', 'Beberapa cakupan izin tidak diizinkan untuk peran Anda: '.implode(', ', $unauthorized))
+                ->withInput();
         }
 
         $expiresInDays = (int) ($validated['expires_in_days'] ?? 0);
@@ -151,7 +168,7 @@ class ApiIntegrationController extends Controller
 
         $token = $request->user()->createToken(
             name: trim($validated['name']),
-            abilities: $abilities,
+            abilities: $authorizedAbilities,
             expiresAt: $expiresAt,
         );
 
@@ -162,6 +179,68 @@ class ApiIntegrationController extends Controller
                 'expires_at' => $expiresAt?->translatedFormat('d M Y, H:i') ?? 'Tidak pernah kedaluwarsa',
             ])
             ->with('success', 'Kunci API berhasil dibuat. Salin kunci Anda sekarang.');
+    }
+
+    /**
+     * Filter abilities to only include those the user is authorized for.
+     *
+     * @param  list<string>  $requestedAbilities
+     * @return list<string>
+     */
+    private function filterAuthorizedAbilities(User $user, array $requestedAbilities): array
+    {
+        // Administrators can request any scope
+        if ($user->hasRole('administrator')) {
+            return $requestedAbilities;
+        }
+
+        $scopeToPermission = $this->scopeToPermissionMap();
+        $authorized = [];
+
+        foreach ($requestedAbilities as $ability) {
+            // Wildcard requires all permissions
+            if ($ability === '*') {
+                // Only grant * if user has all the permissions it represents
+                $requiredPermissions = array_unique(array_merge(...$scopeToPermission));
+                if (empty(array_diff($requiredPermissions, $user->getAllPermissions()->pluck('name')->toArray()))) {
+                    $authorized[] = '*';
+                }
+
+                continue;
+            }
+
+            if (isset($scopeToPermission[$ability])) {
+                $requiredPermissions = $scopeToPermission[$ability];
+                $hasAllPermissions = true;
+                foreach ($requiredPermissions as $permission) {
+                    if (! $user->can($permission)) {
+                        $hasAllPermissions = false;
+                        break;
+                    }
+                }
+                if ($hasAllPermissions) {
+                    $authorized[] = $ability;
+                }
+            }
+        }
+
+        return $authorized;
+    }
+
+    /**
+     * Map API scopes to required Laravel permissions.
+     *
+     * @return array<string, list<string>>
+     */
+    private function scopeToPermissionMap(): array
+    {
+        return [
+            'projects:read' => [Permissions::PROJECTS_VIEW],
+            'projects:write' => [Permissions::PROJECTS_CREATE, Permissions::PROJECTS_UPDATE, Permissions::PROJECTS_DELETE],
+            'tasks:read' => [Permissions::TASKS_VIEW],
+            'tasks:write' => [Permissions::TASKS_VIEW], // tasks.view covers create/update/delete via policy
+            'users:read' => [Permissions::USERS_VIEW],
+        ];
     }
 
     /**
@@ -255,7 +334,7 @@ class ApiIntegrationController extends Controller
     {
         $this->authorizeWebhookManagement($request);
 
-        $result = $this->webhookDispatcher->send($webhook, 'webhook.test', [
+        $result = $this->webhookDispatcher->sendSync($webhook, 'webhook.test', [
             'message' => 'Ini adalah payload uji dari DigitalCode Tasks Flow.',
             'webhook_name' => $webhook->name,
             'triggered_by' => $request->user()->name,

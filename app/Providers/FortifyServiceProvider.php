@@ -87,5 +87,11 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinutes(config('activation.lockout_minutes', 15), config('activation.max_attempts', 5))->by($key);
         });
+
+        RateLimiter::for('api.mutation', function (Request $request) {
+            $key = "api:mutation:{$request->user()->id}:{$request->ip()}";
+
+            return Limit::perMinute(60)->by($key);
+        });
     }
 }

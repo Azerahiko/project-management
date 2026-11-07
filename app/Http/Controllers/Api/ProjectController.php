@@ -10,9 +10,11 @@ use App\Http\Requests\Api\UpdateProjectRequest;
 use App\Http\Resources\ProjectMemberResource;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
+use App\Models\ProjectActivity;
 use App\Models\ProjectMember;
 use App\Models\User;
 use App\Notifications\ProjectMemberAdded;
+use App\Notifications\ProjectOwnershipTransferred;
 use App\Services\NotificationSender;
 use App\Services\WebhookDispatcher;
 use App\Support\Pagination;
@@ -154,14 +156,25 @@ class ProjectController extends Controller
             abort(403, 'Hanya pemilik proyek atau administrator yang dapat mengubah pemilik proyek.');
         }
 
-        DB::transaction(function () use ($project, $data, $newOwnerId, $ownerChanged) {
+        // Validate new owner is a member of the project (or admin)
+        if ($ownerChanged) {
+            $newOwner = User::findOrFail($newOwnerId);
+            if (! $newOwner->is_active) {
+                abort(422, 'Pengguna yang dipilih tidak aktif.');
+            }
+            if (! $project->hasMember($newOwner) && ! $newOwner->hasRole('administrator')) {
+                abort(422, 'Pemilik baru harus menjadi anggota proyek.');
+            }
+        }
+
+        DB::transaction(function () use ($project, $data, $newOwnerId, $ownerChanged, $request) {
             $previousOwnerId = $project->owner_id;
 
             $project->fill($data);
             $project->save();
 
             if ($ownerChanged) {
-                $this->syncProjectOwner($project, $newOwnerId, $previousOwnerId);
+                $this->syncProjectOwner($project, $newOwnerId, $previousOwnerId, $request->user());
             }
         });
 
@@ -178,6 +191,63 @@ class ProjectController extends Controller
                     'name' => $request->user()->name,
                 ],
             ]);
+        }
+
+        // Dispatch ownership transfer webhook and notifications after commit
+        if ($ownerChanged) {
+            $previousOwnerId = $project->getOriginal('owner_id');
+            $previousOwner = User::find($previousOwnerId);
+            $newOwner = User::find($newOwnerId);
+            $transferredBy = $request->user();
+
+            DB::afterCommit(function () use ($project, $previousOwnerId, $newOwnerId, $transferredBy) {
+                $previousOwner = User::query()->where('id', $previousOwnerId)->first();
+                $newOwner = User::query()->where('id', $newOwnerId)->first();
+
+                // Webhook
+                $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_OWNERSHIP_TRANSFERRED, [
+                    'project_id' => $project->id,
+                    'name' => $project->name,
+                    'previous_owner' => $previousOwner ? [
+                        'id' => $previousOwner->id,
+                        'name' => $previousOwner->name,
+                        'email' => $previousOwner->email,
+                    ] : null,
+                    'new_owner' => $newOwner ? [
+                        'id' => $newOwner->id,
+                        'name' => $newOwner->name,
+                        'email' => $newOwner->email,
+                    ] : null,
+                    'transferred_by' => [
+                        'id' => $transferredBy->id,
+                        'name' => $transferredBy->name,
+                    ],
+                ]);
+
+                // Notify previous owner (they lost ownership)
+                if ($previousOwner instanceof User) {
+                    $this->notificationSender->send($previousOwner, ProjectOwnershipTransferred::class, [
+                        'project_id' => $project->id,
+                        'project_name' => $project->name,
+                        'previous_owner_name' => $previousOwner->name,
+                        'new_owner_name' => $newOwner instanceof User ? $newOwner->name : '',
+                        'transferred_by_name' => $transferredBy->name,
+                        'role' => 'previous_owner',
+                    ]);
+                }
+
+                // Notify new owner (they gained ownership)
+                if ($newOwner instanceof User) {
+                    $this->notificationSender->send($newOwner, ProjectOwnershipTransferred::class, [
+                        'project_id' => $project->id,
+                        'project_name' => $project->name,
+                        'previous_owner_name' => $previousOwner instanceof User ? $previousOwner->name : '',
+                        'new_owner_name' => $newOwner->name,
+                        'transferred_by_name' => $transferredBy->name,
+                        'role' => 'new_owner',
+                    ]);
+                }
+            });
         }
 
         return ProjectResource::make($project->load(['owner', 'projectMembers.user']));
@@ -303,22 +373,39 @@ class ProjectController extends Controller
     {
         $this->authorize('manageMembers', $project);
 
-        $users = User::query()
+        $perPage = min(max((int) $request->query('per_page', 20), 5), 50);
+        $search = $request->query('search', '');
+
+        $query = User::query()
             ->where('is_active', true)
-            ->whereDoesntHave('projectMemberships', function ($query) use ($project) {
-                $query->where('project_id', $project->id);
+            ->whereDoesntHave('projectMemberships', function ($q) use ($project) {
+                $q->where('project_id', $project->id);
             })
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'avatar']);
+            ->orderBy('name');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->paginate($perPage);
 
         return response()->json([
-            'data' => $users->map(fn ($user) => [
+            'data' => $users->getCollection()->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'avatar' => $user->avatar,
                 'initials' => $user->initials,
             ]),
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
         ]);
     }
 
@@ -349,7 +436,7 @@ class ProjectController extends Controller
     /**
      * Keep the project member pivot in sync when ownership changes.
      */
-    private function syncProjectOwner(Project $project, int $newOwnerId, int $previousOwnerId): void
+    private function syncProjectOwner(Project $project, int $newOwnerId, int $previousOwnerId, ?User $transferredBy): void
     {
         $project->projectMembers()
             ->where('user_id', $previousOwnerId)
@@ -359,5 +446,16 @@ class ProjectController extends Controller
             ['user_id' => $newOwnerId],
             ['role' => ProjectRole::OWNER]
         );
+
+        // Log ownership transfer activity
+        ProjectActivity::create([
+            'project_id' => $project->id,
+            'user_id' => $transferredBy?->id,
+            'activity_type' => 'project.ownership_transferred',
+            'field' => 'owner_id',
+            'old_value' => (string) $previousOwnerId,
+            'new_value' => (string) $newOwnerId,
+            'description' => ($transferredBy->name ?? 'Sistem')." mentransfer pemilik proyek dari pengguna {$previousOwnerId} ke {$newOwnerId}.",
+        ]);
     }
 }

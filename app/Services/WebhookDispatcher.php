@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
+use App\Jobs\DeliverWebhook;
 use App\Models\Webhook;
-use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
@@ -12,25 +13,33 @@ class WebhookDispatcher
 {
     /**
      * Deliver an event payload to every active webhook that listens to it.
+     * Dispatches jobs after the database transaction commits.
      *
      * @param  array<string, mixed>  $data
      */
     public function dispatch(string $event, array $data): void
     {
-        Webhook::query()
+        $webhooks = Webhook::query()
             ->active()
             ->get()
-            ->filter(fn (Webhook $webhook): bool => $webhook->listensTo($event))
-            ->each(fn (Webhook $webhook) => $this->send($webhook, $event, $data));
+            ->filter(fn (Webhook $webhook): bool => $webhook->listensTo($event));
+
+        foreach ($webhooks as $webhook) {
+            $payloadId = (string) Str::uuid();
+
+            DB::afterCommit(function () use ($webhook, $event, $data, $payloadId) {
+                DeliverWebhook::dispatch($webhook->id, $event, $data, $payloadId);
+            });
+        }
     }
 
     /**
-     * Send a single payload to a webhook and record the delivery result.
+     * Send a single payload to a webhook synchronously (for testing).
      *
      * @param  array<string, mixed>  $data
      * @return array{success: bool, status: int|null, latency_ms: int, error: string|null}
      */
-    public function send(Webhook $webhook, string $event, array $data): array
+    public function sendSync(Webhook $webhook, string $event, array $data): array
     {
         $payload = [
             'id' => (string) Str::uuid(),
@@ -44,7 +53,6 @@ class WebhookDispatcher
         $startedAt = microtime(true);
 
         try {
-            /** @var Response $response */
             $response = Http::timeout(6)
                 ->connectTimeout(3)
                 ->withHeaders([

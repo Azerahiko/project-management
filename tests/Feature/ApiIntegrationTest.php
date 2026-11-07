@@ -209,8 +209,8 @@ it('hides webhook secrets from users without role management permission', functi
         ->assertInertia(fn (Assert $page) => $page
             ->component('Integrations/Index')
             ->where('can_manage_webhooks', false)
-            ->where('webhooks.0.id', $webhook->id)
-            ->where('webhooks.0.secret', null)
+            ->where('webhooks.data.0.id', $webhook->id)
+            ->where('webhooks.data.0.secret', null)
         );
 
     $this->actingAs($admin)
@@ -218,7 +218,7 @@ it('hides webhook secrets from users without role management permission', functi
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('can_manage_webhooks', true)
-            ->where('webhooks.0.secret', 'super-secret-value')
+            ->where('webhooks.data.0.secret', 'super-secret-value')
         );
 });
 

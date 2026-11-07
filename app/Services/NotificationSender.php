@@ -7,15 +7,15 @@ use App\Notifications\ProjectMemberAdded;
 use App\Notifications\TaskAssigned;
 use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskStatusChanged;
-use Carbon\CarbonInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class NotificationSender
 {
     /**
-     * Send a notification with atomic idempotency.
-     * Uses INSERT ... ON CONFLICT for PostgreSQL, fallback for SQLite.
+     * Send a notification with atomic idempotency using an idempotency key.
+     * Works for both PostgreSQL and SQLite.
      * Returns true if inserted, false if duplicate (conflict).
      *
      * @param  array<string, mixed>  $data
@@ -25,165 +25,78 @@ class NotificationSender
         // Build payload explicitly
         $payload = array_merge($data, [
             'url' => $this->buildUrl($type, $data),
+            'notifiable_id' => $recipient->id,
         ]);
 
         $notificationId = Str::uuid()->toString();
         $now = now();
+        $idempotencyKey = $this->generateIdempotencyKey($type, $payload);
 
-        // Use PostgreSQL-specific ON CONFLICT if on PostgreSQL
-        if (DB::getDriverName() === 'pgsql') {
-            return $this->sendPostgreSQL($recipient, $type, $payload, $notificationId, $now);
-        }
+        try {
+            $inserted = DB::table('notifications')->insert([
+                'id' => $notificationId,
+                'type' => $type,
+                'notifiable_type' => User::class,
+                'notifiable_id' => $recipient->id,
+                'data' => json_encode($payload),
+                'idempotency_key' => $idempotencyKey,
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
 
-        // Fallback for SQLite (testing) - check then insert
-        return $this->sendFallback($recipient, $type, $payload, $notificationId, $now);
-    }
-
-    /**
-     * PostgreSQL implementation with atomic ON CONFLICT.
-     *
-     * @param  array<string, mixed>  $payload
-     */
-    private function sendPostgreSQL(User $recipient, string $type, array $payload, string $notificationId, CarbonInterface $now): bool
-    {
-        $conflict = $this->getConflictTarget($type, $payload);
-
-        $affected = DB::affectingStatement(
-            "INSERT INTO notifications (id, type, notifiable_type, notifiable_id, data, read_at, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?::jsonb, NULL, ?, ?)
-             {$conflict}",
-            [
-                $notificationId,
-                $type,
-                User::class,
-                $recipient->id,
-                json_encode($payload),
-                $now,
-                $now,
-            ]
-        );
-
-        return $affected > 0;
-    }
-
-    /**
-     * Fallback implementation for SQLite (testing).
-     * Uses raw SQL with json_extract for JSON field queries.
-     *
-     * @param  array<string, mixed>  $payload
-     */
-    private function sendFallback(User $recipient, string $type, array $payload, string $notificationId, CarbonInterface $now): bool
-    {
-        // Add notifiable_id to payload for where clause
-        $payload['notifiable_id'] = $recipient->id;
-
-        // Build WHERE clause for uniqueness check
-        $where = $this->getFallbackWhere($type, $payload);
-
-        // Build raw SQL query for existence check
-        $conditions = [];
-        $bindings = [];
-
-        foreach ($where as $column => $value) {
-            if (str_starts_with($column, 'json_extract:')) {
-                $jsonPath = substr($column, 13); // 'json_extract:' is 13 characters
-                $isIntegerField = in_array($jsonPath, ['task_id', 'comment_id', 'project_id'], true);
-                $jsonPathBinding = "$.{$jsonPath}";
-                if ($isIntegerField) {
-                    $conditions[] = 'CAST(json_extract(data, ?) AS INTEGER) = ?';
-                    $bindings[] = $jsonPathBinding;
-                    $bindings[] = (int) $value;
-                } else {
-                    $conditions[] = 'json_extract(data, ?) = ?';
-                    $bindings[] = $jsonPathBinding;
-                    $bindings[] = (string) $value;
-                }
-            } else {
-                $conditions[] = "{$column} = ?";
-                $bindings[] = $value;
+            return $inserted > 0;
+        } catch (QueryException $exception) {
+            // Unique constraint violation (idempotency key already exists)
+            // PostgreSQL: SQLSTATE 23505 (unique_violation), MySQL: 1062, SQLite: 19 (constraint failed)
+            $sqlState = $exception->getCode();
+            $driverCode = $exception->errorInfo[1] ?? null;
+            if ($sqlState === '23505' || $sqlState === '23000' || $driverCode === 1062 || $driverCode === 19) {
+                return false;
             }
+            throw $exception;
         }
-
-        $sql = 'SELECT 1 FROM notifications WHERE '.implode(' AND ', $conditions).' LIMIT 1';
-
-        $exists = DB::select($sql, $bindings) !== [];
-
-        if ($exists) {
-            return false;
-        }
-
-        // Insert new
-        $inserted = DB::table('notifications')->insert([
-            'id' => $notificationId,
-            'type' => $type,
-            'notifiable_type' => User::class,
-            'notifiable_id' => $recipient->id,
-            'data' => json_encode($payload),
-            'read_at' => null,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-
-        return $inserted > 0;
     }
 
     /**
-     * Get WHERE conditions for fallback uniqueness check.
-     * Uses json_extract: prefix for JSON fields to work with SQLite.
-     *
-     * @param  array<string, mixed>  $payload
-     * @return array<string, mixed>
-     */
-    private function getFallbackWhere(string $type, array $payload): array
-    {
-        $where = [
-            'notifiable_id' => $payload['notifiable_id'] ?? null,
-            'type' => $type,
-        ];
-
-        return match ($type) {
-            TaskAssigned::class => array_merge($where, [
-                'json_extract:task_id' => $payload['task_id'],
-                'json_extract:event_id' => $payload['event_id'],
-                'json_extract:action' => 'assigned',
-            ]),
-            TaskCommentAdded::class => array_merge($where, [
-                'json_extract:comment_id' => $payload['comment_id'],
-                'json_extract:action' => 'comment',
-            ]),
-            TaskStatusChanged::class => array_merge($where, [
-                'json_extract:task_id' => $payload['task_id'],
-                'json_extract:old_status' => $payload['old_status'],
-                'json_extract:new_status' => $payload['new_status'],
-                'json_extract:action' => 'status_changed',
-            ]),
-            ProjectMemberAdded::class => array_merge($where, [
-                'json_extract:project_id' => $payload['project_id'],
-                'json_extract:role' => $payload['role'],
-                'json_extract:action' => 'project_member_added',
-            ]),
-            default => $where,
-        };
-    }
-
-    /**
-     * Conflict target for ON CONFLICT — uses index expressions directly.
-     * Works with partial unique indexes.
+     * Generate a unique idempotency key based on notification type and payload.
+     * This key ensures duplicate notifications are prevented at the database level.
      *
      * @param  array<string, mixed>  $payload
      */
-    private function getConflictTarget(string $type, array $payload): string
+    private function generateIdempotencyKey(string $type, array $payload): string
     {
+        $notifiableId = $payload['notifiable_id'] ?? '';
+        $keyParts = [$type, (string) $notifiableId];
+
         return match ($type) {
-            TaskAssigned::class => "ON CONFLICT (notifiable_id, type, (data->>'task_id'), (data->>'event_id'), (data->>'action')) WHERE type = '{$type}' AND (data->>'action') = 'assigned' DO NOTHING",
+            TaskAssigned::class => implode('|', array_merge($keyParts, [
+                $payload['task_id'] ?? '',
+                $payload['event_id'] ?? '',
+                $payload['action'] ?? 'assigned',
+            ])),
 
-            TaskCommentAdded::class => "ON CONFLICT (notifiable_id, type, (data->>'comment_id'), (data->>'action')) WHERE type = '{$type}' AND (data->>'action') = 'comment' DO NOTHING",
+            TaskCommentAdded::class => implode('|', array_merge($keyParts, [
+                $payload['comment_id'] ?? '',
+                $payload['action'] ?? 'comment',
+            ])),
 
-            TaskStatusChanged::class => "ON CONFLICT (notifiable_id, type, (data->>'task_id'), (data->>'old_status'), (data->>'new_status'), (data->>'action')) WHERE type = '{$type}' AND (data->>'action') = 'status_changed' DO NOTHING",
+            TaskStatusChanged::class => implode('|', array_merge($keyParts, [
+                $payload['task_id'] ?? '',
+                $payload['old_status'] ?? '',
+                $payload['new_status'] ?? '',
+                $payload['action'] ?? 'status_changed',
+            ])),
 
-            ProjectMemberAdded::class => "ON CONFLICT (notifiable_id, type, (data->>'project_id'), (data->>'role'), (data->>'action')) WHERE type = '{$type}' AND (data->>'action') = 'project_member_added' DO NOTHING",
+            ProjectMemberAdded::class => implode('|', array_merge($keyParts, [
+                $payload['project_id'] ?? '',
+                $payload['role'] ?? '',
+                $payload['action'] ?? 'project_member_added',
+            ])),
 
-            default => 'DO NOTHING',
+            default => implode('|', array_merge($keyParts, [
+                $payload['action'] ?? 'unknown',
+            ])),
         };
     }
 

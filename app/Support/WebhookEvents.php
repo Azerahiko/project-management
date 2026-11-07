@@ -14,6 +14,8 @@ class WebhookEvents
 
     public const PROJECT_COMPLETED = 'project.completed';
 
+    public const PROJECT_OWNERSHIP_TRANSFERRED = 'project.ownership_transferred';
+
     /**
      * All supported outgoing webhook events.
      *
@@ -27,6 +29,7 @@ class WebhookEvents
             self::COMMENT_ADDED => 'Komentar baru pada tugas',
             self::PROJECT_CREATED => 'Proyek baru dibuat',
             self::PROJECT_COMPLETED => 'Proyek ditandai selesai',
+            self::PROJECT_OWNERSHIP_TRANSFERRED => 'Pemilik proyek berubah',
         ];
     }
 

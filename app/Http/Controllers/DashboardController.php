@@ -10,7 +10,6 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskActivity;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -25,23 +24,24 @@ class DashboardController extends Controller
         $accessibleProjects = Project::accessibleBy($user);
         $accessibleTasks = Task::accessibleBy($user);
 
-        // Global statistics (all accessible data, not limited by display)
-        $stats = [
-            'projects_count' => (clone $accessibleProjects)->where('status', ProjectStatus::ACTIVE)->count(),
-            'my_tasks_count' => (clone $accessibleTasks)
-                ->where('assignee_id', $user->id)
-                ->whereNotIn('status', [TaskStatus::DONE])->count(),
-            'active_tasks_count' => (clone $accessibleTasks)
-                ->whereNotIn('status', [TaskStatus::DONE])->count(),
-            'overdue_count' => (clone $accessibleTasks)
-                ->where('status', '!=', TaskStatus::DONE)
-                ->whereNotNull('due_date')
-                ->where('due_date', '<', now())->count(),
-            'team_members_count' => $this->getTeamMembersCount($accessibleProjects),
-            'notifications_unread' => $user->can('notifications.view')
-                ? $user->unreadNotifications()->count()
-                : 0,
-        ];
+        // Single aggregate query for all task statistics
+        $taskStats = (clone $accessibleTasks)
+            ->selectRaw("
+                COUNT(*) as total_count,
+                SUM(CASE WHEN status != 'done' THEN 1 ELSE 0 END) as active_count,
+                SUM(CASE WHEN assignee_id = ? AND status != 'done' THEN 1 ELSE 0 END) as my_tasks_count,
+                SUM(CASE WHEN status != 'done' AND due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue_count,
+                SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as completed_count,
+                SUM(CASE WHEN status = 'review' THEN 1 ELSE 0 END) as review_count,
+                SUM(CASE WHEN priority IN ('urgent', 'high') AND status != 'done' THEN 1 ELSE 0 END) as urgent_count,
+                SUM(CASE WHEN status != 'done' AND due_date BETWEEN ? AND ? THEN 1 ELSE 0 END) as due_this_week_count
+            ", [
+                $user->id,
+                now()->toDateString(),
+                now()->startOfWeek()->toDateString(),
+                now()->endOfWeek()->toDateString(),
+            ])
+            ->first();
 
         // Tasks by status (SQL aggregation)
         $tasksByStatus = (clone $accessibleTasks)
@@ -49,6 +49,16 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
+
+        // Active projects count (for stats)
+        $activeProjectsCount = (clone $accessibleProjects)->where('status', ProjectStatus::ACTIVE)->count();
+
+        // Team members count (optimized with subquery)
+        $teamMembersCount = (clone $accessibleProjects)
+            ->where('status', ProjectStatus::ACTIVE)
+            ->join('project_members', 'projects.id', '=', 'project_members.project_id')
+            ->distinct('project_members.user_id')
+            ->count('project_members.user_id');
 
         // Upcoming deadlines (5 closest, with urgency classification)
         $upcomingDeadlines = (clone $accessibleTasks)
@@ -75,7 +85,7 @@ class DashboardController extends Controller
                 ->map(fn ($a) => TaskActivityResource::make($a)->resolve($request))
             : [];
 
-        // Project progress (max 5 for display, stats from ALL accessible)
+        // Project progress (max 5 for display)
         $projectProgress = $accessibleProjects
             ->where('status', ProjectStatus::ACTIVE)
             ->withCount([
@@ -96,28 +106,28 @@ class DashboardController extends Controller
                 ]
             ));
 
-        $completedTasksCount = (int) ($tasksByStatus[TaskStatus::DONE->value] ?? 0);
-        $reviewTasksCount = (int) ($tasksByStatus[TaskStatus::REVIEW->value] ?? 0);
-        $totalTasksCount = (int) array_sum($tasksByStatus);
-        $activeTasksCount = $stats['active_tasks_count'];
-        $overdueCount = $stats['overdue_count'];
+        $totalTasksCount = (int) ($taskStats->total_count ?? 0);
+        $activeTasksCount = (int) ($taskStats->active_count ?? 0);
+        $completedTasksCount = (int) ($taskStats->completed_count ?? 0);
+        $reviewTasksCount = (int) ($taskStats->review_count ?? 0);
+        $overdueCount = (int) ($taskStats->overdue_count ?? 0);
+        $urgentCount = (int) ($taskStats->urgent_count ?? 0);
+        $dueThisWeekCount = (int) ($taskStats->due_this_week_count ?? 0);
+        $myTasksCount = (int) ($taskStats->my_tasks_count ?? 0);
+
         $onTimeTasks = max(0, $activeTasksCount - $overdueCount);
         $onTimeRate = $activeTasksCount > 0 ? (int) round(($onTimeTasks / $activeTasksCount) * 100) : 100;
 
-        $focusAggregates = (clone $accessibleTasks)
-            ->selectRaw("
-                SUM(CASE WHEN priority IN ('urgent', 'high') AND status != 'done' THEN 1 ELSE 0 END) as urgent_count,
-                SUM(CASE WHEN status != 'done' AND due_date BETWEEN ? AND ? THEN 1 ELSE 0 END) as due_this_week_count
-            ", [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])
-            ->first();
-
-        $urgentCount = 0;
-        $dueThisWeekCount = 0;
-
-        if ($focusAggregates) {
-            $urgentCount = (int) ($focusAggregates->urgent_count ?? 0);
-            $dueThisWeekCount = (int) ($focusAggregates->due_this_week_count ?? 0);
-        }
+        $stats = [
+            'projects_count' => $activeProjectsCount,
+            'my_tasks_count' => $myTasksCount,
+            'active_tasks_count' => $activeTasksCount,
+            'overdue_count' => $overdueCount,
+            'team_members_count' => $teamMembersCount,
+            'notifications_unread' => $user->can('notifications.view')
+                ? $user->unreadNotifications()->count()
+                : 0,
+        ];
 
         $focusMetrics = [
             'on_time_rate' => $onTimeRate,
@@ -129,7 +139,7 @@ class DashboardController extends Controller
             'completion_rate' => $totalTasksCount > 0
                 ? (int) round(($completedTasksCount / $totalTasksCount) * 100)
                 : 0,
-            'my_tasks_count' => $stats['my_tasks_count'],
+            'my_tasks_count' => $myTasksCount,
             'overdue_count' => $overdueCount,
         ];
 
@@ -141,23 +151,6 @@ class DashboardController extends Controller
             'recent_activities' => $recentActivities,
             'project_progress' => $projectProgress,
         ]);
-    }
-
-    /**
-     * @param  Builder<Project>  $projectsQuery
-     */
-    private function getTeamMembersCount($projectsQuery): int
-    {
-        $projectIds = (clone $projectsQuery)->pluck('id')->toArray();
-
-        if ($projectIds === []) {
-            return 0;
-        }
-
-        return \DB::table('project_members')
-            ->whereIn('project_id', $projectIds)
-            ->distinct('user_id')
-            ->count('user_id');
     }
 
     private function getDeadlineUrgency(?string $dueDate): string

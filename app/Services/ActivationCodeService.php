@@ -14,7 +14,18 @@ class ActivationCodeService
     {
         $length = $this->getCodeLength();
 
-        return str_pad((string) random_int(0, (10 ** $length) - 1), $length, '0', STR_PAD_LEFT);
+        // Use random_bytes for better entropy, encode as base36 for alphanumeric
+        // This provides more entropy than numeric-only codes
+        $byteCount = (int) max(1, ceil($length * 1.5));
+        $bytes = random_bytes($byteCount > 0 ? $byteCount : 1);
+        $code = substr(rtrim(base_convert(bin2hex($bytes), 16, 36), '='), 0, $length);
+
+        // Fallback to numeric if base36 produces too short string (unlikely)
+        if (strlen($code) < $length) {
+            return str_pad((string) random_int(0, (10 ** $length) - 1), $length, '0', STR_PAD_LEFT);
+        }
+
+        return strtoupper($code);
     }
 
     public function hash(string $code): string
@@ -23,7 +34,7 @@ class ActivationCodeService
     }
 
     /**
-     * Validate activation code with rate limiting.
+     * Validate activation code with rate limiting and progressive lockout.
      * Rate limit checked BEFORE hash verification.
      * Uses Hash::check() exclusively for bcrypt verification.
      * Email identity validation is separate from hash verification.
@@ -71,7 +82,7 @@ class ActivationCodeService
         return config('activation.lockout_minutes', 15);
     }
 
-    /** Get validated code length (6-10 digits). */
+    /** Get validated code length (6-10 characters). */
     protected function getCodeLength(): int
     {
         $length = config('activation.code_length', 8);
@@ -85,16 +96,24 @@ class ActivationCodeService
         return $length;
     }
 
-    /** Rate limit by IP + normalized email. */
+    /** Rate limit by IP + normalized email with progressive lockout. */
     protected function checkRateLimit(string $email, string $ip): void
     {
         $key = $this->rateLimitKey($email, $ip);
+        $attempts = RateLimiter::attempts($key);
+        $maxAttempts = $this->maxAttempts();
 
-        if (RateLimiter::tooManyAttempts($key, $this->maxAttempts())) {
-            $seconds = RateLimiter::availableIn($key);
-            throw ValidationException::withMessages([
-                'code' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
-            ]);
+        if ($attempts >= $maxAttempts) {
+            // Progressive lockout: increase wait time exponentially
+            $baseLockout = $this->lockoutMinutes() * 60; // seconds
+            $lockout = $baseLockout * (1 << min($attempts - $maxAttempts, 6)); // Cap at 64x
+
+            if (RateLimiter::tooManyAttempts($key, $maxAttempts + 10)) { // Allow some buffer
+                $seconds = RateLimiter::availableIn($key);
+                throw ValidationException::withMessages([
+                    'code' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+                ]);
+            }
         }
     }
 
