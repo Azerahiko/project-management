@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreUserRequest;
 use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
+use App\Mail\InvitationCreated;
+use App\Models\Invitation;
 use App\Models\User;
 use App\Support\Pagination;
 use App\Support\Roles;
@@ -13,6 +15,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -23,7 +28,7 @@ class UserController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $users = User::query()
-            ->with('roles')
+            ->with(['roles', 'invitation'])
             ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
                 $search = $request->string('search')->toString();
 
@@ -51,27 +56,66 @@ class UserController extends Controller
     }
 
     /**
+     * Generate a temporary password for user creation.
+     */
+    public function generateTemporaryPassword(Request $request): JsonResponse
+    {
+        $this->authorize('users.create');
+
+        $temporaryPassword = Str::password(20);
+
+        return response()->json([
+            'temporary_password' => $temporaryPassword,
+            'message' => 'Temporary password generated successfully',
+        ]);
+    }
+
+    /**
      * Store a newly created user.
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = DB::transaction(function () use ($request) {
+        $expiresAt = now()->addHours(config('activation.expiry_hours', 72));
+        $token = Str::random(64);
+        $tokenHash = hash('sha256', $token);
+
+        $result = DB::transaction(function () use ($request, $expiresAt, $tokenHash, $token) {
             $user = User::create([
                 'name' => $request->validated('name'),
                 'email' => $request->validated('email'),
-                'password' => $request->validated('password'),
+                'password' => Hash::make($request->validated('temporary_password')),
                 'is_active' => $request->boolean('is_active', true),
                 'avatar' => $request->validated('avatar'),
+                'email_verified_at' => null,
             ]);
 
             $user->syncRoles($this->assignableRoles($request, [$request->validated('role')]));
 
-            return $user;
+            $invitation = Invitation::updateOrCreate(
+                ['email' => $user->email],
+                [
+                    'name' => $user->name,
+                    'role' => $request->validated('role'),
+                    'token_hash' => $tokenHash,
+                    'expires_at' => $expiresAt,
+                    'accepted_at' => null,
+                    'invited_by' => $request->user()?->id,
+                ]
+            );
+
+            Mail::to($user->email)->send(
+                new InvitationCreated($invitation, $token)
+            );
+
+            return [
+                'user' => $user,
+                'invitation' => $invitation,
+            ];
         });
 
-        return UserResource::make($user->load('roles'))
-            ->response()
-            ->setStatusCode(201);
+        return response()->json([
+            'data' => UserResource::make($result['user']->load(['roles', 'invitation'])),
+        ], 201);
     }
 
     /**
@@ -128,6 +172,7 @@ class UserController extends Controller
         $this->authorize('delete', $user);
 
         DB::transaction(function () use ($user) {
+            Invitation::where('email', $user->email)->delete();
             $user->delete();
         });
 

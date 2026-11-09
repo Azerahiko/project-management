@@ -33,6 +33,11 @@ Route::get('/reset-password/{token}', function (Request $request, string $token)
     ]);
 })->name('password.reset')->middleware('guest');
 
+// Two-factor challenge page (Inertia)
+Route::get('/two-factor-challenge', function () {
+    return Inertia::render('Auth/TwoFactorChallenge');
+})->name('two-factor.login')->middleware('guest');
+
 // Fortify registers its own POST /login and POST /logout routes automatically.
 
 // Public invitation routes

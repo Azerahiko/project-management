@@ -26,8 +26,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(LoginResponse::class, fn () => new LoginResponse);
-        $this->app->singleton(LogoutResponse::class, fn () => new LogoutResponse);
+        $this->app->singleton(\Laravel\Fortify\Contracts\LoginResponse::class, LoginResponse::class);
+        $this->app->singleton(\Laravel\Fortify\Contracts\LogoutResponse::class, LogoutResponse::class);
     }
 
     /**

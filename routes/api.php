@@ -21,7 +21,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('invitations', [InvitationController::class, 'store'])
             ->middleware('can:users.create')
             ->name('invitations.store');
+        Route::post('invitations/{invitation}/resend', [InvitationController::class, 'resend'])
+            ->middleware('can:users.create')
+            ->name('invitations.resend');
         Route::post('users', [UserController::class, 'store'])->middleware('can:users.create');
+        Route::post('users/generate-temporary-password', [UserController::class, 'generateTemporaryPassword'])->middleware('can:users.create');
         Route::put('users/{user}', [UserController::class, 'update'])->middleware('can:users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('can:users.delete');
 

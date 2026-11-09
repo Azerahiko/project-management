@@ -19,7 +19,6 @@ class InvitationCreated extends Mailable
     public function __construct(
         public Invitation $invitation,
         public string $token,
-        public ?string $activationCode = null,
     ) {}
 
     /**
@@ -41,7 +40,6 @@ class InvitationCreated extends Mailable
             view: 'mail.invitation-created',
             with: [
                 'invitationUrl' => route('invitations.show', ['token' => $this->token]),
-                'activationCode' => $this->activationCode,
                 'appName' => config('app.name'),
             ],
         );

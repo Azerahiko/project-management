@@ -29,9 +29,26 @@ class UserResource extends JsonResource
                 'initials' => null,
                 'roles' => [],
                 'permissions' => [],
+                'onboarding_completed_at' => null,
+                'is_onboarded' => false,
+                'two_factor_enabled' => false,
+                'invitation_status' => 'none',
+                'invitation_id' => null,
                 'created_at' => null,
                 'updated_at' => null,
             ];
+        }
+
+        $invitation = $user->invitation;
+        $invitationStatus = 'none';
+        if ($invitation) {
+            if ($invitation->isAccepted()) {
+                $invitationStatus = 'accepted';
+            } elseif ($invitation->isExpired()) {
+                $invitationStatus = 'expired';
+            } else {
+                $invitationStatus = 'pending';
+            }
         }
 
         return [
@@ -44,6 +61,11 @@ class UserResource extends JsonResource
             'initials' => $user->initials,
             'roles' => $user->getRoleNames()->toArray(),
             'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+            'onboarding_completed_at' => $user->onboarding_completed_at?->toISOString(),
+            'is_onboarded' => $user->isOnboarded(),
+            'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
+            'invitation_status' => $invitationStatus,
+            'invitation_id' => $invitation?->id,
             'created_at' => $user->created_at?->toISOString(),
             'updated_at' => $user->updated_at?->toISOString(),
         ];
