@@ -42,6 +42,10 @@ class EnsureOnboardingIsComplete
             return $next($request);
         }
 
+        if ($request->routeIs('passkey.*') || $request->is('user/passkeys*') || $request->is('passkeys/*')) {
+            return $next($request);
+        }
+
         // Allow logout
         if ($request->routeIs('logout')) {
             return $next($request);

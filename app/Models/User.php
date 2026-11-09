@@ -12,12 +12,15 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\PasskeyAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use PragmaRX\Google2FA\Google2FA;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -35,17 +38,22 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $activation_code_hash
  * @property Carbon|null $activation_code_expires_at
  * @property int $activation_code_attempts
+ * @property string|null $two_factor_secret
+ * @property string|null $two_factor_recovery_codes
+ * @property Carbon|null $two_factor_confirmed_at
+ * @property Carbon|null $onboarding_password_changed_at
+ * @property Carbon|null $onboarding_completed_at
  * @property-read Collection<int, Project> $ownedProjects
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, ProjectMember> $projectMemberships
  * @property-read Collection<int, Webhook> $webhooks
  */
 #[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at', 'activation_code_hash', 'activation_code_expires_at', 'activation_code_attempts'])]
-#[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
+class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -188,16 +196,13 @@ class User extends Authenticatable
     }
 
     /**
-     * Generate a new two-factor authentication secret.
+     * Get the invitation linked to this user by email.
+     *
+     * @return HasOne<Invitation, $this>
      */
-    public function generateTwoFactorSecret(): void
+    public function invitation(): HasOne
     {
-        $secret = (new Google2FA)->generateSecretKey();
-
-        $this->forceFill([
-            'two_factor_secret' => encrypt($secret),
-            'two_factor_recovery_codes' => encrypt(json_encode([])),
-        ])->save();
+        return $this->hasOne(Invitation::class, 'email', 'email');
     }
 
     /**

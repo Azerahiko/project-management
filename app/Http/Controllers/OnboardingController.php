@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,8 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Laravel\Fortify\Fortify;
-use PragmaRX\Google2FA\Google2FA;
+use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
+use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 
 class OnboardingController extends Controller
 {
@@ -86,7 +85,7 @@ class OnboardingController extends Controller
     /**
      * Show the two-factor authentication step.
      */
-    public function twoFactor(Request $request): InertiaResponse|RedirectResponse
+    public function twoFactor(Request $request, EnableTwoFactorAuthentication $enable): InertiaResponse|RedirectResponse
     {
         $user = $request->user();
 
@@ -94,37 +93,33 @@ class OnboardingController extends Controller
             return redirect()->route('onboarding.password');
         }
 
-        if ($user->two_factor_confirmed_at !== null) {
+        if ($user->two_factor_confirmed_at !== null && ! session('recoveryCodes')) {
             return redirect()->route('onboarding.passkey');
         }
 
-        // Generate QR code and secret if not already set
+        // Generate secret and recovery codes if not set
         if (! $user->two_factor_secret) {
-            $user->generateTwoFactorSecret();
+            $enable($user);
         }
 
         $secret = decrypt($user->two_factor_secret);
-        $qrCodeUrl = sprintf(
-            'otpauth://totp/%s:%s?secret=%s&issuer=%s',
-            rawurlencode(config('app.name')),
-            rawurlencode($user->email),
-            $secret,
-            rawurlencode(config('app.name'))
-        );
+        $qrCodeSvg = $user->twoFactorQrCodeSvg();
 
         return Inertia::render('Onboarding/TwoFactor', [
             'step' => 'two_factor',
             'nextStep' => 'passkey',
-            'qrCodeUrl' => $qrCodeUrl,
+            'qrCodeSvg' => $qrCodeSvg,
+            'qrCodeUrl' => sprintf('otpauth://totp/%s:%s?secret=%s&issuer=%s', rawurlencode(config('app.name')), rawurlencode($user->email), $secret, rawurlencode(config('app.name'))),
             'secret' => $secret,
-            'twoFactorEnabled' => false,
+            'twoFactorEnabled' => (bool) $user->two_factor_confirmed_at,
+            'recoveryCodes' => session('recoveryCodes', []),
         ]);
     }
 
     /**
      * Confirm two-factor authentication.
      */
-    public function confirmTwoFactor(Request $request): RedirectResponse
+    public function confirmTwoFactor(Request $request, ConfirmTwoFactorAuthentication $confirm): RedirectResponse
     {
         $user = $request->user();
 
@@ -143,30 +138,13 @@ class OnboardingController extends Controller
             'code.size' => 'Kode verifikasi harus 6 digit.',
         ]);
 
-        // Verify the code using Fortify's mechanism
-        $valid = $this->verifyTwoFactorCode($user, $validated['code']);
+        $confirm($user, $validated['code']);
 
-        if (! $valid) {
-            return back()->withErrors(['code' => 'Kode verifikasi tidak valid.']);
-        }
+        $recoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true) ?? [];
 
-        $user->forceFill([
-            'two_factor_confirmed_at' => now(),
-        ])->save();
-
-        return redirect()->route('onboarding.passkey')
-            ->with('success', 'Autentikasi dua faktor aktif. Sekarang Anda bisa mendaftarkan passkey (opsional).');
-    }
-
-    /**
-     * Verify a TOTP code.
-     */
-    protected function verifyTwoFactorCode(User $user, string $code): bool
-    {
-        $secret = decrypt($user->two_factor_secret);
-        $google2fa = new Google2FA;
-
-        return (bool) $google2fa->verifyKey($secret, $code);
+        return redirect()->route('onboarding.two-factor')
+            ->with('recoveryCodes', $recoveryCodes)
+            ->with('success', 'Autentikasi dua faktor berhasil dikonfirmasi.');
     }
 
     /**
@@ -187,6 +165,7 @@ class OnboardingController extends Controller
         return Inertia::render('Onboarding/Passkey', [
             'step' => 'passkey',
             'nextStep' => 'complete',
+            'passkeys' => $user->passkeys()->select(['id', 'name', 'last_used_at', 'created_at'])->get(),
         ]);
     }
 
@@ -218,7 +197,7 @@ class OnboardingController extends Controller
         ])->save();
 
         // Invalidate session and logout
-        Auth::guard()->logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

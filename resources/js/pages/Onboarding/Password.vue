@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { usePage, router } from '@inertiajs/vue3';
-import api from '@/lib/api';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -16,39 +14,20 @@ const page = usePage<{
     nextStep: string;
 }>();
 
-const { success, error: toastError } = useToast();
+const { success } = useToast();
 
-const form = reactive({
+const form = useForm({
     password: '',
     password_confirmation: '',
 });
 
-const errors = ref<Record<string, string[]>>({});
-const processing = ref(false);
-
-function clearError(field: string): void {
-    if (errors.value[field]) {
-        delete errors.value[field];
-    }
-}
-
-async function handleSubmit(): Promise<void> {
-    processing.value = true;
-    errors.value = {};
-
-    try {
-        await api.put('/onboarding/password', form);
-        success('Berhasil', 'Kata sandi berhasil diubah.');
-        router.visit(`/onboarding/${page.props.nextStep}`);
-    } catch (err: any) {
-        if (err.response?.data?.errors) {
-            errors.value = err.response.data.errors;
-        } else if (err.response?.data?.message) {
-            toastError(err.response.data.message);
-        }
-    } finally {
-        processing.value = false;
-    }
+function handleSubmit(): void {
+    form.clearErrors();
+    form.put('/onboarding/password', {
+        onSuccess: () => {
+            success('Berhasil', 'Kata sandi berhasil diubah.');
+        },
+    });
 }
 </script>
 
@@ -90,9 +69,8 @@ async function handleSubmit(): Promise<void> {
                 label="Kata Sandi Baru"
                 placeholder="Masukkan kata sandi baru"
                 required
-                :error="errors.password?.[0]"
+                :error="form.errors.password"
                 autocomplete="new-password"
-                @input="clearError('password')"
             />
 
             <Input
@@ -101,9 +79,8 @@ async function handleSubmit(): Promise<void> {
                 label="Konfirmasi Kata Sandi"
                 placeholder="Masukkan ulang kata sandi"
                 required
-                :error="errors.password_confirmation?.[0]"
+                :error="form.errors.password_confirmation"
                 autocomplete="new-password"
-                @input="clearError('password_confirmation')"
             />
 
             <div
@@ -122,7 +99,7 @@ async function handleSubmit(): Promise<void> {
                 type="submit"
                 variant="primary"
                 class="w-full"
-                :loading="processing"
+                :loading="form.processing"
             >
                 Simpan & Lanjutkan
             </Button>

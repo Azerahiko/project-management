@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { usePage, router } from '@inertiajs/vue3';
-import api from '@/lib/api';
+import { ref, computed, watch, onMounted } from 'vue';
+import { usePage, router, useForm } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -14,78 +13,58 @@ defineOptions({
 const page = usePage<{
     step: string;
     nextStep: string;
+    qrCodeSvg?: string;
     qrCodeUrl: string;
     secret: string;
     twoFactorEnabled: boolean;
+    recoveryCodes?: string[];
 }>();
 
 const { success, error: toastError } = useToast();
 
-const form = reactive({
+const form = useForm({
     code: '',
 });
 
-const errors = ref<Record<string, string[]>>({});
-const processing = ref(false);
 const stepState = ref<'setup' | 'confirm' | 'recovery'>('setup');
-const recoveryCodes = ref<string[]>([]);
+const showManualSecret = ref(false);
 
-function clearError(field: string): void {
-    if (errors.value[field]) {
-        delete errors.value[field];
-    }
-}
+const recoveryCodes = computed<string[]>(() => {
+    return page.props.recoveryCodes || [];
+});
 
-async function enableTwoFactor(): Promise<void> {
-    processing.value = true;
-
-    try {
-        await api.post('/user/two-factor-authentication');
-        stepState.value = 'confirm';
-        success(
-            'Kode QR Generated',
-            'Pindai dengan aplikasi authenticator Anda.',
-        );
-    } catch (err: any) {
-        toastError(err.response?.data?.message || 'Gagal mengaktifkan 2FA.');
-    } finally {
-        processing.value = false;
-    }
-}
-
-async function confirmTwoFactor(): Promise<void> {
-    processing.value = true;
-    errors.value = {};
-
-    try {
-        await api.post('/user/confirmed-two-factor-authentication', {
-            code: form.code,
-        });
-        // Fetch recovery codes
-        const recoveryResponse = await api.get(
-            '/user/two-factor-recovery-codes',
-        );
-        recoveryCodes.value = recoveryResponse.data;
-        stepState.value = 'recovery';
-    } catch (err: any) {
-        if (err.response?.data?.errors?.code) {
-            errors.value = err.response.data.errors;
-        } else {
-            toastError(err.response?.data?.message || 'Kode tidak valid.');
+watch(
+    () => page.props.recoveryCodes,
+    (codes) => {
+        if (codes && codes.length > 0) {
+            stepState.value = 'recovery';
         }
-    } finally {
-        processing.value = false;
-    }
+    },
+    { immediate: true },
+);
+
+function confirmTwoFactor(): void {
+    form.clearErrors();
+    form.post('/onboarding/two-factor/confirmed', {
+        onSuccess: () => {
+            stepState.value = 'recovery';
+            success('2FA Berhasil Dikonfirmasi', 'Simpan kode pemulihan Anda.');
+        },
+    });
 }
 
 function proceedToPasskey(): void {
-    router.visit(`/onboarding/${page.props.nextStep}`);
+    router.visit('/onboarding/passkey');
+}
+
+function completeOnboarding(): void {
+    router.post('/onboarding/complete');
 }
 
 function copyRecoveryCodes(): void {
     const codes = recoveryCodes.value.join('\n');
     navigator.clipboard.writeText(codes);
-    success('Tersalin', 'Kode pemulihan disalin.');
+    success('Tersalin', 'Kode pemulihan disalin ke papan klip.');
 }
 </script>
 
@@ -116,45 +95,39 @@ function copyRecoveryCodes(): void {
                 Aktifkan Autentikasi Dua Faktor
             </h2>
             <p class="mt-2 text-sm text-surface-600 dark:text-surface-400">
-                Anda wajib mengaktifkan 2FA untuk keamanan akun. Pindai kode QR
-                dengan aplikasi authenticator (Google Authenticator, Authy,
+                Pindai kode QR dengan aplikasi authenticator (Google Authenticator, Authy,
                 dll).
             </p>
 
-            <div
-                v-if="page.props.qrCodeUrl"
-                class="mt-6 flex flex-col items-center"
-            >
-                <div class="rounded-lg bg-white p-4">
-                    <img
-                        :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(page.props.qrCodeUrl)}`"
-                        alt="QR Code"
-                        class="h-48 w-48"
-                    />
+            <div class="mt-6 flex flex-col items-center">
+                <div
+                    v-if="page.props.qrCodeSvg"
+                    class="rounded-xl border border-surface-200 bg-white p-4 shadow-sm dark:border-surface-700 dark:bg-white [&>svg]:mx-auto [&>svg]:h-48 [&>svg]:w-48"
+                    v-html="page.props.qrCodeSvg"
+                />
+
+                <div class="mt-4 text-center">
+                    <button
+                        type="button"
+                        class="text-xs font-medium text-primary-600 underline hover:text-primary-700 dark:text-primary-400"
+                        @click="showManualSecret = !showManualSecret"
+                    >
+                        {{ showManualSecret ? 'Sembunyikan kunci manual' : 'Tampilkan kunci rahasia manual' }}
+                    </button>
+
+                    <div v-if="showManualSecret" class="mt-2">
+                        <code
+                            class="rounded bg-surface-100 px-3 py-1 font-mono text-sm tracking-wider select-all dark:bg-surface-800"
+                        >
+                            {{ page.props.secret }}
+                        </code>
+                    </div>
                 </div>
-                <p class="mt-4 text-xs text-surface-500">
-                    atau masukkan kode ini:
-                </p>
-                <code
-                    class="mt-1 rounded bg-surface-100 px-2 py-1 font-mono text-sm select-all dark:bg-surface-800"
-                >
-                    {{ page.props.secret }}
-                </code>
             </div>
 
             <Button
-                v-if="!page.props.twoFactorEnabled && !page.props.qrCodeUrl"
                 variant="primary"
-                class="mt-6"
-                @click="enableTwoFactor"
-                :loading="processing"
-            >
-                Generate Kode QR
-            </Button>
-            <Button
-                v-else-if="!page.props.twoFactorEnabled"
-                variant="primary"
-                class="mt-6"
+                class="mt-6 w-full"
                 @click="stepState = 'confirm'"
             >
                 Lanjut ke Verifikasi
@@ -182,17 +155,16 @@ function copyRecoveryCodes(): void {
                     placeholder="000000"
                     required
                     maxlength="6"
-                    :error="errors.code?.[0]"
+                    :error="form.errors.code"
                     autocomplete="one-time-code"
                     class="text-center font-mono text-2xl tracking-widest"
-                    @input="clearError('code')"
                 />
 
                 <Button
                     type="submit"
                     variant="primary"
                     class="w-full"
-                    :loading="processing"
+                    :loading="form.processing"
                 >
                     Verifikasi & Aktifkan 2FA
                 </Button>
@@ -230,7 +202,7 @@ function copyRecoveryCodes(): void {
                 <h2
                     class="mt-4 text-lg font-semibold text-surface-900 dark:text-surface-50"
                 >
-                    2FA Aktif!
+                    2FA Berhasil Diaktifkan!
                 </h2>
                 <p class="mt-2 text-sm text-surface-600 dark:text-surface-400">
                     Simpan kode pemulihan berikut di tempat yang aman. Anda
@@ -243,8 +215,8 @@ function copyRecoveryCodes(): void {
             >
                 <p class="font-medium">Peringatan:</p>
                 <p>
-                    Kode ini hanya ditampilkan sekali. Pastikan menyimpannya di
-                    tempat yang aman.
+                    Kode ini hanya ditampilkan sekarang. Pastikan menyimpannya di
+                    tempat yang aman sebelum melanjutkan.
                 </p>
             </div>
 
@@ -252,26 +224,33 @@ function copyRecoveryCodes(): void {
                 <code
                     v-for="(code, index) in recoveryCodes"
                     :key="index"
-                    class="rounded bg-surface-100 px-3 py-2 text-center font-mono text-xs dark:bg-surface-800"
+                    class="rounded bg-surface-100 px-3 py-2 text-center font-mono text-xs select-all dark:bg-surface-800"
                 >
                     {{ code }}
                 </code>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex flex-col gap-3 sm:flex-row">
                 <Button
                     variant="secondary"
                     class="flex-1"
                     @click="copyRecoveryCodes"
                 >
-                    Salin Kode
+                    Salin Semua Kode
+                </Button>
+                <Button
+                    variant="secondary"
+                    class="flex-1"
+                    @click="proceedToPasskey"
+                >
+                    Atur Passkey (Opsional)
                 </Button>
                 <Button
                     variant="primary"
                     class="flex-1"
-                    @click="proceedToPasskey"
+                    @click="completeOnboarding"
                 >
-                    Lanjut ke Passkey
+                    Selesaikan Onboarding
                 </Button>
             </div>
         </div>

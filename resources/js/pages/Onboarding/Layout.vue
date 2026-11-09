@@ -16,11 +16,11 @@ const step = computed(() => page.props.step);
 const steps = [
     { key: 'password', label: 'Kata Sandi', icon: 'lock' },
     { key: 'two_factor', label: '2FA', icon: 'shield' },
-    { key: 'passkey', label: 'Passkey', icon: 'key' },
 ];
 
 const currentStepIndex = computed(() => {
-    return steps.findIndex((s) => s.key === step.value);
+    const idx = steps.findIndex((s) => s.key === step.value);
+    return idx === -1 ? steps.length : idx;
 });
 </script>
 

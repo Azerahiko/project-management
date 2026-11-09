@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
-import api from '@/lib/api';
+import web from '@/lib/web';
 import { useToast } from '@/composables/useToast';
 import Button from '@/components/ui/Button.vue';
 import OnboardingLayout from './Layout.vue';
@@ -13,128 +13,27 @@ defineOptions({
 const page = usePage<{
     step: string;
     nextStep: string;
+    passkeys?: Array<{ id: number; name: string; last_used_at: string | null; created_at?: string }>;
 }>();
 
 const { success, error: toastError } = useToast();
 
 const processing = ref(false);
-const passkeyRegistered = ref(false);
 const passkeyName = ref('');
-const passkeys = ref<
-    Array<{ id: number; name: string; last_used_at: string | null }>
->([]);
+const passkeys = ref<Array<{ id: number; name: string; last_used_at: string | null }>>(
+    page.props.passkeys || [],
+);
 
-async function loadPasskeys(): Promise<void> {
-    try {
-        const response = await api.get('/user/passkeys');
-        passkeys.value = response.data;
-        passkeyRegistered.value = passkeys.value.length > 0;
-    } catch (err) {
-        // No passkeys yet
-        passkeys.value = [];
-    }
-}
+const passkeyRegistered = computed(() => passkeys.value.length > 0);
 
-async function registerPasskey(): Promise<void> {
-    if (!passkeyName.value.trim()) {
-        toastError('Masukkan nama untuk passkey.');
-        return;
-    }
-
-    processing.value = true;
-
-    try {
-        // Get registration options
-        const optionsResponse = await api.get('/user/passkeys/options');
-        const options = optionsResponse.data;
-
-        // Create the credential using WebAuthn
-        const credential = await navigator.credentials.create({
-            publicKey: {
-                challenge: base64ToBuffer(options.challenge),
-                rp: options.rp,
-                user: {
-                    id: base64ToBuffer(options.user.id),
-                    name: options.user.name,
-                    displayName: options.user.displayName,
-                },
-                pubKeyCredParams: options.pubKeyCredParams,
-                authenticatorSelection: options.authenticatorSelection,
-                timeout: options.timeout,
-            },
-        });
-
-        if (!credential) {
-            throw new Error('Gagal membuat credential');
-        }
-
-        // Send to server - cast to any for WebAuthn types
-        const cred = credential as unknown as {
-            id: string;
-            type: string;
-            response: {
-                clientDataJSON: ArrayBuffer;
-                attestationObject: ArrayBuffer;
-            };
-        };
-
-        await api.post('/user/passkeys', {
-            name: passkeyName.value,
-            credential: {
-                id: cred.id,
-                type: cred.type,
-                response: {
-                    clientDataJSON: bufferToBase64(
-                        cred.response.clientDataJSON,
-                    ),
-                    attestationObject: bufferToBase64(
-                        cred.response.attestationObject,
-                    ),
-                },
-            },
-        });
-
-        success(
-            'Passkey Didaftarkan',
-            'Passkey berhasil ditambahkan ke akun Anda.',
-        );
-        passkeyName.value = '';
-        await loadPasskeys();
-    } catch (err: any) {
-        if (err.name === 'NotAllowedError') {
-            // User cancelled
-            return;
-        }
-        toastError(
-            err.response?.data?.message || 'Gagal mendaftarkan passkey.',
-        );
-    } finally {
-        processing.value = false;
-    }
-}
-
-async function completeOnboarding(): Promise<void> {
-    processing.value = true;
-
-    try {
-        await api.post('/onboarding/complete');
-        success('Onboarding Selesai', 'Mengalihkan ke halaman login...');
-        window.location.href = '/login?onboarding=complete';
-    } catch (err: any) {
-        toastError(
-            err.response?.data?.message || 'Gagal menyelesaikan onboarding.',
-        );
-    } finally {
-        processing.value = false;
-    }
-}
-
-// Helper functions for ArrayBuffer <-> Base64 conversion
-function base64ToBuffer(base64: string): ArrayBuffer {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+function base64UrlToBuffer(base64url: string): ArrayBuffer {
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
     }
     return bytes.buffer;
 }
@@ -148,9 +47,88 @@ function bufferToBase64(buffer: ArrayBuffer): string {
     return btoa(binary);
 }
 
-onMounted(() => {
-    loadPasskeys();
-});
+function bufferToBase64Url(buffer: ArrayBuffer): string {
+    return bufferToBase64(buffer)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+async function registerPasskey(): Promise<void> {
+    if (!passkeyName.value.trim()) {
+        toastError('Masukkan nama untuk passkey.');
+        return;
+    }
+
+    processing.value = true;
+
+    try {
+        const optionsResponse = await web.get('/user/passkeys/options');
+        const options = optionsResponse.data.options || optionsResponse.data;
+
+        const credential = await navigator.credentials.create({
+            publicKey: {
+                challenge: base64UrlToBuffer(options.challenge),
+                rp: options.rp,
+                user: {
+                    id: base64UrlToBuffer(options.user.id),
+                    name: options.user.name,
+                    displayName: options.user.displayName,
+                },
+                pubKeyCredParams: options.pubKeyCredParams,
+                authenticatorSelection: options.authenticatorSelection,
+                timeout: options.timeout,
+            },
+        });
+
+        if (!credential) {
+            throw new Error('Gagal membuat credential');
+        }
+
+        const cred = credential as unknown as {
+            id: string;
+            rawId: ArrayBuffer;
+            type: string;
+            response: {
+                clientDataJSON: ArrayBuffer;
+                attestationObject: ArrayBuffer;
+            };
+        };
+
+        const storeResponse = await web.post('/user/passkeys', {
+            name: passkeyName.value,
+            credential: {
+                id: cred.id,
+                rawId: bufferToBase64(cred.rawId),
+                type: cred.type,
+                response: {
+                    clientDataJSON: bufferToBase64Url(cred.response.clientDataJSON),
+                    attestationObject: bufferToBase64(cred.response.attestationObject),
+                },
+            },
+        });
+
+        success('Passkey Didaftarkan', 'Passkey berhasil ditambahkan ke akun Anda.');
+        passkeys.value.push(storeResponse.data);
+        passkeyName.value = '';
+    } catch (err: any) {
+        if (err.name === 'NotAllowedError') {
+            return;
+        }
+        toastError(err.response?.data?.message || 'Gagal mendaftarkan passkey.');
+    } finally {
+        processing.value = false;
+    }
+}
+
+function completeOnboarding(): void {
+    processing.value = true;
+    router.post('/onboarding/complete', {}, {
+        onFinish: () => {
+            processing.value = false;
+        },
+    });
+}
 </script>
 
 <template>
