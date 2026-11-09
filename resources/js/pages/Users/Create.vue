@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import users from '@/routes/users';
@@ -29,12 +29,13 @@ const form = reactive({
     email: '',
     role: 'member' as string,
     is_active: true,
+    temporary_password: '',
 });
 
 const errors = ref<Record<string, string[]>>({});
 const processing = ref(false);
-const activationCode = ref<string>('');
-const showCode = ref(false);
+const formSubmitting = ref(false);
+const passwordGenerating = ref(false);
 
 function setErrors(err: Record<string, string[]>): void {
     errors.value = err;
@@ -46,53 +47,80 @@ function clearError(field: string): void {
     }
 }
 
-async function handleSubmit(): Promise<void> {
-    processing.value = true;
+async function generateTemporaryPassword(
+    isRegeneration: boolean = false,
+): Promise<void> {
+    if (passwordGenerating.value) return;
+
+    passwordGenerating.value = true;
     errors.value = {};
 
     try {
-        const response = await api.post('/users', form);
-        activationCode.value = response.data.activation_code;
-        showCode.value = true;
+        const response = await api.post('/users/generate-temporary-password');
+        form.temporary_password = response.data.temporary_password;
+
+        if (isRegeneration) {
+            success(
+                'Password regenerated',
+                'New temporary password has been generated.',
+            );
+        }
+    } catch (err: any) {
+        if (err.response?.data?.errors) {
+            setErrors(err.response.data.errors);
+        } else {
+            toastError('Failed to generate password. Please try again.');
+        }
+    } finally {
+        passwordGenerating.value = false;
+    }
+}
+
+
+
+async function copyTemporaryPassword(): Promise<void> {
+    try {
+        await navigator.clipboard.writeText(form.temporary_password);
+        success('Copied', 'Temporary password copied to clipboard.');
+    } catch {
+        toastError('Failed to copy. Please select and copy manually.');
+    }
+}
+
+async function handleSubmit(): Promise<void> {
+    if (!form.temporary_password) {
+        toastError('Please generate a temporary password before submitting.');
+        return;
+    }
+
+    formSubmitting.value = true;
+    errors.value = {};
+
+    try {
+        await api.post('/users', form);
         success(
             'Pengguna dibuat',
-            'Pengguna baru telah ditambahkan. Bagikan kode aktivasi ke pengguna.',
+            'Pengguna baru telah ditambahkan. Undangan telah dikirim.',
         );
+        setTimeout(() => {
+            router.visit(users.index.url());
+        }, 2000);
     } catch (err: any) {
         if (err.response?.data?.errors) {
             setErrors(err.response.data.errors);
         }
     } finally {
-        processing.value = false;
+        formSubmitting.value = false;
     }
-}
-
-async function regenerateCode(): Promise<void> {
-    if (!activationCode.value) return;
-    processing.value = true;
-    try {
-        const response = await api.post(
-            `/users/${activationCode.value}/regenerate-code`,
-        );
-        activationCode.value = response.data.activation_code;
-        success('Kode diperbarui', 'Kode aktivasi baru telah dibuat.');
-    } catch (err: any) {
-        if (err.response?.data?.errors) {
-            setErrors(err.response.data.errors);
-        }
-    } finally {
-        processing.value = false;
-    }
-}
-
-async function copyCode(): Promise<void> {
-    await navigator.clipboard.writeText(activationCode.value);
-    success('Disalin', 'Kode aktivasi disalin ke papan klip.');
 }
 
 function goBack(): void {
     router.visit(users.index.url());
 }
+
+onMounted(async () => {
+    await generateTemporaryPassword();
+});
 </script>
 
 <template>
@@ -174,43 +202,74 @@ function goBack(): void {
                 </div>
             </div>
 
-            <div
-                v-if="showCode"
-                class="card space-y-4 border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
-            >
-                <h3
-                    class="text-lg font-semibold text-emerald-900 dark:text-emerald-100"
-                >
-                    Kode Aktivasi Pengguna
-                </h3>
-                <p class="text-sm text-emerald-700 dark:text-emerald-300">
-                    Bagikan kode ini kepada pengguna. Kode ini hanya berlaku
-                    sekali dan akan kedaluwarsa dalam 72 jam.
-                </p>
-                <div class="flex items-center gap-3">
-                    <div
-                        class="flex-1 rounded-lg border border-emerald-300 bg-white p-4 font-mono text-2xl tracking-widest text-emerald-900 select-all dark:border-emerald-700 dark:bg-surface-900 dark:text-emerald-100"
-                        :class="{ 'opacity-50': !showCode }"
+            <div class="card space-y-4">
+                <div>
+                    <h3
+                        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
                     >
-                        {{ activationCode }}
-                    </div>
+                        Password Sementara
+                    </h3>
+                    <p
+                        class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
+                    >
+                        Password dibuat otomatis oleh server. Bagikan password
+                        ini kepada pengguna untuk login pertama.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <input
+                        type="text"
+                        readonly
+                        :value="form.temporary_password"
+                        class="input flex-1 font-mono tracking-wider select-all"
+                        placeholder="Membuat password..."
+                        aria-label="Password sementara"
+                    />
                     <Button
                         type="button"
                         variant="secondary"
-                        @click="copyCode"
-                        :disabled="!showCode"
+                        @click="copyTemporaryPassword"
+                        :disabled="!form.temporary_password"
                     >
                         Salin
                     </Button>
                     <Button
                         type="button"
                         variant="ghost"
-                        @click="regenerateCode"
-                        :disabled="processing"
+                        @click="generateTemporaryPassword(true)"
+                        :disabled="passwordGenerating"
                     >
-                        Buat Ulang
+                        {{ passwordGenerating ? 'Membuat...' : 'Buat Ulang' }}
                     </Button>
                 </div>
+
+                <p
+                    v-if="!form.temporary_password && !passwordGenerating"
+                    class="text-sm text-accent-700 dark:text-accent-300"
+                >
+                    Password gagal dibuat.
+                    <button
+                        type="button"
+                        class="underline"
+                        @click="generateTemporaryPassword()"
+                    >
+                        Coba lagi
+                    </button>
+                </p>
+
+                <p
+                    v-if="errors.temporary_password?.[0]"
+                    class="form-error"
+                    role="alert"
+                >
+                    {{ errors.temporary_password[0] }}
+                </p>
+
+                <p class="text-xs text-surface-500 dark:text-surface-400">
+                    20 karakter, kombinasi huruf besar, huruf kecil, angka, dan
+                    simbol.
+                </p>
             </div>
 
             <div
@@ -227,10 +286,10 @@ function goBack(): void {
                 <Button
                     type="submit"
                     variant="primary"
-                    :loading="processing"
-                    :disabled="showCode"
+                    :loading="formSubmitting"
+                    :disabled="!form.temporary_password || passwordGenerating"
                 >
-                    {{ showCode ? 'Pengguna Dibuat' : 'Buat Pengguna' }}
+                    Buat Pengguna
                 </Button>
             </div>
         </form>

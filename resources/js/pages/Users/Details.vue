@@ -474,6 +474,74 @@ function getRoleLabel(role: string): string {
                         </div>
                     </div>
 
+                    <!-- Onboarding Status -->
+                    <div class="space-y-1">
+                        <label
+                            class="text-[11px] font-medium tracking-wider text-surface-500 uppercase"
+                        >
+                            Status Onboarding
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="h-2.5 w-2.5 rounded-full"
+                                :class="
+                                    initialUser.is_onboarded
+                                        ? 'bg-emerald-500'
+                                        : 'bg-amber-500'
+                                "
+                            />
+                            <span
+                                :class="
+                                    initialUser.is_onboarded
+                                        ? 'text-surface-800 dark:text-surface-200'
+                                        : 'font-medium text-amber-700 dark:text-amber-400'
+                                "
+                            >
+                                {{
+                                    initialUser.is_onboarded
+                                        ? 'Selesai'
+                                        : 'Belum Selesai'
+                                }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Invitation Status -->
+                    <div
+                        v-if="
+                            initialUser.invitation_status &&
+                            initialUser.invitation_status !== 'none'
+                        "
+                        class="space-y-1"
+                    >
+                        <label
+                            class="text-[11px] font-medium tracking-wider text-surface-500 uppercase"
+                        >
+                            Status Undangan
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="h-2.5 w-2.5 rounded-full"
+                                :class="{
+                                    'bg-blue-500':
+                                        initialUser.invitation_status ===
+                                        'pending',
+                                    'bg-rose-500':
+                                        initialUser.invitation_status ===
+                                        'expired',
+                                    'bg-emerald-500':
+                                        initialUser.invitation_status ===
+                                        'accepted',
+                                }"
+                            />
+                            <span
+                                class="text-surface-800 capitalize dark:text-surface-200"
+                            >
+                                {{ initialUser.invitation_status }}
+                            </span>
+                        </div>
+                    </div>
+
                     <!-- Created At -->
                     <div class="space-y-1">
                         <label

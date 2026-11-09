@@ -4,6 +4,7 @@ import { useForm, Link, Head } from '@inertiajs/vue3';
 import { store as loginStore } from '@/routes/login';
 import password from '@/routes/password';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import web from '@/lib/web';
 
 defineOptions({ layout: AuthLayout });
 
@@ -14,8 +15,11 @@ const form = useForm({
 });
 
 const showPassword = ref(false);
+const passkeyLoading = ref(false);
+const passkeyError = ref<string | null>(null);
 
 function handleSubmit(): void {
+    passkeyError.value = null;
     form.post(loginStore.url(), {
         onFinish: () => {
             form.password = '';
@@ -23,7 +27,107 @@ function handleSubmit(): void {
     });
 }
 
+function base64UrlToBuffer(base64url: string): ArrayBuffer {
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+function bufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+function bufferToBase64Url(buffer: ArrayBuffer): string {
+    return bufferToBase64(buffer)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+async function loginWithPasskey(): Promise<void> {
+    if (typeof window === 'undefined' || !window.PublicKeyCredential) {
+        passkeyError.value = 'Perangkat ini tidak mendukung login passkey.';
+        return;
+    }
+
+    passkeyLoading.value = true;
+    passkeyError.value = null;
+
+    try {
+        const optionsResponse = await web.get('/passkeys/login/options');
+        const options = optionsResponse.data.options || optionsResponse.data;
+
+        const publicKey: PublicKeyCredentialRequestOptions = {
+            challenge: base64UrlToBuffer(options.challenge),
+            rpId: options.rpId || window.location.hostname,
+            timeout: options.timeout,
+            userVerification: options.userVerification || 'preferred',
+        };
+
+        if (options.allowCredentials && Array.isArray(options.allowCredentials) && options.allowCredentials.length > 0) {
+            publicKey.allowCredentials = options.allowCredentials.map((c: any) => ({
+                id: base64UrlToBuffer(c.id),
+                type: c.type,
+                transports: c.transports,
+            }));
+        }
+
+        const credential = await navigator.credentials.get({ publicKey });
+        if (!credential) {
+            throw new Error('Gagal memverifikasi passkey.');
+        }
+
+        const cred = credential as unknown as {
+            id: string;
+            rawId: ArrayBuffer;
+            type: string;
+            response: {
+                clientDataJSON: ArrayBuffer;
+                authenticatorData: ArrayBuffer;
+                signature: ArrayBuffer;
+                userHandle: ArrayBuffer | null;
+            };
+        };
+
+        const response = await web.post('/passkeys/login', {
+            credential: {
+                id: cred.id,
+                rawId: bufferToBase64(cred.rawId),
+                type: cred.type,
+                response: {
+                    clientDataJSON: bufferToBase64Url(cred.response.clientDataJSON),
+                    authenticatorData: bufferToBase64(cred.response.authenticatorData),
+                    signature: bufferToBase64(cred.response.signature),
+                    userHandle: cred.response.userHandle ? bufferToBase64(cred.response.userHandle) : null,
+                },
+            },
+            remember: form.remember,
+        });
+
+        window.location.href = response.data.redirect || '/dashboard';
+    } catch (err: any) {
+        if (err.name === 'NotAllowedError') {
+            return;
+        }
+        passkeyError.value = err.response?.data?.message || err.message || 'Gagal masuk dengan passkey.';
+    } finally {
+        passkeyLoading.value = false;
+    }
+}
+
 const errorMessage = computed(() => {
+    if (passkeyError.value) return passkeyError.value;
     const errs = form.errors as Record<string, string | undefined>;
     return errs.form ?? errs.email ?? errs.password ?? null;
 });
@@ -304,6 +408,39 @@ const errorMessage = computed(() => {
                                 <path d="m12 5 7 7-7 7" />
                             </svg>
                         </span>
+                    </button>
+                </div>
+
+                <!-- Passkey Alternative -->
+                <div class="mt-6">
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-full border-t border-surface-200"></div>
+                        <span class="absolute bg-white px-3 text-xs uppercase tracking-wider text-surface-400">
+                            atau
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        :disabled="form.processing || passkeyLoading"
+                        @click="loginWithPasskey"
+                        class="mt-6 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-surface-300 bg-white text-[15px] font-semibold text-surface-700 shadow-xs transition hover:bg-surface-50 focus:outline-none focus:ring-4 focus:ring-primary-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        <svg
+                            v-if="passkeyLoading"
+                            class="h-5 w-5 animate-spin text-surface-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <template v-else>
+                            <svg class="h-5 w-5 text-surface-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                            <span>Masuk dengan Passkey</span>
+                        </template>
                     </button>
                 </div>
             </form>

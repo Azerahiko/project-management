@@ -34,8 +34,6 @@ const form = reactive({
 const errors = ref<Record<string, string[]>>({});
 const processing = ref(false);
 const inviteResult = ref<{
-    activation_code: string;
-    invitation_url: string;
     user: { name: string; email: string; role: string };
 } | null>(null);
 const showResult = ref(false);
@@ -58,11 +56,17 @@ async function handleSubmit(): Promise<void> {
 
     try {
         const response = await api.post('/invitations', form);
-        inviteResult.value = response.data;
+        inviteResult.value = {
+            user: {
+                name: response.data.user.name,
+                email: response.data.user.email,
+                role: response.data.user.role,
+            },
+        };
         showResult.value = true;
         success(
             'Undangan berhasil dikirim',
-            'Kode aktivasi ditampilkan di bawah dan dikirim via email.',
+            'Undangan telah dikirim via email ke pengguna.',
         );
     } catch (err: any) {
         if (err.response?.data?.errors) {
@@ -144,60 +148,11 @@ function copyToClipboard(text: string): void {
                         <p
                             class="mt-1 text-sm text-green-700 dark:text-green-300"
                         >
-                            Kode aktivasi untuk
+                            Undangan telah dikirim melalui email untuk
                             <strong>{{ inviteResult.user.name }}</strong> ({{
                                 inviteResult.user.email
-                            }})
+                            }}).
                         </p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <code
-                                class="flex-1 rounded bg-white px-3 py-2 font-mono text-2xl tracking-widest text-green-800 dark:bg-green-950 dark:text-green-200"
-                            >
-                                {{ inviteResult.activation_code }}
-                            </code>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                @click="
-                                    copyToClipboard(
-                                        inviteResult.activation_code,
-                                    )
-                                "
-                            >
-                                Salin
-                            </Button>
-                        </div>
-                        <p class="text-xs text-green-600 dark:text-green-400">
-                            Simpan kode ini! Kode hanya berlaku sekali dan akan
-                            kedaluwarsa dalam 72 jam.
-                        </p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label
-                            class="text-sm font-medium text-green-800 dark:text-green-200"
-                        >
-                            Tautan Undangan:
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <code
-                                class="flex-1 truncate rounded bg-white px-3 py-2 font-mono text-xs dark:bg-green-950"
-                            >
-                                {{ inviteResult.invitation_url }}
-                            </code>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                @click="
-                                    copyToClipboard(inviteResult.invitation_url)
-                                "
-                            >
-                                Salin
-                            </Button>
-                        </div>
                     </div>
 
                     <div class="pt-2">

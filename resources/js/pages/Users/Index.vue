@@ -2,6 +2,7 @@
 import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import users from '@/routes/users';
+import api from '@/lib/api';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useUsers, type UserFilters } from '@/composables/useUsers';
 import { useToast } from '@/composables/useToast';
@@ -18,7 +19,22 @@ defineOptions({
 });
 
 const page = usePage();
-const { success } = useToast();
+const { success, error: toastError } = useToast();
+const resendingInvitation = ref<number | null>(null);
+
+async function handleResendInvitation(userItem: User): Promise<void> {
+    if (!userItem.invitation_id) return;
+    resendingInvitation.value = userItem.id;
+    try {
+        await api.post(`/invitations/${userItem.invitation_id}/resend`);
+        success('Undangan Terkirim', 'Undangan telah dikirim ulang ke email pengguna.');
+        await fetchUsers();
+    } catch (err: any) {
+        toastError(err.response?.data?.message || 'Gagal mengirim ulang undangan.');
+    } finally {
+        resendingInvitation.value = null;
+    }
+}
 
 const viewMode = ref<'grid' | 'table'>('grid');
 
@@ -233,16 +249,28 @@ watch(
                 </p>
             </div>
 
-            <Link
+            <div
                 v-if="
                     page.props.auth.user?.permissions.includes('users.create')
                 "
-                :href="users.create.url()"
-                class="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#0F5132] px-5 py-2.5 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 sm:text-sm dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
+                class="flex items-center gap-2.5"
             >
-                <component :is="getIcon('UserPlus')" class="h-4 w-4" />
-                <span>Tambah Pengguna</span>
-            </Link>
+                <Link
+                    :href="users.invite.url()"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-full border border-surface-300 bg-white px-4 py-2.5 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 active:scale-95 sm:text-sm dark:border-surface-700 dark:bg-surface-800 dark:text-surface-200 dark:hover:bg-surface-700"
+                >
+                    <component :is="getIcon('Mail')" class="h-4 w-4" />
+                    <span>Undang Pengguna</span>
+                </Link>
+
+                <Link
+                    :href="users.create.url()"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#0F5132] px-5 py-2.5 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 sm:text-sm dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
+                >
+                    <component :is="getIcon('UserPlus')" class="h-4 w-4" />
+                    <span>Tambah Pengguna</span>
+                </Link>
+            </div>
         </div>
 
         <!-- 2. KPI Summary Cards Row (Calm System Reference Style) -->
@@ -566,6 +594,20 @@ watch(
                                 </Link>
 
                                 <button
+                                    v-if="userItem.invitation_id && (userItem.invitation_status === 'pending' || userItem.invitation_status === 'expired')"
+                                    type="button"
+                                    class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/20"
+                                    :disabled="resendingInvitation === userItem.id"
+                                    @click="handleResendInvitation(userItem)"
+                                >
+                                    <component
+                                        :is="getIcon('Mail')"
+                                        class="h-4 w-4"
+                                    />
+                                    {{ resendingInvitation === userItem.id ? 'Mengirim...' : 'Kirim Ulang Undangan' }}
+                                </button>
+
+                                <button
                                     v-if="canDeleteUser(userItem)"
                                     type="button"
                                     class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/20"
@@ -611,6 +653,40 @@ watch(
                             class="inline-flex items-center rounded-md border border-surface-200/80 bg-surface-50 px-2 py-0.5 text-[11px] font-medium text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
                         >
                             {{ role }}
+                        </span>
+                    </div>
+
+                    <!-- Security & Onboarding Status Badges -->
+                    <div class="mt-2.5 flex flex-wrap gap-1">
+                        <span
+                            v-if="!userItem.email_verified_at"
+                            class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                        >
+                            Belum Verifikasi
+                        </span>
+                        <span
+                            v-if="userItem.invitation_status === 'pending'"
+                            class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                        >
+                            Undangan Pending
+                        </span>
+                        <span
+                            v-else-if="userItem.invitation_status === 'expired'"
+                            class="inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                        >
+                            Undangan Kedaluwarsa
+                        </span>
+                        <span
+                            v-if="userItem.two_factor_enabled"
+                            class="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                        >
+                            2FA Aktif
+                        </span>
+                        <span
+                            v-if="userItem.email_verified_at && !userItem.is_onboarded"
+                            class="inline-flex items-center rounded-md border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-800 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
+                        >
+                            Onboarding
                         </span>
                     </div>
                 </div>
@@ -713,30 +789,58 @@ watch(
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div
-                                    class="inline-flex items-center gap-1.5 text-xs font-medium"
-                                >
-                                    <span
-                                        class="h-1.5 w-1.5 rounded-full"
-                                        :class="
-                                            userItem.is_active
-                                                ? 'bg-emerald-500'
-                                                : 'bg-surface-400'
-                                        "
-                                    />
-                                    <span
-                                        :class="
-                                            userItem.is_active
-                                                ? 'text-surface-800 dark:text-surface-200'
-                                                : 'text-surface-400'
-                                        "
+                                <div class="space-y-1">
+                                    <div
+                                        class="inline-flex items-center gap-1.5 text-xs font-medium"
                                     >
-                                        {{
-                                            userItem.is_active
-                                                ? 'Aktif'
-                                                : 'Nonaktif'
-                                        }}
-                                    </span>
+                                        <span
+                                            class="h-1.5 w-1.5 rounded-full"
+                                            :class="
+                                                userItem.is_active
+                                                    ? 'bg-emerald-500'
+                                                    : 'bg-surface-400'
+                                            "
+                                        />
+                                        <span
+                                            :class="
+                                                userItem.is_active
+                                                    ? 'text-surface-800 dark:text-surface-200'
+                                                    : 'text-surface-400'
+                                            "
+                                        >
+                                            {{
+                                                userItem.is_active
+                                                    ? 'Aktif'
+                                                    : 'Nonaktif'
+                                            }}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1">
+                                        <span
+                                            v-if="!userItem.email_verified_at"
+                                            class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.2 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                                        >
+                                            Unverified
+                                        </span>
+                                        <span
+                                            v-if="userItem.invitation_status === 'pending'"
+                                            class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.2 text-[10px] font-medium text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                                        >
+                                            Pending
+                                        </span>
+                                        <span
+                                            v-else-if="userItem.invitation_status === 'expired'"
+                                            class="inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.2 text-[10px] font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                                        >
+                                            Expired
+                                        </span>
+                                        <span
+                                            v-if="userItem.two_factor_enabled"
+                                            class="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.2 text-[10px] font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                        >
+                                            2FA
+                                        </span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-surface-500">
@@ -773,6 +877,20 @@ watch(
                                         />
                                         Lihat Detail
                                     </Link>
+
+                                    <button
+                                        v-if="userItem.invitation_id && (userItem.invitation_status === 'pending' || userItem.invitation_status === 'expired')"
+                                        type="button"
+                                        class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/20"
+                                        :disabled="resendingInvitation === userItem.id"
+                                        @click="handleResendInvitation(userItem)"
+                                    >
+                                        <component
+                                            :is="getIcon('Mail')"
+                                            class="h-4 w-4"
+                                        />
+                                        {{ resendingInvitation === userItem.id ? 'Mengirim...' : 'Kirim Ulang Undangan' }}
+                                    </button>
 
                                     <button
                                         v-if="canDeleteUser(userItem)"
