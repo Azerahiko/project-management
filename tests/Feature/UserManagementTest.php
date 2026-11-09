@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Invitation;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -54,8 +57,7 @@ describe('User Management RBAC', function () {
                 ->postJson('/api/users', [
                     'name' => 'New User',
                     'email' => 'new@example.com',
-                    'password' => 'password123',
-                    'password_confirmation' => 'password123',
+                    'temporary_password' => 'TemporaryPass123!',
                     'role' => 'member',
                 ])
                 ->assertCreated()
@@ -64,13 +66,57 @@ describe('User Management RBAC', function () {
             $this->assertDatabaseHas('users', ['email' => 'new@example.com']);
         });
 
+        it('rejects creating user with already existing invitation email', function () {
+            Invitation::create([
+                'name' => 'Existing Invite',
+                'email' => 'invited@example.com',
+                'role' => 'member',
+                'token_hash' => hash('sha256', Str::random(64)),
+                'expires_at' => now()->addHours(72),
+                'invited_by' => $this->admin->id,
+            ]);
+
+            $this->actingAs($this->admin)
+                ->postJson('/api/users', [
+                    'name' => 'Duplicate User',
+                    'email' => 'invited@example.com',
+                    'temporary_password' => 'TemporaryPass123!',
+                    'role' => 'member',
+                ])
+                ->assertStatus(422)
+                ->assertJsonValidationErrors('email');
+        });
+
+        it('cleans up invitation when deleting user', function () {
+            $target = User::factory()->create([
+                'email' => 'target-delete@example.com',
+                'is_active' => true,
+            ]);
+            $target->assignRole('member');
+
+            Invitation::create([
+                'name' => $target->name,
+                'email' => $target->email,
+                'role' => 'member',
+                'token_hash' => hash('sha256', Str::random(64)),
+                'expires_at' => now()->addHours(72),
+                'invited_by' => $this->admin->id,
+            ]);
+
+            $this->actingAs($this->admin)
+                ->deleteJson("/api/users/{$target->id}")
+                ->assertNoContent();
+
+            $this->assertDatabaseMissing('users', ['id' => $target->id]);
+            $this->assertDatabaseMissing('invitations', ['email' => $target->email]);
+        });
+
         it('denies non-admin creating user via API', function () {
             $this->actingAs($this->user)
                 ->postJson('/api/users', [
                     'name' => 'New User',
                     'email' => 'new@example.com',
-                    'password' => 'password123',
-                    'password_confirmation' => 'password123',
+                    'temporary_password' => 'TemporaryPass123!',
                     'role' => 'member',
                 ])
                 ->assertForbidden();
@@ -231,6 +277,85 @@ describe('User Management RBAC', function () {
 
             expect($this->admin->fresh()->hasRole('administrator'))->toBeFalse();
             expect($this->admin->fresh()->hasRole('member'))->toBeTrue();
+        });
+    });
+
+    describe('Temporary password', function () {
+        it('generates a temporary password', function () {
+            $response = $this->actingAs($this->admin)
+                ->postJson('/api/users/generate-temporary-password')
+                ->assertOk()
+                ->assertJsonStructure(['temporary_password', 'message']);
+
+            expect($response->json('temporary_password'))->toBeString();
+        });
+
+        it('generates a 20 character password with mixed character classes', function () {
+            $password = $this->actingAs($this->admin)
+                ->postJson('/api/users/generate-temporary-password')
+                ->json('temporary_password');
+
+            expect($password)->toHaveLength(20)
+                ->and($password)->toMatch('/[A-Z]/')
+                ->and($password)->toMatch('/[a-z]/')
+                ->and($password)->toMatch('/[0-9]/')
+                ->and($password)->toMatch('/[^A-Za-z0-9]/');
+        });
+
+        it('returns a different password on each regeneration', function () {
+            $first = $this->actingAs($this->admin)
+                ->postJson('/api/users/generate-temporary-password')
+                ->json('temporary_password');
+
+            $second = $this->actingAs($this->admin)
+                ->postJson('/api/users/generate-temporary-password')
+                ->json('temporary_password');
+
+            expect($second)->not->toBe($first);
+        });
+
+        it('stores the submitted temporary password hashed and usable for login', function () {
+            $password = 'TemporaryPass123!';
+
+            $this->actingAs($this->admin)
+                ->postJson('/api/users', [
+                    'name' => 'Temp Password User',
+                    'email' => 'temp-password@example.com',
+                    'temporary_password' => $password,
+                    'role' => 'member',
+                ])
+                ->assertCreated();
+
+            $user = User::where('email', 'temp-password@example.com')->firstOrFail();
+
+            expect($user->password)->not->toBe($password)
+                ->and(Hash::check($password, $user->password))->toBeTrue();
+        });
+
+        it('does not create a user when generating a temporary password', function () {
+            $before = User::count();
+
+            $this->actingAs($this->admin)
+                ->postJson('/api/users/generate-temporary-password')
+                ->assertOk();
+
+            expect(User::count())->toBe($before);
+        });
+
+        it('denies temporary password generation to non-admin users', function () {
+            $this->actingAs($this->user)
+                ->postJson('/api/users/generate-temporary-password')
+                ->assertForbidden();
+        });
+
+        it('rate limits temporary password generation', function () {
+            $this->actingAs($this->admin);
+
+            for ($i = 0; $i < 60; $i++) {
+                $this->postJson('/api/users/generate-temporary-password')->assertOk();
+            }
+
+            $this->postJson('/api/users/generate-temporary-password')->assertStatus(429);
         });
     });
 
