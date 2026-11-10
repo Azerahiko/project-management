@@ -111,6 +111,40 @@ describe('User Management RBAC', function () {
             $this->assertDatabaseMissing('invitations', ['email' => $target->email]);
         });
 
+        it('sends temporary password in invitation email', function () {
+            Mail::fake();
+
+            $this->actingAs($this->admin)
+                ->postJson('/api/users', [
+                    'name' => 'Temp Password User',
+                    'email' => 'temp-email@example.com',
+                    'temporary_password' => 'TemporaryPass123!',
+                    'role' => 'member',
+                ])
+                ->assertCreated();
+
+            Mail::assertSent(App\Mail\InvitationCreated::class, function ($mail) {
+                return $mail->temporaryPassword === 'TemporaryPass123!';
+            });
+        });
+
+        it('includes invitation URL in email', function () {
+            Mail::fake();
+
+            $this->actingAs($this->admin)
+                ->postJson('/api/users', [
+                    'name' => 'URL Test User',
+                    'email' => 'url-test@example.com',
+                    'temporary_password' => 'TemporaryPass123!',
+                    'role' => 'member',
+                ])
+                ->assertCreated();
+
+            Mail::assertSent(App\Mail\InvitationCreated::class, function ($mail) {
+                return $mail->token !== null && $mail->invitation !== null;
+            });
+        });
+
         it('denies non-admin creating user via API', function () {
             $this->actingAs($this->user)
                 ->postJson('/api/users', [

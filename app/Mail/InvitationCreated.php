@@ -19,6 +19,7 @@ class InvitationCreated extends Mailable
     public function __construct(
         public Invitation $invitation,
         public string $token,
+        public string $temporaryPassword,
     ) {}
 
     /**
@@ -41,6 +42,7 @@ class InvitationCreated extends Mailable
             with: [
                 'invitationUrl' => route('invitations.show', ['token' => $this->token]),
                 'appName' => config('app.name'),
+                'temporaryPassword' => $this->temporaryPassword,
             ],
         );
     }

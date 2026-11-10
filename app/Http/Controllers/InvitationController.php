@@ -34,10 +34,11 @@ class InvitationController extends Controller
         $tokenHash = hash('sha256', $token);
 
         $invitationData = DB::transaction(function () use ($validated, $expiresAt, $tokenHash, $request, $token) {
+            $temporaryPassword = Str::password(32);
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => Hash::make(Str::password(32)),
+                'password' => Hash::make($temporaryPassword),
                 'is_active' => true,
                 'email_verified_at' => null,
             ]);
@@ -55,7 +56,8 @@ class InvitationController extends Controller
 
             // Dispatch email after transaction commits
             $invitation->token = $token;
-            Mail::to($validated['email'])->send(new InvitationCreated($invitation, $token));
+            $temporaryPassword = Str::password(32);
+            Mail::to($validated['email'])->send(new InvitationCreated($invitation, $token, $temporaryPassword));
 
             return [
                 'user' => $user,
@@ -185,7 +187,9 @@ class InvitationController extends Controller
 
             // Dispatch email after transaction commits
             $invitation->token = $token;
-            Mail::to($invitation->email)->send(new InvitationCreated($invitation, $token));
+            $temporaryPassword = Str::password(32);
+            $user->update(['password' => Hash::make($temporaryPassword)]);
+            Mail::to($invitation->email)->send(new InvitationCreated($invitation, $token, $temporaryPassword));
         });
 
         return response()->json([

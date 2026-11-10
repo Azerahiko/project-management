@@ -334,7 +334,8 @@ describe('Onboarding Findings Verification', function () {
 
         Mail::assertSent(InvitationCreated::class, function ($mail) {
             return $mail->invitation->email === 'createdadmin@example.com'
-                && ! empty($mail->token);
+                && ! empty($mail->token)
+                && $mail->temporaryPassword === 'TemporaryPass123!';
         });
     });
 

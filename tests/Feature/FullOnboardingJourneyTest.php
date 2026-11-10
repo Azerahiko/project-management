@@ -38,12 +38,16 @@ describe('End to end Onboarding Flow', function () {
         expect($createResponse->json('activation_code'))->toBeNull();
         expect($createResponse->json('invitation_url'))->toBeNull();
 
-        // 2. Email was dispatched with raw invitation token
+        // 2. Email was dispatched with raw invitation token and temporary password
         $rawToken = null;
-        Mail::assertSent(InvitationCreated::class, function ($mail) use (&$rawToken) {
+        $tempPassword = null;
+        Mail::assertSent(InvitationCreated::class, function ($mail) use (&$rawToken, &$tempPassword) {
             $rawToken = $mail->token;
+            $tempPassword = $mail->temporaryPassword;
 
-            return $mail->invitation->email === 'e2e-user@example.com' && ! empty($rawToken);
+            return $mail->invitation->email === 'e2e-user@example.com' 
+                && ! empty($rawToken) 
+                && $tempPassword === 'TemporaryPass123!';
         });
 
         // 3. User attempts login prior to invitation verification -> REJECTED
@@ -68,13 +72,16 @@ describe('End to end Onboarding Flow', function () {
         expect($user->email_verified_at)->not->toBeNull();
         expect($user->invitation->isAccepted())->toBeTrue();
 
-        // 6. User logs in using temporary password
+        // 6. User logs in using temporary password (verify it works)
         $loginResponse = $this->post('/login', [
             'email' => 'e2e-user@example.com',
             'password' => $tempPassword,
         ]);
         $loginResponse->assertRedirect();
         $this->assertAuthenticatedAs($user);
+
+        // 7. Verify temporary password was included in the email
+        expect($tempPassword)->toBe('TemporaryPass123!');
 
         // 7. Onboarding middleware forces user to /onboarding/password
         $dashboardResponse = $this->get('/dashboard');

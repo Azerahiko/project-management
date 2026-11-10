@@ -30,6 +30,29 @@
 
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <p style="margin: 0 0 12px; font-weight: 600; color: #1e40af;">Password Sementara Anda:</p>
+            <div style="background: #ffffff; border: 2px solid #3b82f6; border-radius: 6px; padding: 15px; text-align: center; font-family: monospace; font-size: 18px; font-weight: 600; letter-spacing: 2px; color: #1e40af; word-break: break-all;">
+                {{ $temporaryPassword }}
+            </div>
+            <p style="margin: 12px 0 0; font-size: 13px; color: #475569;">
+                Password ini hanya berlaku untuk login pertama Anda. Anda harus membuat password baru saat proses onboarding.<br>
+                Password ini <strong>tidak</strong> boleh dibagikan kepada siapa pun.
+            </p>
+        </div>
+
+        <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
+            <p style="margin: 0 0 8px; font-weight: 600; color: #991b1b;">Peringatan Keamanan:</p>
+            <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #7f1d1d;">
+                <li style="margin-bottom: 4px;">Password sementara ini hanya untuk penggunaan sementara</li>
+                <li style="margin-bottom: 4px;">Anda harus mengubahnya segera setelah login pertama</li>
+                <li style="margin-bottom: 4px;">Jangan simpan password ini di tempat yang tidak aman</li>
+                <li style="margin-bottom: 4px;">Jangan bagikan email atau password ini kepada siapa pun</li>
+            </ul>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
         <p style="color: #9ca3af; font-size: 12px; margin: 0;">
             Tautan ini akan kedaluwarsa dalam {{ config('activation.expiry_hours', 72) }} jam.
             Jika Anda tidak meminta undangan ini, abaikan email ini.

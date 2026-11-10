@@ -104,7 +104,7 @@ class UserController extends Controller
             );
 
             Mail::to($user->email)->send(
-                new InvitationCreated($invitation, $token)
+                new InvitationCreated($invitation, $token, $request->validated('temporary_password'))
             );
 
             return [
