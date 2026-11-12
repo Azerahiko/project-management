@@ -429,9 +429,7 @@ const timezoneForm = useForm({
     timezone: props.timezone,
 });
 
-const timezoneDirty = computed(
-    () => timezoneForm.timezone !== props.timezone,
-);
+const timezoneDirty = computed(() => timezoneForm.timezone !== props.timezone);
 
 function submitTimezone(): void {
     timezoneForm.put(settingsRoutes.timezone.update.url(), {
@@ -1516,7 +1514,8 @@ onMounted(() => {
                                         class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
                                     >
                                         Pilih zona waktu Anda untuk menampilkan
-                                        tanggal dan jam yang akurat di seluruh aplikasi.
+                                        tanggal dan jam yang akurat di seluruh
+                                        aplikasi.
                                     </p>
                                 </div>
                             </div>
@@ -1563,9 +1562,12 @@ onMounted(() => {
                                     <p class="font-semibold">
                                         Zona waktu akan diperbarui
                                     </p>
-                                    <p class="mt-0.5 leading-relaxed opacity-90">
-                                        Perubahan akan memengaruhi tampilan tanggal,
-                                        jam, dan batas waktu di seluruh aplikasi.
+                                    <p
+                                        class="mt-0.5 leading-relaxed opacity-90"
+                                    >
+                                        Perubahan akan memengaruhi tampilan
+                                        tanggal, jam, dan batas waktu di seluruh
+                                        aplikasi.
                                     </p>
                                 </div>
                             </div>
@@ -1605,12 +1607,17 @@ onMounted(() => {
                                     >
                                         Zona waktu saat ini
                                     </h4>
-                                    <p class="mt-1 text-sm font-mono text-surface-700 dark:text-surface-200">
+                                    <p
+                                        class="mt-1 font-mono text-sm text-surface-700 dark:text-surface-200"
+                                    >
                                         {{ props.timezone }}
                                     </p>
-                                    <p class="mt-2 text-xs text-surface-500 dark:text-surface-400">
-                                        Semua tanggal dan jam di dashboard, kalender, timeline,
-                                        dan notifikasi akan ditampilkan dalam zona waktu ini.
+                                    <p
+                                        class="mt-2 text-xs text-surface-500 dark:text-surface-400"
+                                    >
+                                        Semua tanggal dan jam di dashboard,
+                                        kalender, timeline, dan notifikasi akan
+                                        ditampilkan dalam zona waktu ini.
                                     </p>
                                 </div>
                             </div>

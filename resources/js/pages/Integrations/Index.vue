@@ -1060,10 +1060,7 @@ function curlForEndpoint(endpoint: EndpointSummary): string {
                             size="sm"
                             class="shrink-0 bg-white hover:bg-emerald-50 dark:bg-surface-800"
                             @click="
-                                copyText(
-                                    new_webhook_secret,
-                                    'Webhook Secret',
-                                )
+                                copyText(new_webhook_secret, 'Webhook Secret')
                             "
                         >
                             <component

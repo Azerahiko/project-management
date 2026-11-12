@@ -39,7 +39,10 @@ async function handleVerify(): Promise<void> {
         if (err.response?.data?.message) {
             toastError('Gagal', err.response.data.message);
         } else {
-            toastError('Gagal', 'Terjadi kesalahan saat memverifikasi undangan.');
+            toastError(
+                'Gagal',
+                'Terjadi kesalahan saat memverifikasi undangan.',
+            );
         }
     } finally {
         processing.value = false;
@@ -82,7 +85,9 @@ function goToLogin(): void {
                         Konfirmasi Email & Undangan
                     </h2>
                     <p class="text-sm text-surface-600 dark:text-surface-400">
-                        Klik tombol di bawah untuk memverifikasi email Anda. Setelah terverifikasi, Anda dapat masuk menggunakan kata sandi sementara yang diberikan oleh administrator.
+                        Klik tombol di bawah untuk memverifikasi email Anda.
+                        Setelah terverifikasi, Anda dapat masuk menggunakan kata
+                        sandi sementara yang diberikan oleh administrator.
                     </p>
                 </div>
 
@@ -101,7 +106,8 @@ function goToLogin(): void {
                 <p
                     class="text-center text-sm text-surface-600 dark:text-surface-400"
                 >
-                    Mengalami kendala? Hubungi administrator untuk informasi lebih lanjut.
+                    Mengalami kendala? Hubungi administrator untuk informasi
+                    lebih lanjut.
                 </p>
             </div>
 
@@ -135,7 +141,8 @@ function goToLogin(): void {
                         <p
                             class="mt-2 text-sm text-surface-600 dark:text-surface-400"
                         >
-                            Undangan Anda telah diverifikasi. Mengalihkan ke halaman masuk...
+                            Undangan Anda telah diverifikasi. Mengalihkan ke
+                            halaman masuk...
                         </p>
                     </div>
 

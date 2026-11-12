@@ -95,8 +95,8 @@ function copyRecoveryCodes(): void {
                 Aktifkan Autentikasi Dua Faktor
             </h2>
             <p class="mt-2 text-sm text-surface-600 dark:text-surface-400">
-                Pindai kode QR dengan aplikasi authenticator (Google Authenticator, Authy,
-                dll).
+                Pindai kode QR dengan aplikasi authenticator (Google
+                Authenticator, Authy, dll).
             </p>
 
             <div class="mt-6 flex flex-col items-center">
@@ -112,7 +112,11 @@ function copyRecoveryCodes(): void {
                         class="text-xs font-medium text-primary-600 underline hover:text-primary-700 dark:text-primary-400"
                         @click="showManualSecret = !showManualSecret"
                     >
-                        {{ showManualSecret ? 'Sembunyikan kunci manual' : 'Tampilkan kunci rahasia manual' }}
+                        {{
+                            showManualSecret
+                                ? 'Sembunyikan kunci manual'
+                                : 'Tampilkan kunci rahasia manual'
+                        }}
                     </button>
 
                     <div v-if="showManualSecret" class="mt-2">
@@ -215,8 +219,8 @@ function copyRecoveryCodes(): void {
             >
                 <p class="font-medium">Peringatan:</p>
                 <p>
-                    Kode ini hanya ditampilkan sekarang. Pastikan menyimpannya di
-                    tempat yang aman sebelum melanjutkan.
+                    Kode ini hanya ditampilkan sekarang. Pastikan menyimpannya
+                    di tempat yang aman sebelum melanjutkan.
                 </p>
             </div>
 

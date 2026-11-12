@@ -117,7 +117,10 @@ async function executeRestore(): Promise<void> {
         commentToRestore.value = null;
         await fetchTrashedComments(filters);
     } catch {
-        toastError('Gagal memulihkan komentar', 'Komentar gagal dipulihkan. Silakan coba lagi.');
+        toastError(
+            'Gagal memulihkan komentar',
+            'Komentar gagal dipulihkan. Silakan coba lagi.',
+        );
     } finally {
         restoring.value = false;
     }
@@ -175,7 +178,8 @@ watch(
                 <p
                     class="mt-1 max-w-2xl text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
-                    Kelola komentar yang dihapus dari tugas "{{ task.title }}". Pulihkan atau biarkan mereka dihapus permanen.
+                    Kelola komentar yang dihapus dari tugas "{{ task.title }}".
+                    Pulihkan atau biarkan mereka dihapus permanen.
                 </p>
             </div>
 
@@ -304,17 +308,21 @@ watch(
             class="divide-y divide-surface-200 dark:divide-surface-700"
             aria-hidden="true"
         >
-            <div
-                v-for="index in 6"
-                :key="index"
-                class="animate-pulse py-4"
-            >
+            <div v-for="index in 6" :key="index" class="animate-pulse py-4">
                 <div class="flex items-start gap-3">
-                    <div class="h-8 w-8 rounded-full bg-surface-100 dark:bg-surface-800" />
+                    <div
+                        class="h-8 w-8 rounded-full bg-surface-100 dark:bg-surface-800"
+                    />
                     <div class="flex-1">
-                        <div class="h-4 w-3/4 rounded bg-surface-100 dark:bg-surface-800" />
-                        <div class="mt-2 h-4 w-full rounded bg-surface-100 dark:bg-surface-800" />
-                        <div class="mt-1 h-3 w-4/5 rounded bg-surface-100 dark:bg-surface-800" />
+                        <div
+                            class="h-4 w-3/4 rounded bg-surface-100 dark:bg-surface-800"
+                        />
+                        <div
+                            class="mt-2 h-4 w-full rounded bg-surface-100 dark:bg-surface-800"
+                        />
+                        <div
+                            class="mt-1 h-3 w-4/5 rounded bg-surface-100 dark:bg-surface-800"
+                        />
                     </div>
                 </div>
             </div>
@@ -333,7 +341,7 @@ watch(
                 class="py-4 transition-opacity"
             >
                 <div class="flex items-start justify-between gap-4">
-                    <div class="flex-1 min-w-0">
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-3">
                             <Avatar
                                 :initials="comment.user?.initials"
@@ -362,14 +370,28 @@ watch(
                             </div>
                         </div>
 
-                        <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-surface-500 dark:text-surface-400">
+                        <div
+                            class="mt-2 flex flex-wrap items-center gap-3 text-xs text-surface-500 dark:text-surface-400"
+                        >
                             <div class="flex items-center gap-1">
-                                <component :is="getIcon('Calendar')" class="h-3.5 w-3.5" />
-                                <span>Dihapus: {{ formatDate(comment.deleted_at) }}</span>
+                                <component
+                                    :is="getIcon('Calendar')"
+                                    class="h-3.5 w-3.5"
+                                />
+                                <span
+                                    >Dihapus:
+                                    {{ formatDate(comment.deleted_at) }}</span
+                                >
                             </div>
                             <div class="flex items-center gap-1">
-                                <component :is="getIcon('Clock')" class="h-3.5 w-3.5" />
-                                <span>Dibuat: {{ formatDate(comment.created_at) }}</span>
+                                <component
+                                    :is="getIcon('Clock')"
+                                    class="h-3.5 w-3.5"
+                                />
+                                <span
+                                    >Dibuat:
+                                    {{ formatDate(comment.created_at) }}</span
+                                >
                             </div>
                         </div>
                     </div>
@@ -468,7 +490,15 @@ watch(
             Apakah Anda yakin ingin memulihkan komentar ini?
         </p>
         <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
-            <strong class="text-surface-900 dark:text-surface-100">"{{ commentToRestore?.content?.substring(0, 100) }}{{ commentToRestore?.content && commentToRestore.content.length > 100 ? '...' : '' }}"</strong>
+            <strong class="text-surface-900 dark:text-surface-100"
+                >"{{ commentToRestore?.content?.substring(0, 100)
+                }}{{
+                    commentToRestore?.content &&
+                    commentToRestore.content.length > 100
+                        ? '...'
+                        : ''
+                }}"</strong
+            >
         </p>
         <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
             Komentar akan kembali ke daftar komentar tugas.

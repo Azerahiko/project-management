@@ -76,8 +76,6 @@ async function generateTemporaryPassword(
     }
 }
 
-
-
 async function copyTemporaryPassword(): Promise<void> {
     try {
         await navigator.clipboard.writeText(form.temporary_password);

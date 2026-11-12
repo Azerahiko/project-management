@@ -56,9 +56,9 @@ const formatter = new Intl.DateTimeFormat('en-CA', {
     day: '2-digit',
 });
 const nowParts = formatter.formatToParts(now);
-const todayYear = Number(nowParts.find(p => p.type === 'year')?.value);
-const todayMonth = Number(nowParts.find(p => p.type === 'month')?.value);
-const todayDay = Number(nowParts.find(p => p.type === 'day')?.value);
+const todayYear = Number(nowParts.find((p) => p.type === 'year')?.value);
+const todayMonth = Number(nowParts.find((p) => p.type === 'month')?.value);
+const todayDay = Number(nowParts.find((p) => p.type === 'day')?.value);
 
 const month =
     (page.props.month as string) ??
@@ -85,7 +85,9 @@ const todayKey = toDateKey(today);
 
 const monthLabel = computed(() =>
     // firstOfMonth is in UTC, format for display
-    new Date(Date.UTC(firstOfMonth.getUTCFullYear(), firstOfMonth.getUTCMonth(), 1)).toLocaleDateString('id-ID', {
+    new Date(
+        Date.UTC(firstOfMonth.getUTCFullYear(), firstOfMonth.getUTCMonth(), 1),
+    ).toLocaleDateString('id-ID', {
         month: 'long',
         year: 'numeric',
     }),
@@ -134,15 +136,12 @@ const selectedDateTasks = computed(() => {
 const selectedDateLabel = computed(() => {
     const [y, m, d] = selectedDate.value.split('-').map(Number);
     const utcDate = new Date(Date.UTC(y, m - 1, d));
-    return utcDate.toLocaleDateString(
-        'id-ID',
-        {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-        },
-    );
+    return utcDate.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
 });
 
 // If selected date has no tasks, find nearest tasks in the month to avoid blank wasted space!
@@ -175,7 +174,9 @@ const days = computed<DayCell[]>(() => {
     const prevMonthDays = prevMonthLastDay.getUTCDate();
 
     for (let i = leading; i > 0; i--) {
-        const date = new Date(Date.UTC(year, monthNum - 2, prevMonthDays - i + 1));
+        const date = new Date(
+            Date.UTC(year, monthNum - 2, prevMonthDays - i + 1),
+        );
         cells.push({
             date: date.getUTCDate(),
             iso: toDateKey(date),
@@ -323,15 +324,12 @@ const agendaDays = computed(() => {
         const utcDate = new Date(Date.UTC(y, m - 1, d));
         return {
             date,
-            formattedDate: utcDate.toLocaleDateString(
-                'id-ID',
-                {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                },
-            ),
+            formattedDate: utcDate.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            }),
             isToday: date === todayKey,
             isPast: date < todayKey,
             tasks: tasksByDate.value[date] ?? [],
@@ -1145,7 +1143,9 @@ function relativeDueLabel(value: string): string {
                                         {{ formatDate(taskDate(near)) }} ·
                                         {{
                                             near.due_date
-                                                ? relativeDueLabel(near.due_date)
+                                                ? relativeDueLabel(
+                                                      near.due_date,
+                                                  )
                                                 : 'tanggal mulai'
                                         }}
                                     </p>

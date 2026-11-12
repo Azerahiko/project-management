@@ -162,7 +162,10 @@ async function executeRestore(): Promise<void> {
         projectToRestore.value = null;
         await fetchProjects();
     } catch {
-        toastError('Gagal memulihkan proyek', 'Proyek gagal dipulihkan. Silakan coba lagi.');
+        toastError(
+            'Gagal memulihkan proyek',
+            'Proyek gagal dipulihkan. Silakan coba lagi.',
+        );
     } finally {
         restoring.value = false;
     }
@@ -230,7 +233,8 @@ watch(
                 <p
                     class="mt-1 max-w-2xl text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
-                    Kelola proyek yang dihapus secara tidak sengaja. Pulihkan atau biarkan mereka dihapus permanen.
+                    Kelola proyek yang dihapus secara tidak sengaja. Pulihkan
+                    atau biarkan mereka dihapus permanen.
                 </p>
             </div>
 
@@ -373,12 +377,22 @@ watch(
                 class="animate-pulse rounded-2xl border border-surface-200 bg-white p-5 dark:border-surface-700 dark:bg-surface-900"
             >
                 <div class="flex gap-2">
-                    <div class="h-5 w-16 rounded-full bg-surface-100 dark:bg-surface-800" />
-                    <div class="h-5 w-14 rounded-full bg-surface-100 dark:bg-surface-800" />
+                    <div
+                        class="h-5 w-16 rounded-full bg-surface-100 dark:bg-surface-800"
+                    />
+                    <div
+                        class="h-5 w-14 rounded-full bg-surface-100 dark:bg-surface-800"
+                    />
                 </div>
-                <div class="mt-5 h-4 w-3/4 rounded bg-surface-100 dark:bg-surface-800" />
-                <div class="mt-2 h-3 w-full rounded bg-surface-100 dark:bg-surface-800" />
-                <div class="mt-1.5 h-3 w-4/5 rounded bg-surface-100 dark:bg-surface-800" />
+                <div
+                    class="mt-5 h-4 w-3/4 rounded bg-surface-100 dark:bg-surface-800"
+                />
+                <div
+                    class="mt-2 h-3 w-full rounded bg-surface-100 dark:bg-surface-800"
+                />
+                <div
+                    class="mt-1.5 h-3 w-4/5 rounded bg-surface-100 dark:bg-surface-800"
+                />
             </div>
         </div>
 
@@ -406,7 +420,7 @@ watch(
                     <img
                         :src="getProjectCover(project.id)"
                         :alt="project.name"
-                        class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-60"
+                        class="h-full w-full object-cover opacity-60 transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                     <!-- Subtle top sheen and dark gradient at bottom for depth -->
                     <div
@@ -477,7 +491,9 @@ watch(
                             <div
                                 class="text-xs font-medium tracking-tight text-surface-500 dark:text-surface-400"
                             >
-                                <span>{{ formatRelativeTime(project.deleted_at) }}</span>
+                                <span>{{
+                                    formatRelativeTime(project.deleted_at)
+                                }}</span>
                                 <span class="mx-1.5 opacity-60">•</span>
                                 <span
                                     class="font-semibold text-surface-800 dark:text-surface-200"
@@ -629,10 +645,7 @@ watch(
                     <component :is="getIcon('RefreshCw')" class="h-4 w-4" />
                     Reset Filter
                 </button>
-                <Link
-                    :href="projectsRoute.index.url()"
-                    class="btn btn-primary"
-                >
+                <Link :href="projectsRoute.index.url()" class="btn btn-primary">
                     <component :is="getIcon('ArrowLeft')" class="h-4 w-4" />
                     Kembali ke Proyek
                 </Link>

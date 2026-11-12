@@ -351,16 +351,12 @@ const summary = computed(() => {
 });
 
 function projectCompletion(project: TimelineProject): number {
-    if (
-        project.tasks.length === 0 &&
-        project.tasks_with_undated.length === 0
-    )
+    if (project.tasks.length === 0 && project.tasks_with_undated.length === 0)
         return 0;
     const done =
         project.tasks.filter((t) => t.status === 'done').length +
         project.tasks_with_undated.filter((t) => t.status === 'done').length;
-    const total =
-        project.tasks.length + project.tasks_with_undated.length;
+    const total = project.tasks.length + project.tasks_with_undated.length;
     return Math.round((done / total) * 100);
 }
 
@@ -853,9 +849,7 @@ if (rawProjects.value.length > 0) {
                                         />
                                         <Link
                                             v-if="canViewTasks"
-                                            :href="
-                                                taskRoutes.show.url(task.id)
-                                            "
+                                            :href="taskRoutes.show.url(task.id)"
                                             class="truncate text-xs text-surface-700 transition hover:text-primary-700 dark:text-surface-300 dark:hover:text-primary-300"
                                             :class="
                                                 task.status === 'done'

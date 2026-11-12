@@ -64,21 +64,38 @@ const errorMessage = computed(() => {
                     class="h-10 w-auto"
                 />
 
-                <div class="mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <div
+                    class="mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600"
+                >
+                    <svg
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
                     </svg>
                 </div>
 
-                <h1 class="mt-4 text-center text-xl font-bold tracking-tight text-surface-900">
+                <h1
+                    class="mt-4 text-center text-xl font-bold tracking-tight text-surface-900"
+                >
                     Verifikasi Dua Faktor
                 </h1>
                 <p class="mt-2 text-center text-sm text-surface-600">
                     <template v-if="!recovery">
-                        Konfirmasikan akses ke akun Anda dengan memasukkan kode autentikasi yang diberikan oleh aplikasi authenticator Anda.
+                        Konfirmasikan akses ke akun Anda dengan memasukkan kode
+                        autentikasi yang diberikan oleh aplikasi authenticator
+                        Anda.
                     </template>
                     <template v-else>
-                        Konfirmasikan akses ke akun Anda dengan memasukkan salah satu kode pemulihan darurat Anda.
+                        Konfirmasikan akses ke akun Anda dengan memasukkan salah
+                        satu kode pemulihan darurat Anda.
                     </template>
                 </p>
             </div>
@@ -93,7 +110,10 @@ const errorMessage = computed(() => {
 
             <form @submit.prevent="handleSubmit" class="mt-6 space-y-5">
                 <div v-if="!recovery">
-                    <label for="code" class="block text-xs font-semibold uppercase tracking-wider text-surface-700">
+                    <label
+                        for="code"
+                        class="block text-xs font-semibold tracking-wider text-surface-700 uppercase"
+                    >
                         Kode Autentikasi
                     </label>
                     <input
@@ -106,12 +126,15 @@ const errorMessage = computed(() => {
                         autocomplete="one-time-code"
                         placeholder="000000"
                         maxlength="6"
-                        class="mt-2 block w-full rounded-xl border border-surface-200 bg-surface-50/50 px-4 py-3 text-center font-mono text-2xl tracking-widest text-surface-900 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10"
+                        class="mt-2 block w-full rounded-xl border border-surface-200 bg-surface-50/50 px-4 py-3 text-center font-mono text-2xl tracking-widest text-surface-900 focus:border-primary-500 focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:outline-none"
                     />
                 </div>
 
                 <div v-else>
-                    <label for="recovery_code" class="block text-xs font-semibold uppercase tracking-wider text-surface-700">
+                    <label
+                        for="recovery_code"
+                        class="block text-xs font-semibold tracking-wider text-surface-700 uppercase"
+                    >
                         Kode Pemulihan
                     </label>
                     <input
@@ -121,19 +144,21 @@ const errorMessage = computed(() => {
                         type="text"
                         autocomplete="one-time-code"
                         placeholder="xxxx-xxxx-xxxx"
-                        class="mt-2 block w-full rounded-xl border border-surface-200 bg-surface-50/50 px-4 py-3 text-center font-mono text-base text-surface-900 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10"
+                        class="mt-2 block w-full rounded-xl border border-surface-200 bg-surface-50/50 px-4 py-3 text-center font-mono text-base text-surface-900 focus:border-primary-500 focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:outline-none"
                     />
                 </div>
 
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:ring-4 focus:ring-primary-500/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {{ form.processing ? 'Memverifikasi...' : 'Masuk' }}
                 </button>
 
-                <div class="flex flex-col items-center gap-3 pt-2 text-center text-sm">
+                <div
+                    class="flex flex-col items-center gap-3 pt-2 text-center text-sm"
+                >
                     <button
                         type="button"
                         class="font-medium text-primary-600 hover:text-primary-700 hover:underline"
@@ -142,9 +167,7 @@ const errorMessage = computed(() => {
                         <template v-if="!recovery">
                             Gunakan kode pemulihan darurat
                         </template>
-                        <template v-else>
-                            Gunakan kode autentikasi
-                        </template>
+                        <template v-else> Gunakan kode autentikasi </template>
                     </button>
 
                     <Link

@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import api from '@/lib/api';
 import type { PaginatedResponse, Task, TaskFilters } from '@/types';
 

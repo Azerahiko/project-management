@@ -162,7 +162,10 @@ async function executeRestore(): Promise<void> {
         taskToRestore.value = null;
         await fetchTasks();
     } catch {
-        toastError('Gagal memulihkan tugas', 'Tugas gagal dipulihkan. Silakan coba lagi.');
+        toastError(
+            'Gagal memulihkan tugas',
+            'Tugas gagal dipulihkan. Silakan coba lagi.',
+        );
     } finally {
         restoring.value = false;
     }
@@ -230,7 +233,8 @@ watch(
                 <p
                     class="mt-1 max-w-2xl text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
-                    Kelola tugas yang dihapus dari proyek "{{ project.name }}". Pulihkan atau biarkan mereka dihapus permanen.
+                    Kelola tugas yang dihapus dari proyek "{{ project.name }}".
+                    Pulihkan atau biarkan mereka dihapus permanen.
                 </p>
             </div>
 
@@ -411,12 +415,22 @@ watch(
                 :key="index"
                 class="animate-pulse rounded-2xl border border-surface-200 bg-white p-5 dark:border-surface-700 dark:bg-surface-900"
             >
-                <div class="h-5 w-3/4 rounded bg-surface-100 dark:bg-surface-800" />
-                <div class="mt-2 h-3 w-full rounded bg-surface-100 dark:bg-surface-800" />
-                <div class="mt-1.5 h-3 w-4/5 rounded bg-surface-100 dark:bg-surface-800" />
+                <div
+                    class="h-5 w-3/4 rounded bg-surface-100 dark:bg-surface-800"
+                />
+                <div
+                    class="mt-2 h-3 w-full rounded bg-surface-100 dark:bg-surface-800"
+                />
+                <div
+                    class="mt-1.5 h-3 w-4/5 rounded bg-surface-100 dark:bg-surface-800"
+                />
                 <div class="mt-4 flex gap-2">
-                    <div class="h-5 w-20 rounded bg-surface-100 dark:bg-surface-800" />
-                    <div class="h-5 w-24 rounded bg-surface-100 dark:bg-surface-800" />
+                    <div
+                        class="h-5 w-20 rounded bg-surface-100 dark:bg-surface-800"
+                    />
+                    <div
+                        class="h-5 w-24 rounded bg-surface-100 dark:bg-surface-800"
+                    />
                 </div>
             </div>
         </div>
@@ -434,12 +448,10 @@ watch(
                 class="py-4 transition-opacity"
             >
                 <div class="flex items-start justify-between gap-4">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
                             <Link
-                                :href="
-                                    tasksRoute.show.url({ task: task.id })
-                                "
+                                :href="tasksRoute.show.url({ task: task.id })"
                                 class="group/title"
                             >
                                 <h3
@@ -461,10 +473,10 @@ watch(
                                     task.priority === 'low'
                                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                                         : task.priority === 'medium'
-                                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                                        : task.priority === 'high'
-                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+                                          ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                                          : task.priority === 'high'
+                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                            : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
                                 "
                             >
                                 {{ task.priority_label }}
@@ -484,19 +496,37 @@ watch(
                             {{ task.description }}
                         </p>
 
-                        <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-surface-500 dark:text-surface-400">
+                        <div
+                            class="mt-2 flex flex-wrap items-center gap-3 text-xs text-surface-500 dark:text-surface-400"
+                        >
                             <div class="flex items-center gap-1">
-                                <component :is="getIcon('Calendar')" class="h-3.5 w-3.5" />
-                                <span>Dihapus: {{ formatDate(task.deleted_at) }}</span>
+                                <component
+                                    :is="getIcon('Calendar')"
+                                    class="h-3.5 w-3.5"
+                                />
+                                <span
+                                    >Dihapus:
+                                    {{ formatDate(task.deleted_at) }}</span
+                                >
                             </div>
 
-                            <div v-if="task.due_date" class="flex items-center gap-1">
-                                <component :is="getIcon('Clock')" class="h-3.5 w-3.5" />
+                            <div
+                                v-if="task.due_date"
+                                class="flex items-center gap-1"
+                            >
+                                <component
+                                    :is="getIcon('Clock')"
+                                    class="h-3.5 w-3.5"
+                                />
                                 <span
                                     :class="
                                         task.due_date &&
-                                        new Date(task.due_date).setHours(0,0,0,0) <
-                                        new Date().setHours(0,0,0,0) &&
+                                        new Date(task.due_date).setHours(
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                        ) < new Date().setHours(0, 0, 0, 0) &&
                                         task.status !== 'done'
                                             ? 'text-rose-600 dark:text-rose-400'
                                             : ''
@@ -506,12 +536,24 @@ watch(
                                 </span>
                             </div>
 
-                            <div v-if="task.start_date" class="flex items-center gap-1">
-                                <component :is="getIcon('Play')" class="h-3.5 w-3.5" />
-                                <span>Mulai: {{ formatDate(task.start_date) }}</span>
+                            <div
+                                v-if="task.start_date"
+                                class="flex items-center gap-1"
+                            >
+                                <component
+                                    :is="getIcon('Play')"
+                                    class="h-3.5 w-3.5"
+                                />
+                                <span
+                                    >Mulai:
+                                    {{ formatDate(task.start_date) }}</span
+                                >
                             </div>
 
-                            <div v-if="task.assignee" class="flex items-center gap-1">
+                            <div
+                                v-if="task.assignee"
+                                class="flex items-center gap-1"
+                            >
                                 <Avatar
                                     :initials="task.assignee.initials"
                                     :src="task.assignee.avatar"
@@ -522,7 +564,10 @@ watch(
                             </div>
 
                             <div class="flex items-center gap-1">
-                                <component :is="getIcon('User')" class="h-3.5 w-3.5" />
+                                <component
+                                    :is="getIcon('User')"
+                                    class="h-3.5 w-3.5"
+                                />
                                 <span>{{ task.creator?.name }}</span>
                             </div>
                         </div>
@@ -626,7 +671,8 @@ watch(
             ?
         </p>
         <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
-            Tugas akan kembali ke daftar tugas proyek beserta status dan assignee-nya.
+            Tugas akan kembali ke daftar tugas proyek beserta status dan
+            assignee-nya.
         </p>
 
         <template #footer>

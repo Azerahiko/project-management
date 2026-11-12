@@ -1,6 +1,11 @@
 import { ref, computed } from 'vue';
 import api from '@/lib/api';
-import type { PaginatedResponse, TaskComment, TaskActivity, TaskCommentFilters } from '@/types';
+import type {
+    PaginatedResponse,
+    TaskComment,
+    TaskActivity,
+    TaskCommentFilters,
+} from '@/types';
 
 export function useTaskComments(taskId: number) {
     const comments = ref<TaskComment[]>([]);
@@ -62,7 +67,9 @@ export function useTaskComments(taskId: number) {
         }
     }
 
-    async function fetchTrashedComments(filters: TaskCommentFilters): Promise<void> {
+    async function fetchTrashedComments(
+        filters: TaskCommentFilters,
+    ): Promise<void> {
         trashedCommentsLoading.value = true;
         trashedCommentsError.value = null;
 

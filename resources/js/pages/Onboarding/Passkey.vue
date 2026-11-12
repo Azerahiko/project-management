@@ -13,16 +13,21 @@ defineOptions({
 const page = usePage<{
     step: string;
     nextStep: string;
-    passkeys?: Array<{ id: number; name: string; last_used_at: string | null; created_at?: string }>;
+    passkeys?: Array<{
+        id: number;
+        name: string;
+        last_used_at: string | null;
+        created_at?: string;
+    }>;
 }>();
 
 const { success, error: toastError } = useToast();
 
 const processing = ref(false);
 const passkeyName = ref('');
-const passkeys = ref<Array<{ id: number; name: string; last_used_at: string | null }>>(
-    page.props.passkeys || [],
-);
+const passkeys = ref<
+    Array<{ id: number; name: string; last_used_at: string | null }>
+>(page.props.passkeys || []);
 
 const passkeyRegistered = computed(() => passkeys.value.length > 0);
 
@@ -102,20 +107,29 @@ async function registerPasskey(): Promise<void> {
                 rawId: bufferToBase64(cred.rawId),
                 type: cred.type,
                 response: {
-                    clientDataJSON: bufferToBase64Url(cred.response.clientDataJSON),
-                    attestationObject: bufferToBase64(cred.response.attestationObject),
+                    clientDataJSON: bufferToBase64Url(
+                        cred.response.clientDataJSON,
+                    ),
+                    attestationObject: bufferToBase64(
+                        cred.response.attestationObject,
+                    ),
                 },
             },
         });
 
-        success('Passkey Didaftarkan', 'Passkey berhasil ditambahkan ke akun Anda.');
+        success(
+            'Passkey Didaftarkan',
+            'Passkey berhasil ditambahkan ke akun Anda.',
+        );
         passkeys.value.push(storeResponse.data);
         passkeyName.value = '';
     } catch (err: any) {
         if (err.name === 'NotAllowedError') {
             return;
         }
-        toastError(err.response?.data?.message || 'Gagal mendaftarkan passkey.');
+        toastError(
+            err.response?.data?.message || 'Gagal mendaftarkan passkey.',
+        );
     } finally {
         processing.value = false;
     }
@@ -123,11 +137,15 @@ async function registerPasskey(): Promise<void> {
 
 function completeOnboarding(): void {
     processing.value = true;
-    router.post('/onboarding/complete', {}, {
-        onFinish: () => {
-            processing.value = false;
+    router.post(
+        '/onboarding/complete',
+        {},
+        {
+            onFinish: () => {
+                processing.value = false;
+            },
         },
-    });
+    );
 }
 </script>
 

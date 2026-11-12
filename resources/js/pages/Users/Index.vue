@@ -27,10 +27,15 @@ async function handleResendInvitation(userItem: User): Promise<void> {
     resendingInvitation.value = userItem.id;
     try {
         await api.post(`/invitations/${userItem.invitation_id}/resend`);
-        success('Undangan Terkirim', 'Undangan telah dikirim ulang ke email pengguna.');
+        success(
+            'Undangan Terkirim',
+            'Undangan telah dikirim ulang ke email pengguna.',
+        );
         await fetchUsers();
     } catch (err: any) {
-        toastError(err.response?.data?.message || 'Gagal mengirim ulang undangan.');
+        toastError(
+            err.response?.data?.message || 'Gagal mengirim ulang undangan.',
+        );
     } finally {
         resendingInvitation.value = null;
     }
@@ -594,17 +599,29 @@ watch(
                                 </Link>
 
                                 <button
-                                    v-if="userItem.invitation_id && (userItem.invitation_status === 'pending' || userItem.invitation_status === 'expired')"
+                                    v-if="
+                                        userItem.invitation_id &&
+                                        (userItem.invitation_status ===
+                                            'pending' ||
+                                            userItem.invitation_status ===
+                                                'expired')
+                                    "
                                     type="button"
                                     class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/20"
-                                    :disabled="resendingInvitation === userItem.id"
+                                    :disabled="
+                                        resendingInvitation === userItem.id
+                                    "
                                     @click="handleResendInvitation(userItem)"
                                 >
                                     <component
                                         :is="getIcon('Mail')"
                                         class="h-4 w-4"
                                     />
-                                    {{ resendingInvitation === userItem.id ? 'Mengirim...' : 'Kirim Ulang Undangan' }}
+                                    {{
+                                        resendingInvitation === userItem.id
+                                            ? 'Mengirim...'
+                                            : 'Kirim Ulang Undangan'
+                                    }}
                                 </button>
 
                                 <button
@@ -683,7 +700,10 @@ watch(
                             2FA Aktif
                         </span>
                         <span
-                            v-if="userItem.email_verified_at && !userItem.is_onboarded"
+                            v-if="
+                                userItem.email_verified_at &&
+                                !userItem.is_onboarded
+                            "
                             class="inline-flex items-center rounded-md border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-800 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
                         >
                             Onboarding
@@ -818,25 +838,31 @@ watch(
                                     <div class="flex flex-wrap gap-1">
                                         <span
                                             v-if="!userItem.email_verified_at"
-                                            class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.2 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                                            class="py-0.2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
                                         >
                                             Unverified
                                         </span>
                                         <span
-                                            v-if="userItem.invitation_status === 'pending'"
-                                            class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-1.5 py-0.2 text-[10px] font-medium text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                                            v-if="
+                                                userItem.invitation_status ===
+                                                'pending'
+                                            "
+                                            class="py-0.2 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-1.5 text-[10px] font-medium text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
                                         >
                                             Pending
                                         </span>
                                         <span
-                                            v-else-if="userItem.invitation_status === 'expired'"
-                                            class="inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.2 text-[10px] font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                                            v-else-if="
+                                                userItem.invitation_status ===
+                                                'expired'
+                                            "
+                                            class="py-0.2 inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-1.5 text-[10px] font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
                                         >
                                             Expired
                                         </span>
                                         <span
                                             v-if="userItem.two_factor_enabled"
-                                            class="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.2 text-[10px] font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                            class="py-0.2 inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-1.5 text-[10px] font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                                         >
                                             2FA
                                         </span>
@@ -879,17 +905,31 @@ watch(
                                     </Link>
 
                                     <button
-                                        v-if="userItem.invitation_id && (userItem.invitation_status === 'pending' || userItem.invitation_status === 'expired')"
+                                        v-if="
+                                            userItem.invitation_id &&
+                                            (userItem.invitation_status ===
+                                                'pending' ||
+                                                userItem.invitation_status ===
+                                                    'expired')
+                                        "
                                         type="button"
                                         class="dropdown-item flex w-full items-center gap-2 px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/20"
-                                        :disabled="resendingInvitation === userItem.id"
-                                        @click="handleResendInvitation(userItem)"
+                                        :disabled="
+                                            resendingInvitation === userItem.id
+                                        "
+                                        @click="
+                                            handleResendInvitation(userItem)
+                                        "
                                     >
                                         <component
                                             :is="getIcon('Mail')"
                                             class="h-4 w-4"
                                         />
-                                        {{ resendingInvitation === userItem.id ? 'Mengirim...' : 'Kirim Ulang Undangan' }}
+                                        {{
+                                            resendingInvitation === userItem.id
+                                                ? 'Mengirim...'
+                                                : 'Kirim Ulang Undangan'
+                                        }}
                                     </button>
 
                                     <button
