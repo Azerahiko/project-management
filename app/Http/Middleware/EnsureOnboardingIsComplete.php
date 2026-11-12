@@ -51,6 +51,15 @@ class EnsureOnboardingIsComplete
             return $next($request);
         }
 
+        // API/JSON clients cannot follow a redirect to an HTML onboarding page.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Onboarding belum selesai.',
+                'error' => 'onboarding_required',
+                'onboarding_url' => route('onboarding.index'),
+            ], 403);
+        }
+
         // Redirect to onboarding
         return redirect()->route('onboarding.index');
     }

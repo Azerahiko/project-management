@@ -7,7 +7,7 @@ import type {
     ProjectMember,
 } from '@/types';
 
-export function useProjects(filters: ProjectFilters) {
+export function useProjects(filters: ProjectFilters, trashed = false) {
     const projects = ref<Project[]>([]);
     const meta = ref({
         current_page: 1,
@@ -26,7 +26,7 @@ export function useProjects(filters: ProjectFilters) {
         try {
             const { data: response } = await api.get<
                 PaginatedResponse<Project>
-            >('/projects', {
+            >(trashed ? '/projects/trashed' : '/projects', {
                 params: {
                     search: filters.search || undefined,
                     status: filters.status || undefined,
@@ -129,7 +129,7 @@ export function useProjects(filters: ProjectFilters) {
         await api.delete(`/projects/${projectId}/members/${userId}`);
     }
 
-    async function fetchManagers(): Promise<
+    async function fetchManagers(projectId?: number): Promise<
         Array<{
             id: number;
             name: string;
@@ -146,7 +146,9 @@ export function useProjects(filters: ProjectFilters) {
                 avatar: string | null;
                 initials: string;
             }>;
-        }>('/projects/managers');
+        }>('/projects/managers', {
+            params: projectId ? { project: projectId } : {},
+        });
         return response.data;
     }
 

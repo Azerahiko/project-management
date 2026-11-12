@@ -24,20 +24,29 @@ class WorkspaceOverviewController extends Controller
     {
         Gate::authorize(Permissions::CALENDAR_VIEW);
 
+        $user = $request->user();
+        $userTimezone = $user->getTimezoneObject();
+
         $validated = $request->validate(['month' => ['sometimes', 'date_format:Y-m']]);
-        $month = Carbon::createFromFormat('!Y-m', $validated['month'] ?? now()->format('Y-m'));
+        $month = Carbon::createFromFormat('!Y-m', $validated['month'] ?? Carbon::now($userTimezone)->format('Y-m'), $userTimezone);
         $start = $month->copy()->startOfMonth();
         $end = $month->copy()->endOfMonth();
 
         $tasks = Task::accessibleBy($request->user())
-            ->whereBetween('due_date', [$start->toDateString(), $end->toDateString()])
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('due_date', [$start->toDateString(), $end->toDateString()])
+                    ->orWhereBetween('start_date', [$start->toDateString(), $end->toDateString()]);
+            })
             ->with(['project:id,name', 'assignee:id,name,avatar'])
-            ->orderBy('due_date')
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_date', 'desc')
+            ->orderBy('start_date', 'desc')
             ->orderBy('id')
-            ->get(['id', 'project_id', 'title', 'status', 'priority', 'assignee_id', 'due_date']);
+            ->get(['id', 'project_id', 'title', 'status', 'priority', 'assignee_id', 'due_date', 'start_date']);
 
         return Inertia::render('Calendar/Index', [
             'month' => $start->format('Y-m'),
+            'userTimezone' => $user->getTimezone(),
             'tasks' => $tasks->map(fn (Task $task): array => [
                 'id' => $task->id,
                 'title' => $task->title,
@@ -46,7 +55,8 @@ class WorkspaceOverviewController extends Controller
                 'priority' => $task->priority->value,
                 'priority_label' => $task->priority->label(),
                 'priority_color' => $task->priority->color(),
-                'due_date' => $task->due_date->toDateString(),
+                'due_date' => $task->due_date ? $task->due_date->toDateString() : null,
+                'start_date' => $task->start_date ? $task->start_date->toDateString() : null,
                 'project_name' => $task->project->name,
                 'assignee' => $task->assignee
                     ? [
@@ -180,6 +190,9 @@ class WorkspaceOverviewController extends Controller
     {
         Gate::authorize(Permissions::ACTIVITY_LOG_VIEW);
 
+        $user = $request->user();
+        $userTimezone = $user->getTimezoneObject();
+
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'type' => ['nullable', 'in:task,comment'],
@@ -200,7 +213,7 @@ class WorkspaceOverviewController extends Controller
 
         $stats = [
             'total' => (clone $baseQuery)->count(),
-            'today' => (clone $baseQuery)->whereDate('created_at', today())->count(),
+            'today' => (clone $baseQuery)->whereDate('created_at', Carbon::now($userTimezone)->toDateString())->count(),
             'contributors' => (clone $baseQuery)->whereNotNull('user_id')->distinct()->count('user_id'),
             'tasks' => (clone $baseQuery)->distinct()->count('task_id'),
             'task_activities' => (clone $baseQuery)->where('activity_type', 'like', 'task.%')->count(),

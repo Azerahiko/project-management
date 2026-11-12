@@ -188,6 +188,10 @@ test('task assigned notification is idempotent on concurrent requests', function
 // ===========================================
 
 test('comment added creates notifications for project members except author', function () {
+    // Enable comments preference for recipients
+    $this->member2->forceFill(['notification_preferences' => ['comments' => true]])->save();
+    $this->pm->forceFill(['notification_preferences' => ['comments' => true]])->save();
+
     $this->actingAs($this->member1);
 
     $response = $this->postJson("/api/tasks/{$this->task->id}/comments", [
@@ -211,6 +215,9 @@ test('comment added creates notifications for project members except author', fu
 });
 
 test('comment notification is idempotent per comment_id', function () {
+    // Enable comments preference for member2
+    $this->member2->forceFill(['notification_preferences' => ['comments' => true]])->save();
+
     $sender = app(NotificationSender::class);
 
     $result1 = $sender->send($this->member2, TaskCommentAdded::class, [
@@ -719,6 +726,9 @@ test('notification data contains required fields', function () {
 });
 
 test('comment notification data contains comment preview', function () {
+    // Enable comments preference for member2
+    $this->member2->forceFill(['notification_preferences' => ['comments' => true]])->save();
+
     $this->actingAs($this->member1);
     $this->postJson("/api/tasks/{$this->task->id}/comments", ['content' => 'Test comment content']);
 
@@ -742,4 +752,289 @@ test('status changed notification data contains old and new status', function ()
     $this->assertArrayHasKey('new_status', $data);
     $this->assertEquals(TaskStatus::TODO->value, $data['old_status']);
     $this->assertEquals(TaskStatus::IN_PROGRESS->value, $data['new_status']);
+});
+
+// ===========================================
+// IDEMPOTENCY KEY CLEANUP
+// ===========================================
+
+test('idempotency key cleanup command removes old keys', function () {
+    // Create a notification with an old idempotency key
+    $oldNotification = $this->member1->notifications()->create([
+        'id' => Str::uuid(),
+        'type' => TaskAssigned::class,
+        'notifiable_type' => User::class,
+        'notifiable_id' => $this->member1->id,
+        'data' => ['action' => 'assigned', 'task_id' => $this->task->id, 'event_id' => Str::uuid()],
+        'idempotency_key' => 'old-key-'.Str::uuid(),
+        'created_at' => now()->subDays(91),
+    ]);
+
+    // Create a notification with a recent idempotency key
+    $recentNotification = $this->member1->notifications()->create([
+        'id' => Str::uuid(),
+        'type' => TaskAssigned::class,
+        'notifiable_type' => User::class,
+        'notifiable_id' => $this->member1->id,
+        'data' => ['action' => 'assigned', 'task_id' => $this->task->id, 'event_id' => Str::uuid()],
+        'idempotency_key' => 'recent-key-'.Str::uuid(),
+        'created_at' => now()->subDays(30),
+    ]);
+
+    // Run the cleanup command
+    $this->artisan('notifications:cleanup-idempotency-keys', ['--days' => 90, '--force' => true])
+        ->expectsOutput('Found 1 notification(s) with idempotency keys older than 90 days.')
+        ->expectsOutput('Successfully cleared 1 idempotency key(s).')
+        ->assertExitCode(0);
+
+    // Verify old key was cleared
+    $oldNotification->refresh();
+    $this->assertNull($oldNotification->idempotency_key);
+
+    // Verify recent key was NOT cleared
+    $recentNotification->refresh();
+    $this->assertNotNull($recentNotification->idempotency_key);
+});
+
+test('idempotency key cleanup dry run does not delete', function () {
+    // Create a notification with an old idempotency key
+    $oldNotification = $this->member1->notifications()->create([
+        'id' => Str::uuid(),
+        'type' => TaskAssigned::class,
+        'notifiable_type' => User::class,
+        'notifiable_id' => $this->member1->id,
+        'data' => ['action' => 'assigned', 'task_id' => $this->task->id, 'event_id' => Str::uuid()],
+        'idempotency_key' => 'old-key-'.Str::uuid(),
+        'created_at' => now()->subDays(91),
+    ]);
+
+    // Run the cleanup command in dry-run mode
+    $this->artisan('notifications:cleanup-idempotency-keys', ['--days' => 90, '--dry-run' => true])
+        ->expectsOutput('Found 1 notification(s) with idempotency keys older than 90 days.')
+        ->expectsOutput('Dry run mode - no records will be deleted.')
+        ->assertExitCode(0);
+
+    // Verify key was NOT cleared
+    $oldNotification->refresh();
+    $this->assertNotNull($oldNotification->idempotency_key);
+});
+
+test('idempotency key cleanup handles no keys to clean', function () {
+    // Run the cleanup command when there are no old keys
+    $this->artisan('notifications:cleanup-idempotency-keys', ['--days' => 90])
+        ->expectsOutput('No idempotency keys to clean up.')
+        ->assertExitCode(0);
+});
+
+test('duplicate notification with same idempotency key is rejected', function () {
+    $sender = app(NotificationSender::class);
+    $eventId = Str::uuid()->toString();
+
+    // Send same notification twice with same event_id
+    $result1 = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => $eventId,
+    ]);
+
+    $result2 = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => $eventId,
+    ]);
+
+    $this->assertTrue($result1);
+    $this->assertFalse($result2);
+    $this->assertEquals(1, $this->member1->notifications()->where('type', TaskAssigned::class)->count());
+});
+
+test('different event_id creates new notification for task assigned', function () {
+    $sender = app(NotificationSender::class);
+
+    // Send with different event_ids - should create separate notifications
+    $result1 = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => Str::uuid()->toString(),
+    ]);
+
+    $result2 = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => Str::uuid()->toString(),
+    ]);
+
+    // Both should succeed because event_id is part of the idempotency key
+    $this->assertTrue($result1);
+    $this->assertTrue($result2);
+    $this->assertEquals(2, $this->member1->notifications()->where('type', TaskAssigned::class)->count());
+});
+
+// ===========================================
+// NOTIFICATION PREFERENCES ENFORCEMENT
+// ===========================================
+
+test('notification respects task_updates preference for TaskAssigned', function () {
+    $sender = app(NotificationSender::class);
+
+    // Disable task_updates preference
+    $this->member1->forceFill([
+        'notification_preferences' => ['task_updates' => false],
+    ])->save();
+
+    $result = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => Str::uuid()->toString(),
+    ]);
+
+    $this->assertFalse($result);
+    $this->assertEquals(0, $this->member1->notifications()->where('type', TaskAssigned::class)->count());
+});
+
+test('notification respects task_updates preference for TaskStatusChanged', function () {
+    $sender = app(NotificationSender::class);
+
+    // Disable task_updates preference
+    $this->member1->forceFill([
+        'notification_preferences' => ['task_updates' => false],
+    ])->save();
+
+    $result = $sender->send($this->member1, TaskStatusChanged::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'old_status' => 'todo',
+        'new_status' => 'in_progress',
+        'action' => 'status_changed',
+        'event_id' => Str::uuid()->toString(),
+    ]);
+
+    $this->assertFalse($result);
+    $this->assertEquals(0, $this->member1->notifications()->where('type', TaskStatusChanged::class)->count());
+});
+
+test('notification respects comments preference for TaskCommentAdded', function () {
+    $sender = app(NotificationSender::class);
+
+    // Disable comments preference
+    $this->member1->forceFill([
+        'notification_preferences' => ['comments' => false],
+    ])->save();
+
+    $result = $sender->send($this->member1, TaskCommentAdded::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'comment_id' => 123,
+        'comment_preview' => 'Test comment',
+        'author_name' => 'Author',
+        'action' => 'comment',
+    ]);
+
+    $this->assertFalse($result);
+    $this->assertEquals(0, $this->member1->notifications()->where('type', TaskCommentAdded::class)->count());
+});
+
+test('notification respects mentions preference for ProjectMemberAdded', function () {
+    $sender = app(NotificationSender::class);
+
+    // Disable mentions preference
+    $this->member1->forceFill([
+        'notification_preferences' => ['mentions' => false],
+    ])->save();
+
+    $result = $sender->send($this->member1, ProjectMemberAdded::class, [
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'role' => 'member',
+        'added_by_name' => 'PM',
+        'action' => 'project_member_added',
+    ]);
+
+    $this->assertFalse($result);
+    $this->assertEquals(0, $this->member1->notifications()->where('type', ProjectMemberAdded::class)->count());
+});
+
+test('notification sent when preference is enabled', function () {
+    $sender = app(NotificationSender::class);
+
+    // Explicitly enable task_updates preference
+    $this->member1->forceFill([
+        'notification_preferences' => ['task_updates' => true],
+    ])->save();
+
+    $result = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => Str::uuid()->toString(),
+    ]);
+
+    $this->assertTrue($result);
+    $this->assertEquals(1, $this->member1->notifications()->where('type', TaskAssigned::class)->count());
+});
+
+test('notification sent when user has no preferences set (defaults to enabled)', function () {
+    $sender = app(NotificationSender::class);
+
+    // User has no preferences set (null)
+    $this->member1->forceFill([
+        'notification_preferences' => null,
+    ])->save();
+
+    $result = $sender->send($this->member1, TaskAssigned::class, [
+        'task_id' => $this->task->id,
+        'task_title' => $this->task->title,
+        'project_id' => $this->project->id,
+        'project_name' => $this->project->name,
+        'action' => 'assigned',
+        'event_id' => Str::uuid()->toString(),
+    ]);
+
+    $this->assertTrue($result);
+    $this->assertEquals(1, $this->member1->notifications()->where('type', TaskAssigned::class)->count());
+});
+
+test('notification sent for unknown types (fail-open)', function () {
+    $sender = app(NotificationSender::class);
+
+    // Disable all known preferences
+    $this->member1->forceFill([
+        'notification_preferences' => [
+            'task_updates' => false,
+            'comments' => false,
+            'mentions' => false,
+            'deadline_reminders' => false,
+            'daily_digest' => false,
+            'sound' => false,
+        ],
+    ])->save();
+
+    // Send a notification type that has no preference mapping
+    $result = $sender->send($this->member1, 'UnknownNotificationType', [
+        'action' => 'unknown',
+    ]);
+
+    $this->assertTrue($result);
+    $this->assertEquals(1, $this->member1->notifications()->where('type', 'UnknownNotificationType')->count());
 });

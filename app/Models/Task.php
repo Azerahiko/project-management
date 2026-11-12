@@ -207,7 +207,7 @@ class Task extends Model
      */
     public function scopeSort($query, string $sortBy, string $direction = 'asc')
     {
-        $allowedSorts = ['title', 'status', 'priority', 'start_date', 'due_date', 'created_at', 'updated_at'];
+        $allowedSorts = ['title', 'status', 'priority', 'start_date', 'due_date', 'created_at', 'updated_at', 'deleted_at'];
 
         return $query->orderBy(
             in_array($sortBy, $allowedSorts, true) ? $sortBy : 'created_at',

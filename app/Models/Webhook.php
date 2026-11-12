@@ -41,6 +41,13 @@ use Illuminate\Support\Carbon;
 class Webhook extends Model
 {
     /**
+     * Never serialize the signing secret.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['secret'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

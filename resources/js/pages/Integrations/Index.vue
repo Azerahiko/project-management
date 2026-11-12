@@ -75,12 +75,14 @@ interface IntegrationStats {
 interface Props {
     tokens: TokenItem[];
     new_token: NewTokenData | null;
+    new_webhook_secret: string | null;
     base_url: string;
     available_scopes: Record<string, ScopeInfo>;
     endpoints_summary: EndpointSummary[];
     webhooks: WebhookItem[];
     webhook_events: Record<string, string>;
     can_manage_webhooks: boolean;
+    can_view_webhook_secrets: boolean;
     stats: IntegrationStats;
 }
 
@@ -281,7 +283,6 @@ const deleteWebhookModal = ref(false);
 const webhookToDelete = ref<WebhookItem | null>(null);
 const testingWebhookId = ref<number | null>(null);
 const togglingWebhookId = ref<number | null>(null);
-const revealedSecrets = ref<number[]>([]);
 
 const webhookForm = useForm({
     name: '',
@@ -436,12 +437,6 @@ function deleteWebhook(): void {
             },
         },
     );
-}
-
-function revealSecret(webhook: WebhookItem): void {
-    revealedSecrets.value = revealedSecrets.value.includes(webhook.id)
-        ? revealedSecrets.value.filter((id) => id !== webhook.id)
-        : [...revealedSecrets.value, webhook.id];
 }
 
 function deliveryTone(webhook: WebhookItem): string {
@@ -1018,6 +1013,80 @@ function curlForEndpoint(endpoint: EndpointSummary): string {
             </div>
         </div>
 
+        <!-- New webhook secret banner -->
+        <div
+            v-if="new_webhook_secret && can_view_webhook_secrets"
+            class="relative overflow-hidden rounded-3xl border border-emerald-300 bg-emerald-50/95 p-5 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40"
+        >
+            <div class="flex items-start gap-4">
+                <div
+                    class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-xs dark:bg-emerald-500"
+                >
+                    <component
+                        :is="getIcon('Check')"
+                        class="h-5 w-5 stroke-[2.5]"
+                    />
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2
+                            class="text-sm font-bold text-emerald-950 dark:text-emerald-100"
+                        >
+                            Webhook terdaftar
+                        </h2>
+                        <span
+                            class="rounded-full bg-emerald-200/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-800 dark:text-emerald-100"
+                        >
+                            Secret hanya ditampilkan sekali
+                        </span>
+                    </div>
+                    <p
+                        class="mt-1 text-xs text-emerald-800 dark:text-emerald-200"
+                    >
+                        Salin sekarang. Demi keamanan, secret tidak ditampilkan
+                        lagi setelah Anda meninggalkan halaman ini.
+                    </p>
+
+                    <div
+                        class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
+                    >
+                        <div
+                            class="flex-1 overflow-x-auto rounded-xl border border-emerald-200 bg-white/95 px-3.5 py-2 font-mono text-xs font-semibold text-emerald-950 select-all dark:border-emerald-800/80 dark:bg-surface-900 dark:text-emerald-300"
+                        >
+                            {{ new_webhook_secret }}
+                        </div>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            class="shrink-0 bg-white hover:bg-emerald-50 dark:bg-surface-800"
+                            @click="
+                                copyText(
+                                    new_webhook_secret,
+                                    'Webhook Secret',
+                                )
+                            "
+                        >
+                            <component
+                                :is="
+                                    getIcon(
+                                        copiedLabel === 'Webhook Secret'
+                                            ? 'Check'
+                                            : 'Copy',
+                                    )
+                                "
+                                class="h-3.5 w-3.5"
+                            />
+                            {{
+                                copiedLabel === 'Webhook Secret'
+                                    ? 'Tersalin'
+                                    : 'Salin Secret'
+                            }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Tabs -->
         <div class="border-b border-surface-200 dark:border-surface-800">
             <nav
@@ -1449,61 +1518,6 @@ function curlForEndpoint(endpoint: EndpointSummary): string {
                                         >Error terakhir:</strong
                                     >
                                     {{ webhook.last_delivery_error }}
-                                </div>
-
-                                <div
-                                    v-if="can_manage_webhooks && webhook.secret"
-                                    class="mt-3 rounded-xl border border-surface-200/80 bg-surface-50/60 p-3 dark:border-surface-800 dark:bg-surface-950/30"
-                                >
-                                    <div
-                                        class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-                                    >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="text-[10px] font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
-                                            >
-                                                Signing secret
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate font-mono text-[11px] text-surface-700 dark:text-surface-300"
-                                            >
-                                                {{
-                                                    revealedSecrets.includes(
-                                                        webhook.id,
-                                                    )
-                                                        ? webhook.secret
-                                                        : '••••••••••••••••••••••••••••••••'
-                                                }}
-                                            </p>
-                                        </div>
-                                        <div class="flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                class="rounded-lg border border-surface-200 bg-white px-2 py-1 text-[10px] font-semibold text-surface-600 transition hover:text-surface-900 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:text-surface-100"
-                                                @click="revealSecret(webhook)"
-                                            >
-                                                {{
-                                                    revealedSecrets.includes(
-                                                        webhook.id,
-                                                    )
-                                                        ? 'Sembunyikan'
-                                                        : 'Tampilkan'
-                                                }}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="rounded-lg border border-surface-200 bg-white px-2 py-1 text-[10px] font-semibold text-surface-600 transition hover:text-surface-900 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:text-surface-100"
-                                                @click="
-                                                    copyText(
-                                                        webhook.secret ?? '',
-                                                        `Secret ${webhook.name}`,
-                                                    )
-                                                "
-                                            >
-                                                Salin
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 

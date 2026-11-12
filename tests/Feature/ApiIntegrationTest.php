@@ -2,10 +2,13 @@
 
 require_once __DIR__.'/helpers.php';
 
+use App\Enums\ProjectRole;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Webhook;
+use App\Services\WebhookDispatcher;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
@@ -187,7 +190,7 @@ it('validates webhook urls and event names', function () {
     $this->assertDatabaseCount('webhooks', 0);
 });
 
-it('hides webhook secrets from users without role management permission', function () {
+it('hides webhook secrets from users without view secrets permission', function () {
     $admin = User::factory()->create(['is_active' => true]);
     $admin->assignRole('administrator');
 
@@ -203,22 +206,71 @@ it('hides webhook secrets from users without role management permission', functi
         'is_active' => true,
     ]);
 
+    // Member cannot view secrets (no WEBHOOKS_VIEW_SECRETS permission)
     $this->actingAs($member)
         ->get('/integrations')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Integrations/Index')
             ->where('can_manage_webhooks', false)
+            ->where('can_view_webhook_secrets', false)
             ->where('webhooks.data.0.id', $webhook->id)
             ->where('webhooks.data.0.secret', null)
         );
 
+    // Admin has WEBHOOKS_VIEW_SECRETS permission but secret is only shown once on create via flashed session
+    // On index page load, secret should be null (not exposed from database)
     $this->actingAs($admin)
         ->get('/integrations')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
+            ->component('Integrations/Index')
             ->where('can_manage_webhooks', true)
-            ->where('webhooks.data.0.secret', 'super-secret-value')
+            ->where('can_view_webhook_secrets', true)
+            ->where('webhooks.data.0.id', $webhook->id)
+            ->where('webhooks.data.0.secret', null)
+        );
+});
+
+it('shows webhook secret only once via flashed session on create', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    // Create webhook - secret should be flashed to session
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'New Hook',
+            'url' => 'https://example.test/hooks/new',
+            'events' => ['task.created'],
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success')
+        ->assertSessionHas('new_webhook_secret');
+
+    // Get the flashed secret from session
+    $secret = session('new_webhook_secret');
+    expect($secret)->toBeString()->toHaveLength(40);
+
+    // Follow redirect to index - secret should be available via flashed session
+    $this->actingAs($admin)
+        ->get('/integrations')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Integrations/Index')
+            ->where('can_view_webhook_secrets', true)
+            ->where('new_webhook_secret', $secret)
+            ->where('webhooks.data.0.secret', null) // DB secret still not exposed
+        );
+
+    // Second page load - secret should no longer be in session
+    $this->actingAs($admin)
+        ->get('/integrations')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Integrations/Index')
+            ->where('can_view_webhook_secrets', true)
+            ->where('new_webhook_secret', null)
+            ->where('webhooks.data.0.secret', null)
         );
 });
 
@@ -468,4 +520,527 @@ it('does not dispatch events to inactive or unsubscribed webhooks', function () 
         ->assertCreated();
 
     Http::assertNothingSent();
+});
+
+/* ------------------------------------------------------------------ */
+/* SSRF Protection Tests */
+/* ------------------------------------------------------------------ */
+
+it('allows public HTTPS URL for webhook', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Public Webhook',
+            'url' => 'https://example.test/hooks/public',
+            'events' => ['task.created'],
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+});
+
+it('rejects localhost URL', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Localhost Hook',
+            'url' => 'http://localhost:8080/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects loopback IP address', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Loopback Hook',
+            'url' => 'http://127.0.0.1:8080/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects IPv6 loopback', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'IPv6 Loopback Hook',
+            'url' => 'http://[::1]:8080/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects private IPv4 10.0.0.0/8', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Private 10 Hook',
+            'url' => 'http://10.0.0.1/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects private IPv4 172.16.0.0/12', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Private 172 Hook',
+            'url' => 'http://172.16.0.1/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects private IPv4 192.168.0.0/16', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Private 192 Hook',
+            'url' => 'http://192.168.1.1/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects link-local 169.254.0.0/16', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Link Local Hook',
+            'url' => 'http://169.254.169.254/latest/meta-data/',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects carrier-grade NAT 100.64.0.0/10', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'CGNAT Hook',
+            'url' => 'http://100.64.0.1/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects multicast IPv4', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Multicast Hook',
+            'url' => 'http://224.0.0.1/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects reserved IPv4', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Reserved Hook',
+            'url' => 'http://240.0.0.1/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects broadcast address', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Broadcast Hook',
+            'url' => 'http://255.255.255.255/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects zero network 0.0.0.0/8', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Zero Network Hook',
+            'url' => 'http://0.0.0.0/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects IPv6 unique local fc00::/7', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'IPv6 ULA Hook',
+            'url' => 'http://[fc00::1]/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects IPv6 link-local fe80::/10', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'IPv6 Link Local Hook',
+            'url' => 'http://[fe80::1]/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects IPv6 multicast ff00::/8', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'IPv6 Multicast Hook',
+            'url' => 'http://[ff00::1]/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects AWS metadata endpoint 169.254.169.254', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'AWS Metadata Hook',
+            'url' => 'http://169.254.169.254/latest/meta-data/iam/security-credentials/',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('rejects internal service ports', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Internal Port Hook',
+            'url' => 'https://example.test:3306/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertSessionHasErrors(['url' => 'URL tujuan tidak diizinkan karena alasan keamanan.']);
+});
+
+it('validates URL at delivery time to prevent DNS rebinding', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    // Create webhook with initially safe URL
+    $webhook = Webhook::query()->create([
+        'user_id' => $admin->id,
+        'name' => 'Safe Hook',
+        'url' => 'https://example.test/hooks/safe',
+        'secret' => 'test-secret',
+        'events' => ['task.created'],
+        'is_active' => true,
+    ]);
+
+    // Update to dangerous URL (simulating DNS rebinding)
+    $webhook->update(['url' => 'http://169.254.169.254/latest/meta-data/']);
+
+    Http::fake([
+        'example.test/*' => Http::response(['ok' => true], 200),
+    ]);
+
+    // Dispatch should be blocked at delivery time
+    $dispatcher = app(WebhookDispatcher::class);
+    $result = $dispatcher->sendSync($webhook, 'task.created', ['test' => 'data']);
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['error'])->toBe('URL tujuan tidak diizinkan karena alasan keamanan.');
+});
+
+it('blocks DeliverWebhook job for internal IP', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    // Create webhook with dangerous URL
+    $webhook = Webhook::query()->create([
+        'user_id' => $admin->id,
+        'name' => 'Dangerous Hook',
+        'url' => 'http://10.0.0.1/webhook',
+        'secret' => 'test-secret',
+        'events' => ['task.created'],
+        'is_active' => true,
+    ]);
+
+    Http::fake([
+        '10.0.0.1/*' => Http::response(['ok' => true], 200),
+    ]);
+
+    // Dispatch job should be blocked
+    $dispatcher = app(WebhookDispatcher::class);
+    $dispatcher->dispatch('task.created', ['test' => 'data']);
+
+    // Give job time to process
+    $this->assertDatabaseHas('webhook_deliveries', [
+        'webhook_id' => $webhook->id,
+        'status' => 'permanently_failed',
+        'error' => 'URL tujuan tidak diizinkan karena alasan keamanan.',
+    ]);
+});
+
+it('handles DNS resolution failure gracefully', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    // In testing environment, unknown domains fall back to example.com IP (safe)
+    // So this actually passes validation - the protection is in production DNS resolution
+    $this->actingAs($admin)
+        ->post('/integrations/webhooks', [
+            'name' => 'Non-existent Hook',
+            'url' => 'https://this-domain-does-not-exist-12345.invalid/webhook',
+            'events' => ['task.created'],
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+});
+
+/* ------------------------------------------------------------------ */
+/* Sanctum Token Scope Enforcement Tests */
+/* ------------------------------------------------------------------ */
+
+it('allows token with tasks:write scope to create task via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $project = Project::factory()->create(['owner_id' => $admin->id]);
+    ProjectMember::create(['project_id' => $project->id, 'user_id' => $admin->id, 'role' => ProjectRole::OWNER]);
+
+    $token = $admin->createToken('Test Token', ['tasks:write', 'projects:read'])->plainTextToken;
+
+    Http::fake();
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->postJson('/api/tasks', [
+            'project_id' => $project->id,
+            'title' => 'Task via Token',
+            'status' => 'todo',
+            'priority' => 'medium',
+        ]);
+
+    $response->assertCreated();
+});
+
+it('denies token with only tasks:read scope from creating task via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $project = Project::factory()->create(['owner_id' => $admin->id]);
+    ProjectMember::create(['project_id' => $project->id, 'user_id' => $admin->id, 'role' => ProjectRole::OWNER]);
+
+    $token = $admin->createToken('Test Token', ['tasks:read', 'projects:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->postJson('/api/tasks', [
+            'project_id' => $project->id,
+            'title' => 'Task via Token',
+            'status' => 'todo',
+            'priority' => 'medium',
+        ]);
+
+    $response->assertForbidden()
+        ->assertJsonFragment(['required_scope' => 'tasks:write']);
+});
+
+it('allows token with tasks:read scope to list tasks via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $project = Project::factory()->create(['owner_id' => $admin->id]);
+    ProjectMember::create(['project_id' => $project->id, 'user_id' => $admin->id, 'role' => ProjectRole::OWNER]);
+    Task::factory()->forProject($project)->create(['creator_id' => $admin->id]);
+
+    $token = $admin->createToken('Test Token', ['tasks:read', 'projects:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/tasks');
+
+    $response->assertOk();
+});
+
+it('denies token without tasks:read scope from listing tasks via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['projects:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/tasks');
+
+    $response->assertForbidden()
+        ->assertJsonFragment(['required_scope' => 'tasks:read']);
+});
+
+it('allows token with projects:write scope to create project via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['projects:write'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->postJson('/api/projects', [
+            'name' => 'Token Project',
+            'description' => 'Created via token',
+            'status' => 'active',
+            'priority' => 'high',
+        ]);
+
+    $response->assertCreated();
+});
+
+it('denies token with only projects:read scope from creating project via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['projects:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->postJson('/api/projects', [
+            'name' => 'Token Project',
+            'description' => 'Created via token',
+            'status' => 'active',
+            'priority' => 'high',
+        ]);
+
+    $response->assertForbidden()
+        ->assertJsonFragment(['required_scope' => 'projects:write']);
+});
+
+it('allows token with users:read scope to list users via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['users:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/users');
+
+    $response->assertOk();
+});
+
+it('denies token without users:read scope from listing users via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['tasks:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/users');
+
+    $response->assertForbidden()
+        ->assertJsonFragment(['required_scope' => 'users:read']);
+});
+
+it('allows token with notifications:read scope to list notifications via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['notifications:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/notifications');
+
+    $response->assertOk();
+});
+
+it('denies token without notifications:read scope from listing notifications via API', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $token = $admin->createToken('Test Token', ['tasks:read'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/notifications');
+
+    $response->assertForbidden()
+        ->assertJsonFragment(['required_scope' => 'notifications:read']);
+});
+
+it('allows token with * scope to access all endpoints', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $project = Project::factory()->create(['owner_id' => $admin->id]);
+    ProjectMember::create(['project_id' => $project->id, 'user_id' => $admin->id, 'role' => ProjectRole::OWNER]);
+
+    $token = $admin->createToken('Test Token', ['*'])->plainTextToken;
+
+    $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->postJson('/api/tasks', [
+            'project_id' => $project->id,
+            'title' => 'Task via Wildcard Token',
+            'status' => 'todo',
+            'priority' => 'medium',
+        ]);
+
+    $response->assertCreated();
+
+    $response2 = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/tasks');
+
+    $response2->assertOk();
+
+    $response3 = $this->withHeader('Authorization', 'Bearer '.$token)
+        ->getJson('/api/users');
+
+    $response3->assertOk();
+});
+
+it('web session requests bypass token scope checks', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $project = Project::factory()->create(['owner_id' => $admin->id]);
+    ProjectMember::create(['project_id' => $project->id, 'user_id' => $admin->id, 'role' => ProjectRole::OWNER]);
+
+    // Using session authentication (no token)
+    $this->actingAs($admin)
+        ->postJson('/api/tasks', [
+            'project_id' => $project->id,
+            'title' => 'Task via Session',
+            'status' => 'todo',
+            'priority' => 'medium',
+        ])
+        ->assertCreated();
 });

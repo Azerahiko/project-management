@@ -48,7 +48,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection<int, ProjectMember> $projectMemberships
  * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at', 'activation_code_hash', 'activation_code_expires_at', 'activation_code_attempts'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'timezone', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at', 'activation_code_hash', 'activation_code_expires_at', 'activation_code_attempts'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -67,6 +67,7 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'is_active' => 'boolean',
             'notification_preferences' => 'array',
+            'timezone' => 'string',
             'onboarding_password_changed_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
@@ -102,6 +103,78 @@ class User extends Authenticatable implements PasskeyUser
             self::defaultNotificationPreferences(),
             $this->notification_preferences ?? [],
         );
+    }
+
+    /**
+     * Get the user's timezone.
+     */
+    public function getTimezone(): string
+    {
+        return $this->timezone ?? config('app.timezone', 'UTC');
+    }
+
+    /**
+     * Get the user's timezone as a DateTimeZone object.
+     */
+    public function getTimezoneObject(): \DateTimeZone
+    {
+        return new \DateTimeZone($this->getTimezone());
+    }
+
+    /**
+     * Get the user's current time.
+     */
+    public function now(): \Carbon\Carbon
+    {
+        return \Carbon\Carbon::now($this->getTimezoneObject());
+    }
+
+    /**
+     * Get start of day in user's timezone.
+     */
+    public function startOfDay(): \Carbon\Carbon
+    {
+        return $this->now()->copy()->startOfDay();
+    }
+
+    /**
+     * Get end of day in user's timezone.
+     */
+    public function endOfDay(): \Carbon\Carbon
+    {
+        return $this->now()->copy()->endOfDay();
+    }
+
+    /**
+     * Get start of week in user's timezone.
+     */
+    public function startOfWeek(): \Carbon\Carbon
+    {
+        return $this->now()->copy()->startOfWeek();
+    }
+
+    /**
+     * Get end of week in user's timezone.
+     */
+    public function endOfWeek(): \Carbon\Carbon
+    {
+        return $this->now()->copy()->endOfWeek();
+    }
+
+    /**
+     * Get start of month in user's timezone.
+     */
+    public function startOfMonth(): \Carbon\Carbon
+    {
+        return $this->now()->copy()->startOfMonth();
+    }
+
+    /**
+     * Get end of month in user's timezone.
+     */
+    public function endOfMonth(): \Carbon\Carbon
+    {
+        return $this->now()->copy()->endOfMonth();
     }
 
     /**

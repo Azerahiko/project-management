@@ -1,5 +1,6 @@
 <?php
 
+use App\Mail\InvitationCreated;
 use App\Models\Invitation;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
@@ -123,7 +124,7 @@ describe('User Management RBAC', function () {
                 ])
                 ->assertCreated();
 
-            Mail::assertSent(App\Mail\InvitationCreated::class, function ($mail) {
+            Mail::assertSent(InvitationCreated::class, function ($mail) {
                 return $mail->temporaryPassword === 'TemporaryPass123!';
             });
         });
@@ -140,7 +141,7 @@ describe('User Management RBAC', function () {
                 ])
                 ->assertCreated();
 
-            Mail::assertSent(App\Mail\InvitationCreated::class, function ($mail) {
+            Mail::assertSent(InvitationCreated::class, function ($mail) {
                 return $mail->token !== null && $mail->invitation !== null;
             });
         });

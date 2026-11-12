@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Services\WebhookDispatcher;
+use App\Services\WebhookUrlValidator;
 use App\Support\Permissions;
 use App\Support\WebhookEvents;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,10 +13,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class ApiIntegrationController extends Controller
@@ -58,6 +63,8 @@ class ApiIntegrationController extends Controller
             ->withQueryString();
 
         $canManageWebhooks = $user->can(Permissions::ROLES_MANAGE);
+        $canViewWebhookSecrets = $user->can(Permissions::WEBHOOKS_VIEW_SECRETS);
+        $flashedSecret = $canViewWebhookSecrets ? $request->session()->get('new_webhook_secret') : null;
 
         $activeTokens = $tokenData->reject(fn (array $token): bool => $token['is_expired']);
         $webhooks = $webhooksPaginator->getCollection();
@@ -68,6 +75,7 @@ class ApiIntegrationController extends Controller
         return Inertia::render('Integrations/Index', [
             'tokens' => $tokenData,
             'new_token' => $request->session()->get('new_token'),
+            'new_webhook_secret' => $flashedSecret,
             'base_url' => $request->getSchemeAndHttpHost().'/api',
             'available_scopes' => [
                 '*' => [
@@ -94,13 +102,21 @@ class ApiIntegrationController extends Controller
                     'label' => 'Lihat Pengguna & Tim',
                     'description' => 'Membaca daftar nama, email, dan peran anggota tim.',
                 ],
+                'users:write' => [
+                    'label' => 'Kelola Pengguna',
+                    'description' => 'Membuat, memperbarui, dan menghapus pengguna serta mengundang anggota baru.',
+                ],
+                'notifications:read' => [
+                    'label' => 'Lihat Notifikasi',
+                    'description' => 'Membaca dan menandai notifikasi sebagai sudah dibaca.',
+                ],
             ],
             'endpoints_summary' => $this->endpointSummaries(),
             'webhooks' => $webhooksPaginator->through(fn (Webhook $webhook): array => [
                 'id' => $webhook->id,
                 'name' => $webhook->name,
                 'url' => $webhook->url,
-                'secret' => $canManageWebhooks ? $webhook->secret : null,
+                'secret' => null, // Secret only shown once via flashed session on create
                 'events' => $webhook->events ?? [],
                 'is_active' => $webhook->is_active,
                 'last_delivery_status' => $webhook->last_delivery_status,
@@ -114,6 +130,7 @@ class ApiIntegrationController extends Controller
             ]),
             'webhook_events' => WebhookEvents::all(),
             'can_manage_webhooks' => $canManageWebhooks,
+            'can_view_webhook_secrets' => $canViewWebhookSecrets,
             'stats' => [
                 'tokens_count' => $tokens->count(),
                 'active_tokens_count' => $activeTokens->count(),
@@ -238,8 +255,10 @@ class ApiIntegrationController extends Controller
             'projects:read' => [Permissions::PROJECTS_VIEW],
             'projects:write' => [Permissions::PROJECTS_CREATE, Permissions::PROJECTS_UPDATE, Permissions::PROJECTS_DELETE],
             'tasks:read' => [Permissions::TASKS_VIEW],
-            'tasks:write' => [Permissions::TASKS_VIEW], // tasks.view covers create/update/delete via policy
+            'tasks:write' => [Permissions::TASKS_CREATE, Permissions::TASKS_UPDATE, Permissions::TASKS_DELETE],
             'users:read' => [Permissions::USERS_VIEW],
+            'users:write' => [Permissions::USERS_CREATE, Permissions::USERS_UPDATE, Permissions::USERS_DELETE],
+            'notifications:read' => [Permissions::NOTIFICATIONS_VIEW],
         ];
     }
 
@@ -265,20 +284,27 @@ class ApiIntegrationController extends Controller
      */
     public function storeWebhook(Request $request): RedirectResponse
     {
+        Log::info('storeWebhook called', ['url' => $request->input('url')]);
+
         $this->authorizeWebhookManagement($request);
 
         $validated = $this->validateWebhook($request);
+
+        $secret = Str::random(40);
 
         Webhook::query()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
             'url' => $validated['url'],
             'events' => $validated['events'],
-            'secret' => Str::random(40),
+            'secret' => $secret,
             'is_active' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Webhook berhasil didaftarkan.');
+        return redirect()->back()->with([
+            'success' => 'Webhook berhasil didaftarkan.',
+            'new_webhook_secret' => $secret,
+        ]);
     }
 
     /**
@@ -363,7 +389,9 @@ class ApiIntegrationController extends Controller
      */
     private function validateWebhook(Request $request): array
     {
-        return $request->validate([
+        Log::info('validateWebhook called', ['url' => $request->input('url')]);
+
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'url' => ['required', 'string', 'url:http,https', 'max:2048'],
             'events' => ['required', 'array', 'min:1'],
@@ -377,6 +405,24 @@ class ApiIntegrationController extends Controller
             'events.min' => 'Pilih minimal satu event webhook.',
             'events.*.in' => 'Pilihan event webhook tidak valid.',
         ]);
+
+        Log::info('Initial validation passed', ['url' => $validated['url']]);
+
+        // SSRF protection: validate URL at creation/update time
+        try {
+            WebhookUrlValidator::validate($validated['url']);
+        } catch (InvalidArgumentException $e) {
+            // Add error to validator and throw
+            Log::info('SSRF validation failed', [
+                'url' => $validated['url'],
+                'error' => $e->getMessage(),
+            ]);
+            $validator = Validator::make($validated, []);
+            $validator->errors()->add('url', $e->getMessage());
+            throw new ValidationException($validator);
+        }
+
+        return $validated;
     }
 
     /**

@@ -64,10 +64,10 @@ it('forbids members from creating announcements', function () {
 });
 
 it('allows project managers to pin and delete announcements', function () {
-    [$admin, $pm] = createTestUsers();
+    [, $pm] = createTestUsers();
 
     $announcement = Announcement::factory()->create([
-        'user_id' => $admin->id,
+        'user_id' => $pm->id,
         'is_pinned' => false,
     ]);
 

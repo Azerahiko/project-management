@@ -20,9 +20,15 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $userTimezone = $user->getTimezoneObject();
 
         $accessibleProjects = Project::accessibleBy($user);
         $accessibleTasks = Task::accessibleBy($user);
+
+        // Get today/week boundaries in user's timezone
+        $today = Carbon::now($userTimezone)->startOfDay();
+        $startOfWeek = Carbon::now($userTimezone)->startOfWeek();
+        $endOfWeek = Carbon::now($userTimezone)->endOfWeek();
 
         // Single aggregate query for all task statistics
         $taskStats = (clone $accessibleTasks)
@@ -37,9 +43,9 @@ class DashboardController extends Controller
                 SUM(CASE WHEN status != 'done' AND due_date BETWEEN ? AND ? THEN 1 ELSE 0 END) as due_this_week_count
             ", [
                 $user->id,
-                now()->toDateString(),
-                now()->startOfWeek()->toDateString(),
-                now()->endOfWeek()->toDateString(),
+                $today->toDateString(),
+                $startOfWeek->toDateString(),
+                $endOfWeek->toDateString(),
             ])
             ->first();
 
@@ -70,7 +76,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($task) => array_merge(
                 TaskResource::make($task)->resolve($request),
-                ['deadline_urgency' => $this->getDeadlineUrgency($task->due_date)]
+                ['deadline_urgency' => $this->getDeadlineUrgency($task->due_date, $userTimezone)]
             ));
 
         // Recent activities (10 latest, filtered by accessible projects)
@@ -150,19 +156,20 @@ class DashboardController extends Controller
             'upcoming_deadlines' => $upcomingDeadlines,
             'recent_activities' => $recentActivities,
             'project_progress' => $projectProgress,
+            'userTimezone' => $user->getTimezone(),
         ]);
     }
 
-    private function getDeadlineUrgency(?string $dueDate): string
+    private function getDeadlineUrgency(?string $dueDate, \DateTimeZone $timezone): string
     {
         if (! $dueDate) {
             return 'normal';
         }
 
-        $carbon = Carbon::parse($dueDate);
+        $carbon = Carbon::parse($dueDate, $timezone);
 
         // due_date is cast to 'date' (not datetime), so compare dates
-        $today = now()->startOfDay();
+        $today = Carbon::now($timezone)->startOfDay();
         $dueDateStart = $carbon->copy()->startOfDay();
 
         if ($dueDateStart->lt($today)) {

@@ -22,6 +22,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Password Minimum Length
+    |--------------------------------------------------------------------------
+    |
+    | Single source of truth for password length, used by the Password rule
+    | defaults and by the frontend hints so both always agree.
+    |
+    */
+
+    'password_min_length' => (int) env(
+        'AUTH_PASSWORD_MIN_LENGTH',
+        env('APP_ENV') === 'production' ? 12 : 8
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Authentication Guards
     |--------------------------------------------------------------------------
     |

@@ -21,6 +21,22 @@ defineOptions({
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
+const userTimezone = computed(
+    () => (page.props.userTimezone as string) ?? 'UTC',
+);
+
+function todayInUserTimezone(): Date {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: userTimezone.value,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    const get = (type: string): number =>
+        Number(parts.find((part) => part.type === type)?.value);
+
+    return new Date(Date.UTC(get('year'), get('month') - 1, get('day')));
+}
 const stats = computed(() => page.props.stats as DashboardStats | undefined);
 const tasksByStatus = computed(
     () =>
@@ -70,6 +86,7 @@ const focusMetrics = computed<FocusMetrics>(() => {
 // Formatted Date & Time Labels
 const currentMonthLabel = computed(() => {
     return new Date().toLocaleDateString('id-ID', {
+        timeZone: userTimezone.value,
         month: 'long',
         year: 'numeric',
     });
@@ -77,6 +94,7 @@ const currentMonthLabel = computed(() => {
 
 const currentDateFormatted = computed(() => {
     return new Date().toLocaleDateString('id-ID', {
+        timeZone: userTimezone.value,
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -85,7 +103,14 @@ const currentDateFormatted = computed(() => {
 });
 
 const greetingTime = computed(() => {
-    const hour = new Date().getHours();
+    const hour = Number(
+        new Intl.DateTimeFormat('en-GB', {
+            timeZone: userTimezone.value,
+            hour: '2-digit',
+            hour12: false,
+        }).format(new Date()),
+    );
+
     if (hour < 11) return 'Selamat Pagi';
     if (hour < 15) return 'Selamat Siang';
     if (hour < 18) return 'Selamat Sore';
@@ -259,22 +284,22 @@ const pipelineTrendData = computed(() => {
 
 // Dynamic 7-day current week calendar
 const currentWeekDays = computed(() => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
+    const today = todayInUserTimezone();
+    const dayOfWeek = today.getUTCDay();
     const distanceToMonday = (dayOfWeek + 6) % 7;
     const monday = new Date(today);
-    monday.setDate(today.getDate() - distanceToMonday);
+    monday.setUTCDate(today.getUTCDate() - distanceToMonday);
 
     const days = [];
     const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
     for (let i = 0; i < 7; i++) {
         const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
+        d.setUTCDate(monday.getUTCDate() + i);
         days.push({
             name: dayNames[i],
-            date: d.getDate(),
-            isToday: d.toDateString() === today.toDateString(),
+            date: d.getUTCDate(),
+            isToday: d.getTime() === today.getTime(),
         });
     }
     return days;

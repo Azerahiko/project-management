@@ -75,7 +75,7 @@ jobs:
           DB_PASSWORD: 0501
 
       - name: Run tests
-        run: php artisan test --parallel
+        run: PEST_PARALLEL=false php artisan test
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1

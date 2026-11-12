@@ -204,6 +204,14 @@ export type ProjectFilters = {
     per_page: number;
 };
 
+export type TaskCommentFilters = {
+    search: string;
+    sort_by: string;
+    sort_direction: 'asc' | 'desc';
+    page: number;
+    per_page: number;
+};
+
 export type PageProps = {
     name: string;
     app: {

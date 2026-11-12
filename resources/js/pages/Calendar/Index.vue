@@ -19,7 +19,8 @@ interface CalendarTask {
     priority: string;
     priority_label: string;
     priority_color: string;
-    due_date: string;
+    due_date: string | null;
+    start_date: string | null;
     project_name: string;
     assignee: {
         id: number;
@@ -44,32 +45,47 @@ interface WeekDay {
 }
 
 const page = usePage();
+const userTimezone = (page.props.userTimezone as string) ?? 'UTC';
+
+// Get current date in user's timezone using Intl.DateTimeFormat
 const now = new Date();
+const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+});
+const nowParts = formatter.formatToParts(now);
+const todayYear = Number(nowParts.find(p => p.type === 'year')?.value);
+const todayMonth = Number(nowParts.find(p => p.type === 'month')?.value);
+const todayDay = Number(nowParts.find(p => p.type === 'day')?.value);
+
 const month =
     (page.props.month as string) ??
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    `${todayYear}-${String(todayMonth).padStart(2, '0')}`;
 const allTasks = computed(() => (page.props.tasks as CalendarTask[]) ?? []);
 const canViewTasks = computed(() => Boolean(page.props.can_view_tasks));
 
 const [year, monthNum] = month.split('-').map(Number);
-const firstOfMonth = new Date(year, monthNum - 1, 1);
-const lastOfMonth = new Date(year, monthNum, 0);
+const firstOfMonth = new Date(Date.UTC(year, monthNum - 1, 1));
+const lastOfMonth = new Date(Date.UTC(year, monthNum, 0));
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+const today = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay));
 
 function pad(value: number): string {
     return String(value).padStart(2, '0');
 }
 
 function toDateKey(date: Date): string {
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    // date is in UTC representing user's timezone date
+    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
 const todayKey = toDateKey(today);
 
 const monthLabel = computed(() =>
-    firstOfMonth.toLocaleDateString('id-ID', {
+    // firstOfMonth is in UTC, format for display
+    new Date(Date.UTC(firstOfMonth.getUTCFullYear(), firstOfMonth.getUTCMonth(), 1)).toLocaleDateString('id-ID', {
         month: 'long',
         year: 'numeric',
     }),
@@ -84,8 +100,8 @@ const selectedDate = ref(
 const selectedPriority = ref('all');
 
 function shiftMonth(offset: number): string {
-    const shifted = new Date(year, monthNum - 1 + offset, 1);
-    return `${shifted.getFullYear()}-${pad(shifted.getMonth() + 1)}`;
+    const shifted = new Date(Date.UTC(year, monthNum - 1 + offset, 1));
+    return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}`;
 }
 
 const prevMonth = computed(() => shiftMonth(-1));
@@ -96,10 +112,17 @@ const filteredTasks = computed(() => {
     return allTasks.value.filter((t) => t.priority === selectedPriority.value);
 });
 
+// Tasks that only have a start_date still need a day to sit on.
+function taskDate(task: CalendarTask): string {
+    return task.due_date ?? task.start_date ?? '';
+}
+
 const tasksByDate = computed(() => {
     const map: Record<string, CalendarTask[]> = {};
     for (const task of filteredTasks.value) {
-        (map[task.due_date] ??= []).push(task);
+        const date = taskDate(task);
+        if (!date) continue;
+        (map[date] ??= []).push(task);
     }
     return map;
 });
@@ -109,7 +132,9 @@ const selectedDateTasks = computed(() => {
 });
 
 const selectedDateLabel = computed(() => {
-    return new Date(selectedDate.value + 'T00:00:00').toLocaleDateString(
+    const [y, m, d] = selectedDate.value.split('-').map(Number);
+    const utcDate = new Date(Date.UTC(y, m - 1, d));
+    return utcDate.toLocaleDateString(
         'id-ID',
         {
             weekday: 'long',
@@ -122,16 +147,20 @@ const selectedDateLabel = computed(() => {
 
 // If selected date has no tasks, find nearest tasks in the month to avoid blank wasted space!
 const nearestTasks = computed(() => {
-    const target = selectedDate.value;
+    // Parse selectedDate as UTC (YYYY-MM-DD format)
+    const [sy, sm, sd] = selectedDate.value.split('-').map(Number);
+    const target = Date.UTC(sy, sm - 1, sd);
     return allTasks.value
         .slice()
         .sort((a, b) => {
-            const diffA = Math.abs(
-                new Date(a.due_date).getTime() - new Date(target).getTime(),
-            );
-            const diffB = Math.abs(
-                new Date(b.due_date).getTime() - new Date(target).getTime(),
-            );
+            const dateA = taskDate(a);
+            const dateB = taskDate(b);
+            const [ay, am, ad] = dateA.split('-').map(Number);
+            const [by, bm, bd] = dateB.split('-').map(Number);
+            const timeA = Date.UTC(ay, am - 1, ad);
+            const timeB = Date.UTC(by, bm - 1, bd);
+            const diffA = Math.abs(timeA - target);
+            const diffB = Math.abs(timeB - target);
             return diffA - diffB;
         })
         .slice(0, 4);
@@ -139,44 +168,46 @@ const nearestTasks = computed(() => {
 
 const days = computed<DayCell[]>(() => {
     const cells: DayCell[] = [];
-    const leading = (firstOfMonth.getDay() + 6) % 7; // Start Monday
-    const daysInMonth = lastOfMonth.getDate();
-    const prevMonthDays = new Date(year, monthNum - 1, 0).getDate();
+    // firstOfMonth and lastOfMonth are UTC dates representing user's timezone dates
+    const leading = (firstOfMonth.getUTCDay() + 6) % 7; // Start Monday (0=Sun, 1=Mon, etc.)
+    const daysInMonth = lastOfMonth.getUTCDate();
+    const prevMonthLastDay = new Date(Date.UTC(year, monthNum - 1, 0));
+    const prevMonthDays = prevMonthLastDay.getUTCDate();
 
     for (let i = leading; i > 0; i--) {
-        const date = new Date(year, monthNum - 2, prevMonthDays - i + 1);
+        const date = new Date(Date.UTC(year, monthNum - 2, prevMonthDays - i + 1));
         cells.push({
-            date: date.getDate(),
+            date: date.getUTCDate(),
             iso: toDateKey(date),
             isCurrentMonth: false,
             isToday: false,
-            isWeekend: date.getDay() === 0 || date.getDay() === 6,
+            isWeekend: date.getUTCDay() === 0 || date.getUTCDay() === 6,
             tasks: [],
         });
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
-        const date = new Date(year, monthNum - 1, d);
+        const date = new Date(Date.UTC(year, monthNum - 1, d));
         const iso = toDateKey(date);
         cells.push({
             date: d,
             iso,
             isCurrentMonth: true,
             isToday: iso === todayKey,
-            isWeekend: date.getDay() === 0 || date.getDay() === 6,
+            isWeekend: date.getUTCDay() === 0 || date.getUTCDay() === 6,
             tasks: tasksByDate.value[iso] ?? [],
         });
     }
 
     const remainder = (7 - (cells.length % 7)) % 7;
     for (let d = 1; d <= remainder; d++) {
-        const date = new Date(year, monthNum, d);
+        const date = new Date(Date.UTC(year, monthNum, d));
         cells.push({
             date: d,
             iso: toDateKey(date),
             isCurrentMonth: false,
             isToday: false,
-            isWeekend: date.getDay() === 0 || date.getDay() === 6,
+            isWeekend: date.getUTCDay() === 0 || date.getUTCDay() === 6,
             tasks: [],
         });
     }
@@ -207,7 +238,10 @@ const highPriorityTasks = computed(
 const overdueTasks = computed(
     () =>
         allTasks.value.filter(
-            (task) => task.status !== 'done' && task.due_date < todayKey,
+            (task) =>
+                task.status !== 'done' &&
+                task.due_date !== null &&
+                task.due_date < todayKey,
         ).length,
 );
 const completionRate = computed(() =>
@@ -231,6 +265,9 @@ const projectDeadlinesSummary = computed<ProjectDeadlineSummary[]>(() => {
     const map = new Map<string, ProjectDeadlineSummary>();
 
     for (const task of allTasks.value) {
+        const date = taskDate(task);
+        if (!date) continue;
+
         const name = task.project_name || 'Proyek Tanpa Nama';
         if (!map.has(name)) {
             map.set(name, {
@@ -238,8 +275,8 @@ const projectDeadlinesSummary = computed<ProjectDeadlineSummary[]>(() => {
                 totalTasks: 0,
                 completedTasks: 0,
                 completionRate: 0,
-                earliestDue: task.due_date,
-                latestDue: task.due_date,
+                earliestDue: date,
+                latestDue: date,
                 urgentCount: 0,
                 highCount: 0,
             });
@@ -249,8 +286,8 @@ const projectDeadlinesSummary = computed<ProjectDeadlineSummary[]>(() => {
         if (task.status === 'done') item.completedTasks++;
         if (task.priority === 'urgent') item.urgentCount++;
         if (task.priority === 'high') item.highCount++;
-        if (task.due_date < item.earliestDue) item.earliestDue = task.due_date;
-        if (task.due_date > item.latestDue) item.latestDue = task.due_date;
+        if (date < item.earliestDue) item.earliestDue = date;
+        if (date > item.latestDue) item.latestDue = date;
     }
 
     for (const item of map.values()) {
@@ -267,34 +304,39 @@ const projectDeadlinesSummary = computed<ProjectDeadlineSummary[]>(() => {
 const agendaTasks = computed(() => {
     const sorted = allTasks.value
         .slice()
-        .sort((a, b) => a.due_date.localeCompare(b.due_date));
+        .sort((a, b) => taskDate(a).localeCompare(taskDate(b)));
 
     if (!isCurrentMonth.value) {
         return sorted.slice(0, 8);
     }
 
-    const upcoming = sorted.filter((task) => task.due_date >= todayKey);
+    const upcoming = sorted.filter((task) => taskDate(task) >= todayKey);
     return (upcoming.length > 0 ? upcoming : sorted).slice(0, 8);
 });
 
 // Grouped by date for Agenda View
 const agendaDays = computed(() => {
     const dates = Object.keys(tasksByDate.value).sort();
-    return dates.map((date) => ({
-        date,
-        formattedDate: new Date(date + 'T00:00:00').toLocaleDateString(
-            'id-ID',
-            {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-            },
-        ),
-        isToday: date === todayKey,
-        isPast: date < todayKey,
-        tasks: tasksByDate.value[date] ?? [],
-    }));
+    return dates.map((date) => {
+        // Parse date as UTC for consistent formatting
+        const [y, m, d] = date.split('-').map(Number);
+        const utcDate = new Date(Date.UTC(y, m - 1, d));
+        return {
+            date,
+            formattedDate: utcDate.toLocaleDateString(
+                'id-ID',
+                {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                },
+            ),
+            isToday: date === todayKey,
+            isPast: date < todayKey,
+            tasks: tasksByDate.value[date] ?? [],
+        };
+    });
 });
 
 const priorityPills = [
@@ -325,7 +367,9 @@ function selectDate(cell: DayCell): void {
 }
 
 function formatDate(value: string): string {
-    return new Date(value + 'T00:00:00').toLocaleDateString('id-ID', {
+    const [y, m, d] = value.split('-').map(Number);
+    const utcDate = new Date(Date.UTC(y, m - 1, d));
+    return utcDate.toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -333,15 +377,17 @@ function formatDate(value: string): string {
 }
 
 function dateParts(value: string): { day: string; month: string } {
-    const date = new Date(value + 'T00:00:00');
+    const [y, m, d] = value.split('-').map(Number);
+    const utcDate = new Date(Date.UTC(y, m - 1, d));
     return {
-        day: String(date.getDate()),
-        month: date.toLocaleDateString('id-ID', { month: 'short' }),
+        day: String(d),
+        month: utcDate.toLocaleDateString('id-ID', { month: 'short' }),
     };
 }
 
 function relativeDueLabel(value: string): string {
-    const due = new Date(value + 'T00:00:00');
+    const [y, m, d] = value.split('-').map(Number);
+    const due = new Date(Date.UTC(y, m - 1, d));
     const diffDays = Math.round((due.getTime() - today.getTime()) / 86_400_000);
 
     if (diffDays === 0) return 'Hari ini';
@@ -1096,8 +1142,12 @@ function relativeDueLabel(value: string): string {
                                         {{ near.title }}
                                     </p>
                                     <p class="text-[10px] text-surface-400">
-                                        {{ formatDate(near.due_date) }} ·
-                                        {{ relativeDueLabel(near.due_date) }}
+                                        {{ formatDate(taskDate(near)) }} ·
+                                        {{
+                                            near.due_date
+                                                ? relativeDueLabel(near.due_date)
+                                                : 'tanggal mulai'
+                                        }}
                                     </p>
                                 </div>
                                 <span
@@ -1149,12 +1199,12 @@ function relativeDueLabel(value: string): string {
                                 <span
                                     class="font-serif text-xs leading-none font-bold text-surface-950 dark:text-surface-50"
                                 >
-                                    {{ dateParts(task.due_date).day }}
+                                    {{ dateParts(taskDate(task)).day }}
                                 </span>
                                 <span
                                     class="text-[9px] font-bold tracking-wider text-surface-400 uppercase"
                                 >
-                                    {{ dateParts(task.due_date).month }}
+                                    {{ dateParts(taskDate(task)).month }}
                                 </span>
                             </div>
 
@@ -1179,7 +1229,11 @@ function relativeDueLabel(value: string): string {
                                 </p>
                                 <p class="text-[10px] text-surface-400">
                                     {{ task.project_name }} ·
-                                    {{ relativeDueLabel(task.due_date) }}
+                                    {{
+                                        task.due_date
+                                            ? relativeDueLabel(task.due_date)
+                                            : 'tanggal mulai'
+                                    }}
                                 </p>
                             </div>
 

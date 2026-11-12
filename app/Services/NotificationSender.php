@@ -7,21 +7,39 @@ use App\Notifications\ProjectMemberAdded;
 use App\Notifications\TaskAssigned;
 use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskStatusChanged;
-use Illuminate\Database\QueryException;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class NotificationSender
 {
     /**
+     * Map notification types to preference keys.
+     *
+     * @var array<string, string>
+     */
+    private const TYPE_TO_PREFERENCE = [
+        TaskAssigned::class => 'task_updates',
+        TaskStatusChanged::class => 'task_updates',
+        TaskCommentAdded::class => 'comments',
+        ProjectMemberAdded::class => 'mentions',
+        // ProjectOwnershipTransferred uses 'mentions' as it's a significant event
+    ];
+
+    /**
      * Send a notification with atomic idempotency using an idempotency key.
-     * Works for both PostgreSQL and SQLite.
+     * Uses database-specific upsert/ignore to avoid transaction abort on conflict.
      * Returns true if inserted, false if duplicate (conflict).
      *
      * @param  array<string, mixed>  $data
      */
     public function send(User $recipient, string $type, array $data): bool
     {
+        // Check user notification preferences before sending
+        if (! $this->shouldSendNotification($recipient, $type)) {
+            return false;
+        }
+
         // Build payload explicitly
         $payload = array_merge($data, [
             'url' => $this->buildUrl($type, $data),
@@ -32,30 +50,98 @@ class NotificationSender
         $now = now();
         $idempotencyKey = $this->generateIdempotencyKey($type, $payload);
 
-        try {
-            $inserted = DB::table('notifications')->insert([
-                'id' => $notificationId,
-                'type' => $type,
-                'notifiable_type' => User::class,
-                'notifiable_id' => $recipient->id,
-                'data' => json_encode($payload),
-                'idempotency_key' => $idempotencyKey,
-                'read_at' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+        $inserted = $this->insertIgnoringConflict($notificationId, $type, $recipient->id, $payload, $idempotencyKey, $now);
 
-            return $inserted > 0;
-        } catch (QueryException $exception) {
-            // Unique constraint violation (idempotency key already exists)
-            // PostgreSQL: SQLSTATE 23505 (unique_violation), MySQL: 1062, SQLite: 19 (constraint failed)
-            $sqlState = $exception->getCode();
-            $driverCode = $exception->errorInfo[1] ?? null;
-            if ($sqlState === '23505' || $sqlState === '23000' || $driverCode === 1062 || $driverCode === 19) {
-                return false;
-            }
-            throw $exception;
+        return $inserted > 0;
+    }
+
+    /**
+     * Check if notification should be sent based on user preferences.
+     */
+    private function shouldSendNotification(User $recipient, string $type): bool
+    {
+        $preferenceKey = self::TYPE_TO_PREFERENCE[$type] ?? null;
+
+        // If no preference mapping exists, send by default (fail-open for unknown types)
+        if ($preferenceKey === null) {
+            return true;
         }
+
+        $preferences = $recipient->notificationPreferences();
+
+        // If preference is explicitly set to false, don't send
+        return $preferences[$preferenceKey] ?? true;
+    }
+
+    /**
+     * Insert notification using database-specific conflict handling.
+     * - PostgreSQL: INSERT ... ON CONFLICT (idempotency_key) DO NOTHING RETURNING id
+     * - SQLite: INSERT OR IGNORE ... (check changes())
+     * - MySQL: INSERT IGNORE ... (check affected rows)
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function insertIgnoringConflict(
+        string $notificationId,
+        string $type,
+        int $notifiableId,
+        array $payload,
+        string $idempotencyKey,
+        CarbonInterface $now
+    ): int {
+        $driver = DB::connection()->getDriverName();
+        $table = 'notifications';
+        $columns = ['id', 'type', 'notifiable_type', 'notifiable_id', 'data', 'idempotency_key', 'read_at', 'created_at', 'updated_at'];
+        $values = [$notificationId, $type, User::class, $notifiableId, json_encode($payload), $idempotencyKey, null, $now, $now];
+
+        return match ($driver) {
+            'pgsql' => $this->insertPgsql($table, $columns, $values),
+            'sqlite' => $this->insertSqlite($table, $columns, $values),
+            default => $this->insertMysql($table, $columns, $values),
+        };
+    }
+
+    /**
+     * PostgreSQL: use RETURNING to detect actual insert.
+     *
+     * @param  list<string>  $columns
+     * @param  list<mixed>  $values
+     */
+    private function insertPgsql(string $table, array $columns, array $values): int
+    {
+        $sql = "INSERT INTO {$table} (".implode(', ', $columns).') VALUES ('.str_repeat('?,', count($columns) - 1).'?) ON CONFLICT (idempotency_key) DO NOTHING RETURNING id';
+        $result = DB::connection()->select($sql, $values);
+
+        return count($result) > 0 ? 1 : 0;
+    }
+
+    /**
+     * SQLite: use changes() to detect actual insert.
+     *
+     * @param  list<string>  $columns
+     * @param  list<mixed>  $values
+     */
+    private function insertSqlite(string $table, array $columns, array $values): int
+    {
+        $sql = "INSERT OR IGNORE INTO {$table} (".implode(', ', $columns).') VALUES ('.str_repeat('?,', count($columns) - 1).'?)';
+        DB::connection()->insert($sql, $values);
+        // Get the number of rows actually changed
+        $changes = DB::connection()->select('SELECT changes() as c')[0]->c ?? 0;
+
+        return (int) $changes;
+    }
+
+    /**
+     * MySQL: use affected rows to detect actual insert.
+     *
+     * @param  list<string>  $columns
+     * @param  list<mixed>  $values
+     */
+    private function insertMysql(string $table, array $columns, array $values): int
+    {
+        $sql = "INSERT IGNORE INTO {$table} (".implode(', ', $columns).') VALUES ('.str_repeat('?,', count($columns) - 1).'?)';
+
+        return (int) DB::connection()->insert($sql, $values);
     }
 
     /**

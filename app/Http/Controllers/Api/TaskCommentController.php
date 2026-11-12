@@ -156,4 +156,37 @@ class TaskCommentController extends Controller
 
         return response()->json(status: 204);
     }
+
+    /**
+     * List soft-deleted comments for a task.
+     */
+    public function trashed(Request $request, Task $task): AnonymousResourceCollection
+    {
+        $this->authorize('view', $task);
+
+        $perPage = $request->integer('per_page', 15);
+        $comments = TaskComment::onlyTrashed()
+            ->where('task_id', $task->id)
+            ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
+                $query->where('content', 'like', '%'.$request->string('search')->toString().'%');
+            })
+            ->with('user')
+            ->latest('deleted_at')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return TaskCommentResource::collection($comments);
+    }
+
+    /**
+     * Restore a soft-deleted comment.
+     */
+    public function restore(Request $request, TaskComment $comment): JsonResponse
+    {
+        $this->authorize('restore', $comment);
+
+        $comment->restore();
+
+        return response()->json(['message' => 'Komentar berhasil dipulihkan.']);
+    }
 }

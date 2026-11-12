@@ -45,8 +45,8 @@ describe('End to end Onboarding Flow', function () {
             $rawToken = $mail->token;
             $tempPassword = $mail->temporaryPassword;
 
-            return $mail->invitation->email === 'e2e-user@example.com' 
-                && ! empty($rawToken) 
+            return $mail->invitation->email === 'e2e-user@example.com'
+                && ! empty($rawToken)
                 && $tempPassword === 'TemporaryPass123!';
         });
 

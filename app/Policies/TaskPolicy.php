@@ -53,7 +53,7 @@ class TaskPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('tasks.view');
+        return $user->can('tasks.create');
     }
 
     /**
@@ -61,7 +61,7 @@ class TaskPolicy
      */
     public function update(User $user, Task $task): bool
     {
-        if (! $user->can('tasks.view')) {
+        if (! $user->can('tasks.update')) {
             return false;
         }
 
@@ -94,7 +94,7 @@ class TaskPolicy
      */
     public function delete(User $user, Task $task): bool
     {
-        if (! $user->can('tasks.view')) {
+        if (! $user->can('tasks.delete')) {
             return false;
         }
 

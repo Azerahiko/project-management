@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Models\TaskComment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTaskCommentRequest extends FormRequest
@@ -11,7 +10,11 @@ class StoreTaskCommentRequest extends FormRequest
     {
         $task = $this->route('task');
 
-        return $this->user()?->can('create', [TaskComment::class, $task]) ?? false;
+        if (! $this->user()?->can('task-comments.create')) {
+            return false;
+        }
+
+        return $this->user()->can('view', $task);
     }
 
     /**

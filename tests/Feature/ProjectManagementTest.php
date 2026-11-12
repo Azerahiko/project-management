@@ -2,7 +2,9 @@
 
 require_once __DIR__.'/helpers.php';
 
+use App\Enums\ProjectPriority;
 use App\Enums\ProjectRole;
+use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\User;
@@ -360,6 +362,67 @@ describe('Project Management', function () {
                 ->getJson('/api/projects/managers')
                 ->assertOk()
                 ->assertJsonStructure(['data' => [['id', 'name', 'email']]]);
+        });
+
+        it('includes team leaders in the project managers list', function () {
+            [$admin] = createTestUsers();
+
+            $teamLeader = User::factory()->create(['is_active' => true]);
+            $teamLeader->assignRole('team_leader');
+
+            $response = $this->actingAs($admin)
+                ->getJson('/api/projects/managers')
+                ->assertOk();
+
+            expect(collect($response->json('data'))->pluck('id'))->toContain($teamLeader->id);
+        });
+
+        it('includes project-level managers when a project is given', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $projectManager = User::factory()->create(['is_active' => true]);
+            $projectManager->assignRole('member');
+            ProjectMember::create([
+                'project_id' => $project->id,
+                'user_id' => $projectManager->id,
+                'role' => ProjectRole::MANAGER,
+            ]);
+
+            $response = $this->actingAs($admin)
+                ->getJson("/api/projects/managers?project={$project->id}")
+                ->assertOk();
+
+            expect(collect($response->json('data'))->pluck('id'))->toContain($projectManager->id);
+        });
+
+        it('excludes managers from other projects when a project is given', function () {
+            [$admin, $pm, $member] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $member);
+
+            $otherProject = Project::create([
+                'name' => 'Proyek Lain',
+                'description' => 'Other project',
+                'status' => ProjectStatus::ACTIVE,
+                'priority' => ProjectPriority::LOW,
+                'start_date' => now(),
+                'end_date' => now()->addWeek(),
+                'owner_id' => $admin->id,
+            ]);
+
+            $otherManager = User::factory()->create(['is_active' => true]);
+            $otherManager->assignRole('member');
+            ProjectMember::create([
+                'project_id' => $otherProject->id,
+                'user_id' => $otherManager->id,
+                'role' => ProjectRole::MANAGER,
+            ]);
+
+            $response = $this->actingAs($admin)
+                ->getJson("/api/projects/managers?project={$project->id}")
+                ->assertOk();
+
+            expect(collect($response->json('data'))->pluck('id'))->not->toContain($otherManager->id);
         });
     });
 

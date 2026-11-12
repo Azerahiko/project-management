@@ -18,7 +18,7 @@ class StoreTaskRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        if (! $this->user()?->can('tasks.view')) {
+        if (! $this->user()?->can('tasks.create')) {
             return false;
         }
 

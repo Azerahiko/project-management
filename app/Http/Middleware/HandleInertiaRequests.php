@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
                 ] : null,
             ],
+            'password_min_length' => (int) config('auth.password_min_length'),
             'csrf_token' => $request->session()->token(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

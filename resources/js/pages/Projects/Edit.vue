@@ -93,7 +93,7 @@ function loadProject(): void {
 async function loadManagers(): Promise<void> {
     loadingManagers.value = true;
     try {
-        managers.value = await fetchManagers();
+        managers.value = await fetchManagers(initialProject.id);
     } catch {
         toastError('Gagal memuat daftar manager', 'Silakan coba lagi.');
     } finally {

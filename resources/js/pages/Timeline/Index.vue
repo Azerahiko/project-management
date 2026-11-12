@@ -40,6 +40,7 @@ interface TimelineProject {
     start_date: string | null;
     end_date: string | null;
     tasks: TimelineTask[];
+    tasks_with_undated: TimelineTask[];
 }
 
 const page = usePage();
@@ -49,8 +50,21 @@ const rawProjects = computed(
 const canViewTasks = computed(() => Boolean(page.props.can_view_tasks));
 
 // Date helpers
-const now = new Date();
-now.setHours(0, 0, 0, 0);
+const userTimezone = computed(
+    () => (page.props.userTimezone as string) ?? 'UTC',
+);
+const now = (() => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: userTimezone.value,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(new Date());
+    const get = (type: string): number =>
+        Number(parts.find((part) => part.type === type)?.value);
+
+    return new Date(get('year'), get('month') - 1, get('day'));
+})();
 
 function parseIso(value: string): Date {
     const [year, month, day] = value.split('-').map(Number);
@@ -291,7 +305,10 @@ const filteredProjects = computed(() => {
         list = list.filter(
             (p) =>
                 p.name.toLowerCase().includes(query) ||
-                p.tasks.some((t) => t.title.toLowerCase().includes(query)),
+                p.tasks.some((t) => t.title.toLowerCase().includes(query)) ||
+                p.tasks_with_undated.some((t) =>
+                    t.title.toLowerCase().includes(query),
+                ),
         );
     }
 
@@ -304,6 +321,7 @@ const summary = computed(() => {
     let scheduledTasks = 0;
     let completedTasks = 0;
     let overdueTasks = 0;
+    let undatedTasks = 0;
 
     for (const p of rawProjects.value) {
         for (const t of p.tasks) {
@@ -311,6 +329,12 @@ const summary = computed(() => {
             if (t.status === 'done') completedTasks++;
             if (t.is_overdue) overdueTasks++;
         }
+        for (const t of p.tasks_with_undated) {
+            undatedTasks++;
+            if (t.status === 'done') completedTasks++;
+            if (t.is_overdue) overdueTasks++;
+        }
+        scheduledTasks += p.tasks_with_undated.length;
     }
 
     return {
@@ -318,6 +342,7 @@ const summary = computed(() => {
         scheduledTasks,
         completedTasks,
         overdueTasks,
+        undatedTasks,
         completionRate:
             scheduledTasks > 0
                 ? Math.round((completedTasks / scheduledTasks) * 100)
@@ -326,9 +351,21 @@ const summary = computed(() => {
 });
 
 function projectCompletion(project: TimelineProject): number {
-    if (project.tasks.length === 0) return 0;
-    const done = project.tasks.filter((t) => t.status === 'done').length;
-    return Math.round((done / project.tasks.length) * 100);
+    if (
+        project.tasks.length === 0 &&
+        project.tasks_with_undated.length === 0
+    )
+        return 0;
+    const done =
+        project.tasks.filter((t) => t.status === 'done').length +
+        project.tasks_with_undated.filter((t) => t.status === 'done').length;
+    const total =
+        project.tasks.length + project.tasks_with_undated.length;
+    return Math.round((done / total) * 100);
+}
+
+function allProjectTasks(project: TimelineProject): TimelineTask[] {
+    return [...project.tasks, ...project.tasks_with_undated];
 }
 
 const statusBadgeClasses: Record<string, string> = {
@@ -434,7 +471,7 @@ if (rawProjects.value.length > 0) {
                 <div class="flex items-center justify-between text-surface-400">
                     <span
                         class="text-xs font-medium text-surface-500 dark:text-surface-400"
-                        >Tugas Terjadwal</span
+                        >Total Tugas</span
                     >
                     <component :is="getIcon('CheckSquare')" class="h-4 w-4" />
                 </div>
@@ -442,6 +479,12 @@ if (rawProjects.value.length > 0) {
                     class="mt-2 font-serif text-2xl font-normal text-surface-950 dark:text-surface-50"
                 >
                     {{ summary.scheduledTasks }}
+                </p>
+                <p
+                    v-if="summary.undatedTasks > 0"
+                    class="mt-1 text-[11px] text-surface-400"
+                >
+                    {{ summary.undatedTasks }} tanpa tanggal
                 </p>
             </div>
 
@@ -728,7 +771,11 @@ if (rawProjects.value.length > 0) {
                                         statusBadgeClasses.draft
                                     "
                                 >
-                                    {{ project.tasks.length }} tugas
+                                    {{
+                                        project.tasks.length +
+                                        project.tasks_with_undated.length
+                                    }}
+                                    tugas
                                 </span>
                             </div>
 
@@ -777,6 +824,61 @@ if (rawProjects.value.length > 0) {
                                     </div>
 
                                     <!-- Assignee avatar -->
+                                    <Avatar
+                                        v-if="task.assignee"
+                                        :src="task.assignee.avatar"
+                                        :initials="task.assignee.initials"
+                                        :alt="task.assignee.name"
+                                        size="xs"
+                                        class="ml-2 shrink-0"
+                                    />
+                                </div>
+
+                                <!-- Tasks without any date: no Gantt bar to draw -->
+                                <div
+                                    v-for="task in project.tasks_with_undated"
+                                    :key="`task-undated-left-${task.id}`"
+                                    class="flex h-11 items-center justify-between border-t border-dashed border-surface-200/60 bg-surface-50/20 pr-3 pl-9 transition-colors hover:bg-surface-50 dark:border-surface-800/40 dark:bg-surface-950/10 dark:hover:bg-surface-800/30"
+                                >
+                                    <div
+                                        class="flex min-w-0 flex-1 items-center gap-2"
+                                    >
+                                        <span
+                                            class="h-1.5 w-1.5 shrink-0 rounded-full"
+                                            :class="
+                                                priorityDotColors[
+                                                    task.priority
+                                                ] ?? 'bg-surface-400'
+                                            "
+                                        />
+                                        <Link
+                                            v-if="canViewTasks"
+                                            :href="
+                                                taskRoutes.show.url(task.id)
+                                            "
+                                            class="truncate text-xs text-surface-700 transition hover:text-primary-700 dark:text-surface-300 dark:hover:text-primary-300"
+                                            :class="
+                                                task.status === 'done'
+                                                    ? 'line-through opacity-60'
+                                                    : ''
+                                            "
+                                            :title="task.title"
+                                        >
+                                            {{ task.title }}
+                                        </Link>
+                                        <span
+                                            v-else
+                                            class="truncate text-xs text-surface-700 dark:text-surface-300"
+                                        >
+                                            {{ task.title }}
+                                        </span>
+                                        <span
+                                            class="shrink-0 rounded-full border border-surface-200 px-1.5 py-0.5 text-[9px] font-semibold text-surface-500 dark:border-surface-700 dark:text-surface-400"
+                                        >
+                                            Tanpa tanggal
+                                        </span>
+                                    </div>
+
                                     <Avatar
                                         v-if="task.assignee"
                                         :src="task.assignee.avatar"
@@ -957,6 +1059,13 @@ if (rawProjects.value.length > 0) {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Undated tasks keep a matching empty row so bars stay aligned -->
+                                    <div
+                                        v-for="task in project.tasks_with_undated"
+                                        :key="`task-undated-canvas-${task.id}`"
+                                        class="relative h-11 border-t border-dashed border-surface-200/40 dark:border-surface-800/30"
+                                    />
                                 </template>
                             </template>
                         </div>
@@ -1037,12 +1146,12 @@ if (rawProjects.value.length > 0) {
                     class="mb-3 text-xs font-bold tracking-wider text-surface-500 uppercase dark:text-surface-400"
                 >
                     Daftar Tugas dalam Proyek Ini ({{
-                        selectedProject.tasks.length
+                        allProjectTasks(selectedProject).length
                     }})
                 </h3>
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     <div
-                        v-for="task in selectedProject.tasks"
+                        v-for="task in allProjectTasks(selectedProject)"
                         :key="`preview-task-${task.id}`"
                         class="flex items-center justify-between rounded-2xl border border-surface-200/70 bg-surface-50/50 p-3 dark:border-surface-800 dark:bg-surface-950/30"
                     >

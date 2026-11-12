@@ -17,12 +17,9 @@ return new class extends Migration
         });
 
         // Create unique index for idempotency
-        if (DB::getDriverName() === 'pgsql') {
-            DB::statement('CREATE UNIQUE INDEX notifications_idempotency_key_unique ON notifications (idempotency_key) WHERE idempotency_key IS NOT NULL');
-        } else {
-            // SQLite - create unique index (NULL values are not considered duplicates in SQLite)
-            DB::statement('CREATE UNIQUE INDEX notifications_idempotency_key_unique ON notifications (idempotency_key)');
-        }
+        // Use non-partial index for PostgreSQL to support ON CONFLICT (idempotency_key)
+        // idempotency_key is never NULL in practice (always generated)
+        DB::statement('CREATE UNIQUE INDEX notifications_idempotency_key_unique ON notifications (idempotency_key)');
     }
 
     /**

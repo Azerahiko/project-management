@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import api from '@/lib/api';
-import type { PaginatedResponse, TaskComment, TaskActivity } from '@/types';
+import type { PaginatedResponse, TaskComment, TaskActivity, TaskCommentFilters } from '@/types';
 
 export function useTaskComments(taskId: number) {
     const comments = ref<TaskComment[]>([]);
@@ -16,6 +16,18 @@ export function useTaskComments(taskId: number) {
     const activitiesLoading = ref(false);
     const commentsError = ref<string | null>(null);
     const activitiesError = ref<string | null>(null);
+
+    // For trashed comments
+    const trashedComments = ref<TaskComment[]>([]);
+    const trashedCommentsMeta = ref({
+        current_page: 1,
+        last_page: 1,
+        from: null as number | null,
+        to: null as number | null,
+        total: 0,
+    });
+    const trashedCommentsLoading = ref(false);
+    const trashedCommentsError = ref<string | null>(null);
 
     async function fetchComments(page = 1, perPage = 15): Promise<void> {
         commentsLoading.value = true;
@@ -47,6 +59,40 @@ export function useTaskComments(taskId: number) {
                 'Gagal memuat komentar. Silakan coba lagi.';
         } finally {
             commentsLoading.value = false;
+        }
+    }
+
+    async function fetchTrashedComments(filters: TaskCommentFilters): Promise<void> {
+        trashedCommentsLoading.value = true;
+        trashedCommentsError.value = null;
+
+        try {
+            const { data: response } = await api.get<
+                PaginatedResponse<TaskComment>
+            >(`/tasks/${taskId}/comments/trashed`, {
+                params: {
+                    search: filters.search || undefined,
+                    sort_by: filters.sort_by || undefined,
+                    sort_direction: filters.sort_direction,
+                    page: filters.page,
+                    per_page: filters.per_page,
+                },
+            });
+
+            trashedComments.value = response.data;
+            trashedCommentsMeta.value = {
+                current_page: response.meta.current_page,
+                last_page: response.meta.last_page,
+                from: response.meta.from,
+                to: response.meta.to,
+                total: response.meta.total,
+            };
+        } catch (e: any) {
+            trashedCommentsError.value =
+                e?.response?.data?.message ??
+                'Gagal memuat komentar yang dihapus. Silakan coba lagi.';
+        } finally {
+            trashedCommentsLoading.value = false;
         }
     }
 
@@ -138,6 +184,10 @@ export function useTaskComments(taskId: number) {
         }
     }
 
+    async function restoreComment(commentId: number): Promise<void> {
+        await api.post(`/comments/${commentId}/restore`);
+    }
+
     const hasMoreComments = computed(
         () => commentsMeta.value.current_page < commentsMeta.value.last_page,
     );
@@ -158,5 +208,12 @@ export function useTaskComments(taskId: number) {
         deleteComment,
         hasMoreComments,
         nextPage,
+        // Trashed comments
+        trashedComments,
+        trashedCommentsMeta,
+        trashedCommentsLoading,
+        trashedCommentsError,
+        fetchTrashedComments,
+        restoreComment,
     };
 }

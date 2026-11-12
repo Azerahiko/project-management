@@ -7,6 +7,7 @@ use App\Models\Announcement;
 use App\Support\Permissions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,6 +20,10 @@ class AnnouncementController extends Controller
     public function index(Request $request): Response
     {
         Gate::authorize(Permissions::DASHBOARD_VIEW);
+
+        $user = $request->user();
+        $userTimezone = $user->getTimezoneObject();
+        $now = Carbon::now($userTimezone);
 
         $search = trim((string) $request->query('search', ''));
         $filter = (string) $request->query('filter', 'all');
@@ -38,8 +43,8 @@ class AnnouncementController extends Controller
                 });
             })
             ->when($filter === 'pinned', fn ($query) => $query->where('is_pinned', true))
-            ->when($filter === 'recent', fn ($query) => $query->whereRaw('COALESCE(published_at, created_at) >= ?', [now()->subDays(7)]))
-            ->when($filter === 'month', fn ($query) => $query->whereRaw('COALESCE(published_at, created_at) >= ?', [now()->startOfMonth()]))
+            ->when($filter === 'recent', fn ($query) => $query->whereRaw('COALESCE(published_at, created_at) >= ?', [$now->copy()->subDays(7)->toDateTimeString()]))
+            ->when($filter === 'month', fn ($query) => $query->whereRaw('COALESCE(published_at, created_at) >= ?', [$now->copy()->startOfMonth()->toDateTimeString()]))
             ->orderByDesc('is_pinned')
             ->orderByDesc('published_at')
             ->orderByDesc('id')
@@ -49,8 +54,8 @@ class AnnouncementController extends Controller
         $summary = [
             'total' => Announcement::count(),
             'pinned' => Announcement::where('is_pinned', true)->count(),
-            'recent' => Announcement::whereRaw('COALESCE(published_at, created_at) >= ?', [now()->subDays(7)])->count(),
-            'this_month' => Announcement::whereRaw('COALESCE(published_at, created_at) >= ?', [now()->startOfMonth()])->count(),
+            'recent' => Announcement::whereRaw('COALESCE(published_at, created_at) >= ?', [$now->copy()->subDays(7)->toDateTimeString()])->count(),
+            'this_month' => Announcement::whereRaw('COALESCE(published_at, created_at) >= ?', [$now->copy()->startOfMonth()->toDateTimeString()])->count(),
             'contributors' => Announcement::distinct()->count('user_id'),
         ];
 
@@ -82,6 +87,8 @@ class AnnouncementController extends Controller
      */
     public function store(StoreAnnouncementRequest $request): RedirectResponse
     {
+        $this->authorize('create', Announcement::class);
+
         $validated = $request->validated();
 
         Announcement::create([
@@ -100,7 +107,7 @@ class AnnouncementController extends Controller
      */
     public function togglePin(Announcement $announcement): RedirectResponse
     {
-        Gate::authorize(Permissions::TEAMS_VIEW);
+        $this->authorize('update', $announcement);
 
         $announcement->update(['is_pinned' => ! $announcement->is_pinned]);
 
@@ -117,7 +124,7 @@ class AnnouncementController extends Controller
      */
     public function destroy(Announcement $announcement): RedirectResponse
     {
-        Gate::authorize(Permissions::TEAMS_VIEW);
+        $this->authorize('delete', $announcement);
 
         $announcement->delete();
 

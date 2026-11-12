@@ -10,7 +10,11 @@ class UpdateTaskCommentRequest extends FormRequest
     {
         $comment = $this->route('comment');
 
-        return $this->user()?->can('update', $comment) ?? false;
+        if (! $this->user()?->can('task-comments.update')) {
+            return false;
+        }
+
+        return $this->user()->can('update', $comment);
     }
 
     /**

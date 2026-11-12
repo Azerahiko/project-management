@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast';
 import Button from '@/components/ui/Button.vue';
@@ -12,7 +13,10 @@ defineOptions({
 const page = usePage<{
     step: string;
     nextStep: string;
+    password_min_length?: number;
 }>();
+
+const passwordMinLength = computed(() => page.props.password_min_length ?? 8);
 
 const { success } = useToast();
 
@@ -88,7 +92,7 @@ function handleSubmit(): void {
             >
                 <p class="font-medium">Persyaratan kata sandi:</p>
                 <ul class="mt-1 list-inside list-disc">
-                    <li>Minimal 8 karakter</li>
+                    <li>Minimal {{ passwordMinLength }} karakter</li>
                     <li>Mengandung huruf besar dan kecil</li>
                     <li>Mengandung angka</li>
                     <li>Mengandung karakter khusus</li>

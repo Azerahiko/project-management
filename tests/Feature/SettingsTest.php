@@ -202,3 +202,43 @@ it('rejects non-boolean notification values', function () {
         ])
         ->assertSessionHasErrors('preferences.task_updates');
 });
+
+it('renders the settings page with timezone data', function () {
+    $user = settingsUser();
+
+    $this->actingAs($user)
+        ->get('/settings')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Settings/Index')
+            ->has('timezone')
+            ->has('timezones')
+            ->where('timezone', 'UTC')
+        );
+});
+
+it('updates the timezone preference', function () {
+    $user = settingsUser();
+
+    $this->actingAs($user)
+        ->put('/settings/timezone', [
+            'timezone' => 'Asia/Jakarta',
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($user->fresh()->timezone)->toBe('Asia/Jakarta');
+});
+
+it('rejects an invalid timezone', function () {
+    $user = settingsUser();
+
+    $this->actingAs($user)
+        ->put('/settings/timezone', [
+            'timezone' => 'Invalid/Timezone',
+        ])
+        ->assertSessionHasErrors('timezone');
+
+    // Timezone should remain unchanged (default UTC from migration)
+    expect($user->fresh()->timezone)->toBe('UTC');
+});

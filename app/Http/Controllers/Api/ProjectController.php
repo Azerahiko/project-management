@@ -18,6 +18,7 @@ use App\Notifications\ProjectOwnershipTransferred;
 use App\Services\NotificationSender;
 use App\Services\WebhookDispatcher;
 use App\Support\Pagination;
+use App\Support\Roles;
 use App\Support\WebhookEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -410,15 +411,37 @@ class ProjectController extends Controller
     }
 
     /**
-     * List available project managers (users with project_manager role or administrator).
+     * List users assignable as project owner.
+     *
+     * Global candidates: administrator, project_manager, team_leader.
+     * When `project` is provided, that project's owner and manager members
+     * are included as well.
      */
-    public function managers(): JsonResponse
+    public function managers(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'project' => ['sometimes', 'integer', 'exists:projects,id'],
+        ]);
+
+        $projectId = $validated['project'] ?? null;
+
         $managers = User::query()
-            ->whereHas('roles', function ($query) {
-                $query->whereIn('name', ['administrator', 'project_manager']);
-            })
             ->where('is_active', true)
+            ->where(function ($query) use ($projectId): void {
+                $query->whereHas('roles', fn ($roleQuery) => $roleQuery->whereIn('name', [
+                    Roles::ADMINISTRATOR,
+                    Roles::PROJECT_MANAGER,
+                    Roles::TEAM_LEADER,
+                ]));
+
+                if ($projectId === null) {
+                    return;
+                }
+
+                $query->orWhereHas('projectMemberships', fn ($membershipQuery) => $membershipQuery
+                    ->where('project_id', $projectId)
+                    ->whereIn('role', [ProjectRole::OWNER->value, ProjectRole::MANAGER->value]));
+            })
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'avatar']);
 
@@ -457,5 +480,62 @@ class ProjectController extends Controller
             'new_value' => (string) $newOwnerId,
             'description' => ($transferredBy->name ?? 'Sistem')." mentransfer pemilik proyek dari pengguna {$previousOwnerId} ke {$newOwnerId}.",
         ]);
+    }
+
+    /**
+     * List soft-deleted projects.
+     */
+    public function trashed(Request $request): AnonymousResourceCollection
+    {
+        $this->authorize('viewAny', Project::class);
+
+        $user = $request->user();
+        $perPage = $request->integer('per_page', 15);
+        $projects = Project::onlyTrashed()
+            ->where(function ($query) use ($user) {
+                $query->where('owner_id', $user->id)
+                    ->orWhereHas('projectMembers', fn ($q) => $q->where('user_id', $user->id));
+            })
+            ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
+                $query->search($request->string('search')->toString());
+            })
+            ->when($request->string('status')->isNotEmpty(), function ($query) use ($request) {
+                $query->status($request->string('status')->toString());
+            })
+            ->when($request->string('priority')->isNotEmpty(), function ($query) use ($request) {
+                $query->priority($request->string('priority')->toString());
+            })
+            ->when($request->string('sort_by')->isNotEmpty(), function ($query) use ($request) {
+                $sortBy = $request->string('sort_by')->toString();
+                $direction = $request->string('sort_direction')->toString() === 'desc' ? 'desc' : 'asc';
+
+                $allowedSorts = ['name', 'status', 'priority', 'start_date', 'end_date', 'created_at', 'deleted_at'];
+                $query->orderBy(in_array($sortBy, $allowedSorts, true) ? $sortBy : 'deleted_at', $direction);
+            }, fn ($query) => $query->latest('deleted_at'))
+            ->with(['owner', 'projectMembers.user'])
+            ->withCount(['members', 'tasks'])
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $projects->getCollection()->transform(function ($project) use ($request) {
+            $project->can_update = $request->user()?->can('update', $project) ?? false;
+            $project->can_delete = $request->user()?->can('delete', $project) ?? false;
+
+            return $project;
+        });
+
+        return ProjectResource::collection($projects);
+    }
+
+    /**
+     * Restore a soft-deleted project.
+     */
+    public function restore(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('restore', $project);
+
+        $project->restore();
+
+        return response()->json(['message' => 'Proyek berhasil dipulihkan.']);
     }
 }

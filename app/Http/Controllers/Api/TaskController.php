@@ -348,4 +348,48 @@ class TaskController extends Controller
         // Deduplicate by user ID
         return $recipients->unique('id');
     }
+
+    /**
+     * List soft-deleted tasks for a project.
+     */
+    public function trashed(Request $request, Project $project): AnonymousResourceCollection
+    {
+        $this->authorize('view', $project);
+
+        $perPage = $request->integer('per_page', 15);
+        $tasks = Task::onlyTrashed()
+            ->where('project_id', $project->id)
+            ->with(['assignee', 'creator'])
+            ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
+                $query->search($request->string('search')->toString());
+            })
+            ->when($request->string('status')->isNotEmpty(), function ($query) use ($request) {
+                $query->status($request->string('status')->toString());
+            })
+            ->when($request->string('priority')->isNotEmpty(), function ($query) use ($request) {
+                $query->priority($request->string('priority')->toString());
+            })
+            ->when($request->string('sort_by')->isNotEmpty(), function ($query) use ($request) {
+                $query->sort(
+                    $request->string('sort_by')->toString(),
+                    $request->string('sort_direction')->toString() === 'desc' ? 'desc' : 'asc'
+                );
+            }, fn ($query) => $query->latest('deleted_at'))
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return TaskResource::collection($tasks);
+    }
+
+    /**
+     * Restore a soft-deleted task.
+     */
+    public function restore(Request $request, Task $task): JsonResponse
+    {
+        $this->authorize('restore', $task);
+
+        $task->restore();
+
+        return response()->json(['message' => 'Tugas berhasil dipulihkan.']);
+    }
 }

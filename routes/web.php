@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
     // Project routes
     Route::middleware('can:projects.view')->group(function () {
         Route::inertia('/projects', 'Projects/Index')->name('projects.index');
+        Route::inertia('/projects/trashed', 'Projects/Trashed')->name('projects.trashed');
     });
 
     Route::middleware('can:projects.create')->group(function () {
@@ -108,6 +109,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('can:tasks.view')->group(function () {
         Route::inertia('/tasks', 'Tasks/Index')->name('tasks.index');
         Route::inertia('/tasks/create', 'Tasks/Create')->name('tasks.create');
+        Route::get('/projects/{project}/tasks/trashed', function (Project $project, Request $request) {
+            abort_unless($request->user()->can('view', $project), 403);
+
+            return Inertia::render('Tasks/Trashed', [
+                'project' => ProjectResource::make($project->load('owner'))->toArray($request),
+            ]);
+        })->name('tasks.trashed');
         Route::get('/tasks/{task}', function (Task $task, Request $request) {
             abort_unless($request->user()->can('view', $task), 403);
 
@@ -131,6 +139,16 @@ Route::middleware(['auth'])->group(function () {
                 'task' => TaskResource::make($task)->toArray($request),
             ]);
         })->name('tasks.edit');
+
+        Route::get('/tasks/{task}/comments/trashed', function (Task $task, Request $request) {
+            abort_unless($request->user()->can('view', $task), 403);
+
+            $task->load(['project', 'assignee', 'creator']);
+
+            return Inertia::render('TaskComments/Trashed', [
+                'task' => TaskResource::make($task)->toArray($request),
+            ]);
+        })->name('task-comments.trashed');
     });
     Route::get('/timeline', [TimelineController::class, 'index'])
         ->name('timeline')
@@ -196,6 +214,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
         Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
+        Route::put('/settings/timezone', [SettingsController::class, 'updateTimezone'])->name('settings.timezone.update');
     });
 
     // API & Webhook Integrations

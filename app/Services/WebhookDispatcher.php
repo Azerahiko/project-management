@@ -6,7 +6,9 @@ use App\Jobs\DeliverWebhook;
 use App\Models\Webhook;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Throwable;
 
 class WebhookDispatcher
@@ -51,6 +53,29 @@ class WebhookDispatcher
         $body = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
         $signature = hash_hmac('sha256', $body, $webhook->secret);
         $startedAt = microtime(true);
+
+        // SSRF protection: validate URL at delivery time (prevents DNS rebinding)
+        try {
+            WebhookUrlValidator::validate($webhook->url);
+        } catch (InvalidArgumentException $e) {
+            Log::warning('Webhook sync delivery blocked by SSRF protection', [
+                'webhook_id' => $webhook->id,
+                'url' => $webhook->url,
+                'reason' => $e->getMessage(),
+            ]);
+
+            $error = 'URL tujuan tidak diizinkan karena alasan keamanan.';
+            $latency = (int) round((microtime(true) - $startedAt) * 1000);
+
+            $this->record($webhook, false, null, $latency, $error);
+
+            return [
+                'success' => false,
+                'status' => null,
+                'latency_ms' => $latency,
+                'error' => $error,
+            ];
+        }
 
         try {
             $response = Http::timeout(6)

@@ -39,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
+            ? Password::min((int) config('auth.password_min_length'))
                 ->mixedCase()
                 ->letters()
                 ->numbers()

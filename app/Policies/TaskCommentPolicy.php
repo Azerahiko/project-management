@@ -17,11 +17,20 @@ class TaskCommentPolicy
 
     public function create(User $user, Task $task): bool
     {
+        if (! $user->can('task-comments.create')) {
+            return false;
+        }
+
+        // Must have access to the parent task
         return $user->can('view', $task);
     }
 
     public function update(User $user, TaskComment $comment): bool
     {
+        if (! $user->can('task-comments.update')) {
+            return false;
+        }
+
         if (! $user->can('view', $comment->task)) {
             return false;
         }
@@ -44,6 +53,10 @@ class TaskCommentPolicy
 
     public function delete(User $user, TaskComment $comment): bool
     {
+        if (! $user->can('task-comments.delete')) {
+            return false;
+        }
+
         if (! $user->can('view', $comment->task)) {
             return false;
         }
@@ -62,5 +75,21 @@ class TaskCommentPolicy
         $role = $comment->task->project->getMemberRole($user);
 
         return $role === ProjectRole::OWNER;
+    }
+
+    /**
+     * Determine whether the user can restore the comment.
+     */
+    public function restore(User $user, TaskComment $comment): bool
+    {
+        return $this->delete($user, $comment);
+    }
+
+    /**
+     * Determine whether the user can permanently delete the comment.
+     */
+    public function forceDelete(User $user, TaskComment $comment): bool
+    {
+        return $this->delete($user, $comment);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Webhook;
 use App\Models\WebhookDelivery;
+use App\Services\WebhookUrlValidator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,6 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Throwable;
 
 class DeliverWebhook implements ShouldQueue
@@ -128,6 +130,34 @@ class DeliverWebhook implements ShouldQueue
         $signature = hash_hmac('sha256', $body, $webhook->secret);
         $startedAt = microtime(true);
 
+        // SSRF protection: validate URL at delivery time (prevents DNS rebinding)
+        try {
+            WebhookUrlValidator::validate($webhook->url);
+        } catch (InvalidArgumentException $e) {
+            Log::warning('Webhook delivery blocked by SSRF protection', [
+                'webhook_id' => $webhook->id,
+                'payload_id' => $this->payloadId,
+                'url' => $webhook->url,
+                'reason' => $e->getMessage(),
+            ]);
+
+            $delivery->update([
+                'status' => 'permanently_failed',
+                'error' => 'URL tujuan tidak diizinkan karena alasan keamanan.',
+                'delivered_at' => now(),
+            ]);
+
+            $webhook->forceFill([
+                'last_delivery_status' => 'failed',
+                'last_delivery_code' => null,
+                'last_delivery_latency_ms' => 0,
+                'last_delivery_error' => 'URL tujuan tidak diizinkan karena alasan keamanan.',
+                'last_delivery_at' => now(),
+            ])->save();
+
+            return;
+        }
+
         try {
             $response = Http::timeout(10)
                 ->connectTimeout(5)
@@ -165,7 +195,6 @@ class DeliverWebhook implements ShouldQueue
 
             if (! $success) {
                 $this->scheduleNextRetry($delivery);
-                $this->fail(new \Exception("Webhook delivery failed with status {$response->status()}"));
             }
         } catch (Throwable $exception) {
             $latency = (int) round((microtime(true) - $startedAt) * 1000);
@@ -186,7 +215,6 @@ class DeliverWebhook implements ShouldQueue
             ])->save();
 
             $this->scheduleNextRetry($delivery);
-            throw $exception;
         }
     }
 

@@ -20,6 +20,18 @@ class Permissions
 
     public const TASKS_VIEW = 'tasks.view';
 
+    public const TASKS_CREATE = 'tasks.create';
+
+    public const TASKS_UPDATE = 'tasks.update';
+
+    public const TASKS_DELETE = 'tasks.delete';
+
+    public const TASK_COMMENTS_CREATE = 'task-comments.create';
+
+    public const TASK_COMMENTS_UPDATE = 'task-comments.update';
+
+    public const TASK_COMMENTS_DELETE = 'task-comments.delete';
+
     public const TASK_COLLABORATION_VIEW = 'task-collaboration.view';
 
     public const TEAMS_VIEW = 'teams.view';
@@ -42,6 +54,8 @@ class Permissions
 
     public const ROLES_MANAGE = 'roles.manage';
 
+    public const WEBHOOKS_VIEW_SECRETS = 'webhooks.view_secrets';
+
     public const SETTINGS_VIEW = 'settings.view';
 
     /**
@@ -63,6 +77,12 @@ class Permissions
                 self::PROJECTS_DELETE => 'Projects Delete',
                 self::PROJECTS_MANAGE_MEMBERS => 'Projects Manage Members',
                 self::TASKS_VIEW => 'Tasks View',
+                self::TASKS_CREATE => 'Tasks Create',
+                self::TASKS_UPDATE => 'Tasks Update',
+                self::TASKS_DELETE => 'Tasks Delete',
+                self::TASK_COMMENTS_CREATE => 'Task Comments Create',
+                self::TASK_COMMENTS_UPDATE => 'Task Comments Update',
+                self::TASK_COMMENTS_DELETE => 'Task Comments Delete',
                 self::TASK_COLLABORATION_VIEW => 'Task Collaboration View',
                 self::TEAMS_VIEW => 'Teams View',
                 self::CALENDAR_VIEW => 'Calendar View',
@@ -78,6 +98,7 @@ class Permissions
                 self::USERS_UPDATE => 'Users Update',
                 self::USERS_DELETE => 'Users Delete',
                 self::ROLES_MANAGE => 'Roles Manage',
+                self::WEBHOOKS_VIEW_SECRETS => 'Webhooks View Secrets',
                 self::SETTINGS_VIEW => 'Settings View',
             ],
         ];
@@ -117,6 +138,12 @@ class Permissions
                 self::PROJECTS_DELETE,
                 self::PROJECTS_MANAGE_MEMBERS,
                 self::TASKS_VIEW,
+                self::TASKS_CREATE,
+                self::TASKS_UPDATE,
+                self::TASKS_DELETE,
+                self::TASK_COMMENTS_CREATE,
+                self::TASK_COMMENTS_UPDATE,
+                self::TASK_COMMENTS_DELETE,
                 self::TASK_COLLABORATION_VIEW,
                 self::TEAMS_VIEW,
                 self::CALENDAR_VIEW,
@@ -132,6 +159,11 @@ class Permissions
                 self::PROJECTS_CREATE,
                 self::PROJECTS_UPDATE,
                 self::TASKS_VIEW,
+                self::TASKS_CREATE,
+                self::TASKS_UPDATE,
+                self::TASK_COMMENTS_CREATE,
+                self::TASK_COMMENTS_UPDATE,
+                self::TASK_COMMENTS_DELETE,
                 self::TASK_COLLABORATION_VIEW,
                 self::TEAMS_VIEW,
                 self::CALENDAR_VIEW,
@@ -144,6 +176,11 @@ class Permissions
                 self::NOTIFICATIONS_VIEW,
                 self::PROJECTS_VIEW,
                 self::TASKS_VIEW,
+                self::TASKS_CREATE,
+                self::TASKS_UPDATE,
+                self::TASK_COMMENTS_CREATE,
+                self::TASK_COMMENTS_UPDATE,
+                self::TASK_COMMENTS_DELETE,
                 self::TASK_COLLABORATION_VIEW,
                 self::CALENDAR_VIEW,
                 self::DOCUMENTS_VIEW,
@@ -154,6 +191,7 @@ class Permissions
                 self::NOTIFICATIONS_VIEW,
                 self::PROJECTS_VIEW,
                 self::TASKS_VIEW,
+                self::TASK_COMMENTS_CREATE,
                 self::TASK_COLLABORATION_VIEW,
                 self::DOCUMENTS_VIEW,
                 self::SETTINGS_VIEW,
