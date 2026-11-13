@@ -79,16 +79,36 @@ interface Props {
     base_url: string;
     available_scopes: Record<string, ScopeInfo>;
     endpoints_summary: EndpointSummary[];
-    webhooks: WebhookItem[];
+    webhooks:
+        | WebhookItem[]
+        | {
+              data: WebhookItem[];
+              meta?: PaginationMeta;
+          };
     webhook_events: Record<string, string>;
     can_manage_webhooks: boolean;
     can_view_webhook_secrets: boolean;
     stats: IntegrationStats;
 }
 
+interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+}
+
 const props = defineProps<Props>();
 const page = usePage();
 const toast = useToast();
+
+const webhooksList = computed<WebhookItem[]>(() => {
+    const raw = props.webhooks;
+    if (Array.isArray(raw)) return raw;
+    if (raw && Array.isArray(raw.data)) return raw.data;
+    return [];
+});
 
 type TabKey = 'tokens' | 'webhooks' | 'console' | 'docs';
 
@@ -151,7 +171,7 @@ function switchTab(tab: TabKey): void {
 /* ------------------------------------------------------------------ */
 
 const averageLatency = computed<number | null>(() => {
-    const values = props.webhooks
+    const values = webhooksList.value
         .map((webhook) => webhook.last_delivery_latency_ms)
         .filter((value): value is number => value !== null);
 
@@ -163,7 +183,7 @@ const averageLatency = computed<number | null>(() => {
 });
 
 const activeWebhookCount = computed(
-    () => props.webhooks.filter((webhook) => webhook.is_active).length,
+    () => webhooksList.value.filter((webhook) => webhook.is_active).length,
 );
 
 const tabCounts = computed<Record<string, number>>(() => ({
@@ -1387,11 +1407,11 @@ function curlForEndpoint(endpoint: EndpointSummary): string {
                 </div>
 
                 <div
-                    v-if="props.webhooks.length > 0"
+                    v-if="webhooksList.length > 0"
                     class="divide-y divide-surface-100 dark:divide-surface-800"
                 >
                     <div
-                        v-for="webhook in props.webhooks"
+                        v-for="webhook in webhooksList"
                         :key="webhook.id"
                         class="p-5 transition-colors hover:bg-surface-50/40 sm:p-6 dark:hover:bg-surface-800/20"
                     >

@@ -444,7 +444,10 @@ onBeforeUnmount(() => {
                         <span class="text-surface-300 dark:text-surface-600"
                             >·</span
                         >
-                        <span>Tasks Flow Workspace</span>
+                        <span
+                            >{{ page.props.app.name }}
+                            {{ page.props.app.shortName }} Workspace</span
+                        >
                     </div>
 
                     <!-- Serif Heading inspired by CALM / SYSTEM "Clarity feels good" -->

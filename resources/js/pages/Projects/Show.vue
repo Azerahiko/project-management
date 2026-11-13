@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { usePage, Link } from '@inertiajs/vue3';
 import projects from '@/routes/projects';
+import tasks from '@/routes/tasks';
 import api from '@/lib/api';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useProjects } from '@/composables/useProjects';
@@ -16,7 +17,12 @@ import Table from '@/components/ui/Table.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import DeadlineBadge from '@/components/tasks/DeadlineBadge.vue';
-import type { Project, ProjectMember, ProjectFilters } from '@/types';
+import type {
+    Project,
+    ProjectMember,
+    ProjectFile,
+    ProjectFilters,
+} from '@/types';
 
 defineOptions({
     layout: AppLayout,
@@ -28,6 +34,11 @@ const { fetchAvailableUsers, addMember, updateMember, removeMember } =
     useProjects({} as ProjectFilters);
 
 const project = page.props.project as Project;
+
+const canViewTrashedTasks = computed(() => {
+    const userPerms = (page.props.auth?.user as any)?.permissions || [];
+    return userPerms.includes('tasks.view');
+});
 const projectId = project.id;
 
 const projectStatusForBadge = computed(() => {
@@ -76,6 +87,172 @@ const editMemberRole = ref<{ member: ProjectMember; role: string } | null>(
     null,
 );
 const savingMemberRole = ref(false);
+
+const fileColumns = [
+    { key: 'name', label: 'Berkas', class: 'max-w-xs' },
+    { key: 'size', label: 'Ukuran', class: 'max-w-xs' },
+    { key: 'uploader', label: 'Pengunggah', class: 'max-w-xs' },
+    { key: 'created_at', label: 'Diunggah', class: 'max-w-xs' },
+    { key: 'actions', label: 'Aksi' },
+];
+
+const files = ref<ProjectFile[]>([]);
+const filesLoading = ref(true);
+const filesError = ref(false);
+
+const uploadModalOpen = ref(false);
+const selectedFile = ref<File | null>(null);
+const uploadError = ref<string | null>(null);
+const uploading = ref(false);
+
+const fileToDelete = ref<ProjectFile | null>(null);
+const deletingFile = ref(false);
+const downloadingFileId = ref<number | null>(null);
+
+async function loadFiles(): Promise<void> {
+    filesLoading.value = true;
+    filesError.value = false;
+
+    try {
+        const { data } = await api.get(`/projects/${projectId}/files`, {
+            params: { per_page: 100 },
+        });
+        files.value = data.data;
+    } catch {
+        filesError.value = true;
+    } finally {
+        filesLoading.value = false;
+    }
+}
+
+function openUploadModal(): void {
+    selectedFile.value = null;
+    uploadError.value = null;
+    uploadModalOpen.value = true;
+}
+
+function handleFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    selectedFile.value = input.files?.[0] ?? null;
+    uploadError.value = null;
+}
+
+async function submitUpload(): Promise<void> {
+    if (!selectedFile.value || uploading.value) return;
+
+    if (selectedFile.value.size > 25 * 1024 * 1024) {
+        uploadError.value = 'Ukuran berkas melebihi batas 25 MB.';
+        return;
+    }
+
+    uploading.value = true;
+    uploadError.value = null;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile.value);
+
+    try {
+        const { data } = await api.post(
+            `/projects/${projectId}/files`,
+            formData,
+        );
+        files.value.unshift(data.data);
+        uploadModalOpen.value = false;
+        success(
+            'Berkas diunggah',
+            `${data.data.original_name} berhasil diunggah.`,
+        );
+    } catch (err: any) {
+        uploadError.value =
+            err.response?.data?.errors?.file?.[0] ??
+            err.response?.data?.message ??
+            'Berkas gagal diunggah.';
+    } finally {
+        uploading.value = false;
+    }
+}
+
+function filenameFromDisposition(header?: string): string | null {
+    if (!header) return null;
+
+    const encoded = /filename\*=utf-8''([^;]+)/i.exec(header);
+    if (encoded?.[1]) {
+        try {
+            return decodeURIComponent(encoded[1]);
+        } catch {
+            return null;
+        }
+    }
+
+    return /filename="?([^";]+)"?/i.exec(header)?.[1] ?? null;
+}
+
+async function downloadFile(file: ProjectFile): Promise<void> {
+    if (downloadingFileId.value !== null) return;
+
+    downloadingFileId.value = file.id;
+
+    try {
+        const response = await api.get(
+            `/projects/${projectId}/files/${file.id}/download`,
+            { responseType: 'blob' },
+        );
+
+        const url = URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download =
+            filenameFromDisposition(
+                response.headers['content-disposition'] as string | undefined,
+            ) ?? file.original_name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    } catch {
+        toastError('Gagal mengunduh berkas', 'Silakan coba lagi.');
+    } finally {
+        downloadingFileId.value = null;
+    }
+}
+
+function confirmDeleteFile(file: ProjectFile): void {
+    fileToDelete.value = file;
+}
+
+async function executeDeleteFile(): Promise<void> {
+    if (!fileToDelete.value || deletingFile.value) return;
+
+    const file = fileToDelete.value;
+    deletingFile.value = true;
+
+    try {
+        await api.delete(`/projects/${projectId}/files/${file.id}`);
+        files.value = files.value.filter((item) => item.id !== file.id);
+        fileToDelete.value = null;
+        success(
+            'Berkas dihapus',
+            `${file.original_name} dihapus dari daftar proyek.`,
+        );
+    } catch {
+        toastError('Gagal menghapus berkas', 'Silakan coba lagi.');
+    } finally {
+        deletingFile.value = false;
+    }
+}
+
+function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function fileExtension(name: string): string {
+    const extension = name.split('.').pop();
+    return extension && extension !== name ? extension.toUpperCase() : 'FILE';
+}
+
+onMounted(loadFiles);
 
 async function loadAvailableUsers(): Promise<void> {
     loadingAvailableUsers.value = true;
@@ -289,6 +466,18 @@ function formatDateShort(dateString: string | null): string {
                             class="mr-2 h-4 w-4"
                         />
                         Edit Proyek
+                    </Link>
+
+                    <Link
+                        v-if="canViewTrashedTasks"
+                        :href="tasks.trashed.url({ project: projectId })"
+                        class="dropdown-item"
+                    >
+                        <component
+                            :is="getIcon('Archive')"
+                            class="mr-2 h-4 w-4"
+                        />
+                        Tugas yang Dihapus
                     </Link>
 
                     <button
@@ -567,6 +756,146 @@ function formatDateShort(dateString: string | null): string {
                 </Button>
             </div>
         </div>
+
+        <!-- Project Files Section -->
+        <div class="card">
+            <div
+                class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+                <div class="flex items-center gap-2">
+                    <h3
+                        class="text-lg font-semibold text-surface-900 dark:text-surface-100"
+                    >
+                        Berkas Proyek
+                    </h3>
+                    <span
+                        v-if="!filesLoading && !filesError"
+                        class="rounded-md bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                    >
+                        {{ files.length }}
+                    </span>
+                </div>
+                <Button
+                    v-if="project.can_update"
+                    size="sm"
+                    @click="openUploadModal"
+                >
+                    <component :is="getIcon('Plus')" class="mr-1 h-4 w-4" />
+                    Unggah Berkas
+                </Button>
+            </div>
+
+            <div
+                v-if="filesLoading"
+                class="py-8 text-center text-sm text-surface-500 dark:text-surface-400"
+            >
+                Memuat berkas...
+            </div>
+
+            <div
+                v-else-if="filesError"
+                class="py-8 text-center text-surface-500 dark:text-surface-400"
+            >
+                <p>Gagal memuat berkas.</p>
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    class="mt-3"
+                    @click="loadFiles"
+                >
+                    Coba Lagi
+                </Button>
+            </div>
+
+            <div
+                v-else-if="files.length === 0"
+                class="py-8 text-center text-surface-500 dark:text-surface-400"
+            >
+                <component
+                    :is="getIcon('FileText')"
+                    class="mx-auto mb-3 h-12 w-12 text-surface-200 dark:text-surface-700"
+                />
+                <p>Belum ada berkas pada proyek ini</p>
+                <Button
+                    v-if="project.can_update"
+                    size="sm"
+                    class="mt-3"
+                    @click="openUploadModal"
+                >
+                    <component :is="getIcon('Plus')" class="mr-1 h-4 w-4" />
+                    Unggah Berkas Pertama
+                </Button>
+            </div>
+
+            <Table v-else :columns="fileColumns" :data="files" row-key="id">
+                <template #name="{ row }">
+                    <div class="flex items-center gap-3">
+                        <component
+                            :is="getIcon('FileText')"
+                            class="h-4 w-4 shrink-0 text-surface-400"
+                        />
+                        <div class="min-w-0">
+                            <p
+                                class="truncate font-medium text-surface-900 dark:text-surface-100"
+                            >
+                                {{ row.original_name }}
+                            </p>
+                            <p
+                                class="text-xs text-surface-500 dark:text-surface-400"
+                            >
+                                {{ fileExtension(row.original_name) }} ·
+                                {{ row.mime_type }}
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
+                <template #size="{ row }">
+                    <p class="text-sm text-surface-500 dark:text-surface-400">
+                        {{ formatFileSize(row.size) }}
+                    </p>
+                </template>
+
+                <template #uploader="{ row }">
+                    <p class="text-sm text-surface-500 dark:text-surface-400">
+                        {{ row.uploader?.name ?? '—' }}
+                    </p>
+                </template>
+
+                <template #created_at="{ row }">
+                    <p class="text-sm text-surface-500 dark:text-surface-400">
+                        {{ formatDateShort(row.created_at) }}
+                    </p>
+                </template>
+
+                <template #actions="{ row }">
+                    <div class="flex items-center gap-1">
+                        <button
+                            class="btn-ghost btn-icon text-surface-500 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-800"
+                            title="Unduh"
+                            :disabled="downloadingFileId !== null"
+                            @click="downloadFile(row)"
+                        >
+                            <component
+                                :is="getIcon('Download')"
+                                class="h-4 w-4"
+                            />
+                        </button>
+                        <button
+                            v-if="project.can_update"
+                            class="btn-ghost btn-icon text-accent-700 hover:bg-accent-50 dark:hover:bg-accent-900/20"
+                            title="Hapus"
+                            @click="confirmDeleteFile(row)"
+                        >
+                            <component
+                                :is="getIcon('Trash2')"
+                                class="h-4 w-4"
+                            />
+                        </button>
+                    </div>
+                </template>
+            </Table>
+        </div>
     </div>
 
     <!-- Add Member Modal -->
@@ -658,6 +987,103 @@ function formatDateShort(dateString: string | null): string {
                 :loading="deleteLoading"
             >
                 Hapus Proyek
+            </Button>
+        </template>
+    </Modal>
+
+    <!-- Upload File Modal -->
+    <Modal
+        :open="uploadModalOpen"
+        title="Unggah Berkas"
+        @close="uploadModalOpen = false"
+    >
+        <div class="space-y-4">
+            <p class="text-sm text-surface-600 dark:text-surface-300">
+                Format yang diterima: gambar (JPG, PNG, GIF, WEBP), PDF, dokumen
+                Office (DOC, DOCX, XLS, XLSX, PPT, PPTX), teks (TXT, CSV), dan
+                ZIP. Maksimal 25 MB per berkas.
+            </p>
+
+            <label
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-surface-300 bg-surface-50/40 px-4 py-6 text-sm font-medium text-surface-600 transition hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20 dark:text-surface-400"
+            >
+                <component
+                    :is="getIcon('Plus')"
+                    class="h-5 w-5 text-surface-400"
+                />
+                <span class="text-center">
+                    {{
+                        selectedFile
+                            ? selectedFile.name
+                            : 'Pilih berkas untuk diunggah'
+                    }}
+                </span>
+                <input
+                    type="file"
+                    class="hidden"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+                    @change="handleFileChange"
+                />
+            </label>
+
+            <p
+                v-if="selectedFile"
+                class="text-xs text-surface-500 dark:text-surface-400"
+            >
+                Ukuran: {{ formatFileSize(selectedFile.size) }}
+            </p>
+
+            <p
+                v-if="uploadError"
+                class="text-sm text-accent-700 dark:text-accent-300"
+            >
+                {{ uploadError }}
+            </p>
+        </div>
+
+        <template #footer>
+            <Button variant="secondary" @click="uploadModalOpen = false">
+                Batal
+            </Button>
+            <Button
+                variant="primary"
+                :loading="uploading"
+                :disabled="!selectedFile"
+                @click="submitUpload"
+            >
+                Unggah
+            </Button>
+        </template>
+    </Modal>
+
+    <!-- Delete File Modal -->
+    <Modal
+        :open="fileToDelete !== null"
+        title="Hapus Berkas"
+        @close="fileToDelete = null"
+    >
+        <p class="text-surface-600 dark:text-surface-300">
+            Hapus berkas
+            <strong class="text-surface-900 dark:text-surface-100">{{
+                fileToDelete?.original_name
+            }}</strong>
+            dari daftar proyek?
+        </p>
+        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
+            Berkas akan dihapus dari daftar proyek ini dan tidak lagi
+            ditampilkan.
+        </p>
+
+        <template #footer>
+            <Button variant="secondary" @click="fileToDelete = null">
+                Batal
+            </Button>
+            <Button
+                variant="destructive"
+                :loading="deletingFile"
+                @click="executeDeleteFile"
+            >
+                Hapus Berkas
             </Button>
         </template>
     </Modal>

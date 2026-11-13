@@ -239,7 +239,10 @@ watch(
                     <span class="text-surface-300 dark:text-surface-700"
                         >·</span
                     >
-                    <span>Tasks Flow Workspace</span>
+                    <span
+                        >{{ page.props.app.name }}
+                        {{ page.props.app.shortName }} Workspace</span
+                    >
                 </div>
                 <h1
                     class="mt-1 font-serif text-2xl font-normal tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"

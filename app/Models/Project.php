@@ -32,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property-read User $owner
  * @property-read Collection<int, User> $members
  * @property-read Collection<int, ProjectMember> $projectMembers
+ * @property-read Collection<int, File> $files
  * @property-read int|null $members_count
  * @property-read int|null $tasks_count
  * @property-read int|null $completed_tasks_count
@@ -59,6 +60,16 @@ class Project extends Model
             'end_date' => 'date',
             'owner_id' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Database cascade deletes rows without firing model events, so files are
+        // force deleted here first to let their physical cleanup run.
+        static::forceDeleting(function (Project $project): void {
+            File::withTrashed()->where('project_id', $project->id)->get()
+                ->each(fn (File $file) => $file->forceDelete());
+        });
     }
 
     /**
@@ -102,6 +113,16 @@ class Project extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    /**
+     * Get all files uploaded to the project.
+     *
+     * @return HasMany<File, $this>
+     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(File::class);
     }
 
     /**

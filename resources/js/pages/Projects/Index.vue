@@ -59,6 +59,10 @@ const canCreate = computed(() =>
     Boolean(page.props.auth.user?.permissions.includes('projects.create')),
 );
 
+const canViewTrashed = computed(() =>
+    Boolean(page.props.auth.user?.permissions.includes('projects.view')),
+);
+
 const canCreateTask = computed(() => {
     const perms = page.props.auth.user?.permissions ?? [];
     return Boolean(
@@ -345,6 +349,14 @@ watch(
                 >
                     <component :is="getIcon('Plus')" class="h-4 w-4" />
                     Tambah Proyek
+                </Link>
+                <Link
+                    v-if="canViewTrashed"
+                    :href="projectsRoute.trashed.url()"
+                    class="btn btn-ghost w-full sm:w-auto"
+                >
+                    <component :is="getIcon('Trash2')" class="h-4 w-4" />
+                    Sampah
                 </Link>
             </div>
         </div>

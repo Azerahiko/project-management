@@ -126,7 +126,7 @@ Route::middleware(['auth'])->group(function () {
             return Inertia::render('Tasks/Show', [
                 'task' => TaskResource::make($task)->toArray($request),
             ]);
-        })->name('tasks.show');
+        })->name('tasks.show')->whereNumber('task');
 
         Route::get('/tasks/{task}/edit', function (Task $task, Request $request) {
             abort_unless($request->user()->can('update', $task), 403);

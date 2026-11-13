@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { usePage, Link } from '@inertiajs/vue3';
 import tasks from '@/routes/tasks';
+import taskComments from '@/routes/task-comments';
 import api from '@/lib/api';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useTasks } from '@/composables/useTasks';
@@ -32,6 +33,11 @@ const { fetchAssignees } = useTasks({} as TaskFilters);
 
 const task = page.props.task as Task;
 const taskId = task.id;
+
+const canViewTrashedComments = computed(() => {
+    const userPerms = (page.props.auth?.user as any)?.permissions || [];
+    return userPerms.includes('tasks.view');
+});
 
 const activities = ref<TaskActivityItem[]>([]);
 const activitiesLoading = ref(false);
@@ -276,6 +282,18 @@ function formatDateShort(dateString: string | null): string {
                         />
                         Ubah Penugasan
                     </div>
+
+                    <Link
+                        v-if="canViewTrashedComments"
+                        :href="taskComments.trashed.url({ task: taskId })"
+                        class="dropdown-item"
+                    >
+                        <component
+                            :is="getIcon('Archive')"
+                            class="mr-2 h-4 w-4"
+                        />
+                        Komentar yang Dihapus
+                    </Link>
 
                     <button
                         v-if="task.can_delete"

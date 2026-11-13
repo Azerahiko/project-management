@@ -294,7 +294,7 @@ watch(
     >
         <!-- Top Section: Natural Brand Logo & Categorized Menus -->
         <div class="flex flex-col gap-5">
-            <!-- Brand Logo with Tasks Flow branding -->
+            <!-- Brand Logo with dynamic application branding -->
             <div class="flex items-center justify-between px-2 pt-1 pb-2">
                 <Link
                     href="/dashboard"
@@ -305,7 +305,7 @@ watch(
                     >
                         <img
                             src="/images/logo-mark.png"
-                            alt="Tasks Flow"
+                            :alt="page.props.app.name"
                             class="h-7 w-7 object-contain transition-transform duration-200 group-hover:scale-105"
                         />
                     </div>
@@ -313,12 +313,12 @@ watch(
                         <span
                             class="font-serif text-lg font-normal tracking-tight text-surface-950 dark:text-surface-50"
                         >
-                            Tasks Flow
+                            {{ page.props.app.name }}
                         </span>
                         <span
                             class="text-[10px] font-medium tracking-wider text-surface-500 uppercase dark:text-surface-400"
                         >
-                            Workspace
+                            {{ page.props.app.shortName }}
                         </span>
                     </div>
                 </Link>

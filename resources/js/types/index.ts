@@ -193,6 +193,19 @@ export type ProjectMember = {
     updated_at: string;
 };
 
+export type ProjectFile = {
+    id: number;
+    project_id: number;
+    original_name: string;
+    mime_type: string;
+    size: number;
+    uploaded_by: number | null;
+    created_at: string | null;
+    updated_at: string | null;
+    deleted_at: string | null;
+    uploader?: User | null;
+};
+
 export type ProjectFilters = {
     search: string;
     status: string;

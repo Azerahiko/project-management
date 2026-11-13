@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectFileController;
 use App\Http\Controllers\Api\TaskActivityController;
 use App\Http\Controllers\Api\TaskCommentController;
 use App\Http\Controllers\Api\TaskController;
@@ -48,6 +49,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->middleware('can:task-comments.create', 'token.ability:tasks:write');
         Route::put('comments/{comment}', [TaskCommentController::class, 'update'])->middleware('can:task-comments.update', 'token.ability:tasks:write');
         Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->middleware('can:task-comments.delete', 'token.ability:tasks:write');
+
+        // Project files
+        Route::post('projects/{project}/files', [ProjectFileController::class, 'store'])
+            ->middleware(['can:projects.update', 'token.ability:projects:write']);
+        Route::delete('projects/{project}/files/{file}', [ProjectFileController::class, 'destroy'])
+            ->scopeBindings()
+            ->middleware(['can:projects.update', 'token.ability:projects:write']);
     });
 
     // Read-only endpoints (no rate limit)
@@ -72,6 +80,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Task assignees
     Route::get('projects/{project}/assignees', [TaskController::class, 'assignees'])->middleware('can:projects.view', 'token.ability:projects:read');
 
+    // Project files (read-only)
+    Route::get('projects/{project}/files', [ProjectFileController::class, 'index'])
+        ->middleware(['can:projects.view', 'token.ability:projects:read']);
+    Route::get('projects/{project}/files/{file}/download', [ProjectFileController::class, 'download'])
+        ->scopeBindings()
+        ->middleware(['can:projects.view', 'token.ability:projects:read']);
+
     // Task comments (read-only)
     Route::middleware(['can:tasks.view', 'can:task-collaboration.view', 'token.ability:tasks:read'])->group(function () {
         Route::get('tasks/{task}/comments', [TaskCommentController::class, 'index']);
@@ -90,6 +105,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Task comment trash
         Route::get('tasks/{task}/comments/trashed', [TaskCommentController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
         Route::post('comments/{comment}/restore', [TaskCommentController::class, 'restore'])->withTrashed()->middleware('can:task-comments.update', 'token.ability:tasks:write');
+        // Project file trash
+        Route::post('projects/{project}/files/{file}/restore', [ProjectFileController::class, 'restore'])
+            ->withTrashed()
+            ->scopeBindings()
+            ->middleware(['can:projects.update', 'token.ability:projects:write']);
     });
 
     // Notification routes

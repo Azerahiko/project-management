@@ -203,7 +203,7 @@ onUnmounted(() => {
                     <span
                         class="h-1.5 w-1.5 rounded-full bg-primary-700 dark:bg-primary-300"
                     />
-                    Tasks Flow
+                    {{ page.props.app.name }}
                 </Link>
                 <span
                     class="hidden text-surface-300 lg:inline dark:text-surface-700"
