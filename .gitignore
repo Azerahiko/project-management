@@ -44,3 +44,5 @@ yarn-error.log
 /opencode.jsonc
 /.playwright-mcp
 .aider*
+skills-lock.json
+/.opencode
