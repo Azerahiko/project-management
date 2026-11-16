@@ -30,7 +30,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.5'
           extensions: pdo_pgsql, pgsql, bcmath, intl, redis
           coverage: none
           tools: composer:v2
@@ -64,6 +64,9 @@ jobs:
       - name: Generate APP_KEY
         run: php artisan key:generate --no-interaction
 
+      - name: Generate route helpers
+        run: php artisan wayfinder:generate --path=resources/js
+
       - name: Run database migrations
         run: php artisan migrate --force
         env:
@@ -93,7 +96,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.5'
           extensions: pdo_pgsql, pgsql
           coverage: none
           tools: composer:v2
@@ -117,9 +120,24 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    needs: [laravel, lint]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, pgsql
+          coverage: none
+          tools: composer:v2
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Generate route helpers
+        run: php artisan wayfinder:generate --path=resources/js
 
       - name: Setup Node
         uses: actions/setup-node@v4
