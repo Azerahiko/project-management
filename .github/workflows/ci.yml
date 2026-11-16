@@ -64,9 +64,6 @@ jobs:
       - name: Generate APP_KEY
         run: php artisan key:generate --no-interaction
 
-      - name: Generate route helpers
-        run: php artisan wayfinder:generate --path=resources/js
-
       - name: Run database migrations
         run: php artisan migrate --force
         env:
@@ -76,6 +73,26 @@ jobs:
           DB_DATABASE: project_management_test
           DB_USERNAME: project_management
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Generate route helpers
+        run: php artisan wayfinder:generate --path=resources/js
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: project_management_test
+          DB_USERNAME: project_management
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Upload generated route helpers
+        uses: actions/upload-artifact@v4
+        with:
+          name: wayfinder-generated
+          path: |
+            resources/js/routes
+            resources/js/actions
+            resources/js/wayfinder
+          retention-days: 1
 
       - name: Run tests with parallel execution
         run: php artisan test --parallel --processes=4
@@ -120,23 +137,16 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    needs: laravel
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - name: Download generated route helpers
+        uses: actions/download-artifact@v4
         with:
-          php-version: '8.5'
-          extensions: pdo_pgsql, pgsql
-          coverage: none
-          tools: composer:v2
-
-      - name: Install PHP dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
-
-      - name: Generate route helpers
-        run: php artisan wayfinder:generate --path=resources/js
+          name: wayfinder-generated
+          path: resources/js
 
       - name: Setup Node
         uses: actions/setup-node@v4
