@@ -197,7 +197,7 @@ describe('Project file upload', function () {
 
     it('removes the stored file when the database insert fails', function () {
         File::saving(function () {
-            throw new \RuntimeException('Database failure simulation');
+            throw new RuntimeException('Database failure simulation');
         });
 
         try {

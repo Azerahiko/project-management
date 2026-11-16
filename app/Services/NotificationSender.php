@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Notifications\ProjectMemberAdded;
+use App\Notifications\ProjectOwnershipTransferred;
 use App\Notifications\TaskAssigned;
 use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskStatusChanged;
@@ -53,6 +54,51 @@ class NotificationSender
         $inserted = $this->insertIgnoringConflict($notificationId, $type, $recipient->id, $payload, $idempotencyKey, $now);
 
         return $inserted > 0;
+    }
+
+    /**
+     * Send the same notification to many recipients with one insert per chunk.
+     *
+     * @param  iterable<User>  $recipients
+     * @param  array<string, mixed>  $data
+     */
+    public function sendMany(iterable $recipients, string $type, array $data): int
+    {
+        $now = now();
+        $rows = [];
+
+        foreach ($recipients as $recipient) {
+            if (! $this->shouldSendNotification($recipient, $type)) {
+                continue;
+            }
+
+            $payload = array_merge($data, [
+                'url' => $this->buildUrl($type, $data),
+                'notifiable_id' => $recipient->id,
+            ]);
+
+            $rows[] = [
+                'id' => Str::uuid()->toString(),
+                'type' => $type,
+                'notifiable_type' => User::class,
+                'notifiable_id' => $recipient->id,
+                'data' => json_encode($payload),
+                'idempotency_key' => $this->generateIdempotencyKey($type, $payload),
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($rows === []) {
+            return 0;
+        }
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            DB::table('notifications')->insertOrIgnore($chunk);
+        }
+
+        return count($rows);
     }
 
     /**
@@ -180,6 +226,13 @@ class NotificationSender
                 $payload['action'] ?? 'project_member_added',
             ])),
 
+            ProjectOwnershipTransferred::class => implode('|', array_merge($keyParts, [
+                $payload['project_id'] ?? '',
+                $payload['previous_owner_id'] ?? '',
+                $payload['new_owner_id'] ?? '',
+                $payload['action'] ?? 'ownership_transferred',
+            ])),
+
             default => implode('|', array_merge($keyParts, [
                 $payload['action'] ?? 'unknown',
             ])),
@@ -195,7 +248,8 @@ class NotificationSender
             TaskAssigned::class,
             TaskCommentAdded::class,
             TaskStatusChanged::class => route('tasks.show', $data['task_id'], false),
-            ProjectMemberAdded::class => route('projects.show', $data['project_id'], false),
+            ProjectMemberAdded::class,
+            ProjectOwnershipTransferred::class => route('projects.show', $data['project_id'], false),
             default => '#',
         };
     }

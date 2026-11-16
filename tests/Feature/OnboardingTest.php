@@ -90,7 +90,10 @@ describe('Invitation System', function () {
             'expires_at' => now()->subHour(),
         ]);
 
-        $response = $this->post("/api/invite/{$token}/activate");
+        $response = $this->post("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
 
         $response->assertStatus(410);
     });
@@ -133,10 +136,13 @@ describe('Invitation System', function () {
             'expires_at' => now()->addHours(72),
         ]);
 
-        $response = $this->post("/api/invite/{$token}/activate");
+        $response = $this->post("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
 
         $response->assertJson([
-            'message' => 'Email dan undangan berhasil diverifikasi. Silakan masuk menggunakan kata sandi sementara Anda.',
+            'message' => 'Akun berhasil diaktifkan. Silakan masuk menggunakan kata sandi yang baru Anda buat.',
             'redirect' => route('login'),
         ]);
 
@@ -144,6 +150,7 @@ describe('Invitation System', function () {
         $invitation->refresh();
         expect($user->email_verified_at)->not->toBeNull();
         expect($invitation->accepted_at)->not->toBeNull();
+        expect(Hash::check('ActivationPass123!', $user->password))->toBeTrue();
     });
 
     it('unverified user cannot login', function () {
@@ -460,5 +467,117 @@ describe('Onboarding Findings Verification', function () {
         $response->assertSee('Tautan Tidak Berlaku');
         $response->assertDontSee('Fatal error');
         $response->assertDontSee('vendor/');
+    });
+});
+
+describe('Invitation security (H-1)', function () {
+    it('invitation email does not contain temporary password for invited users', function () {
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->assignRole('administrator');
+
+        Mail::fake();
+
+        $this->actingAs($admin)
+            ->postJson('/api/invitations', [
+                'name' => 'Invited User',
+                'email' => 'invited@example.com',
+                'role' => 'member',
+            ])
+            ->assertCreated();
+
+        Mail::assertSent(InvitationCreated::class, function ($mail) {
+            return $mail->temporaryPassword === null;
+        });
+    });
+
+    it('activation requires password and password_confirmation', function () {
+        $token = Str::random(64);
+        $tokenHash = hash('sha256', $token);
+
+        $user = User::create([
+            'name' => 'Test User',
+            'email' => 'require-pass@example.com',
+            'password' => Hash::make('TemporaryPass123!'),
+            'is_active' => true,
+            'email_verified_at' => null,
+        ]);
+
+        Invitation::create([
+            'name' => 'Test User',
+            'email' => 'require-pass@example.com',
+            'role' => 'member',
+            'token_hash' => $tokenHash,
+            'expires_at' => now()->addHours(72),
+        ]);
+
+        $response = $this->postJson("/api/invite/{$token}/activate", []);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['password']);
+    });
+
+    it('activation is single-use; second attempt returns 410', function () {
+        $token = Str::random(64);
+        $tokenHash = hash('sha256', $token);
+
+        $user = User::create([
+            'name' => 'Single Use User',
+            'email' => 'singleuse@example.com',
+            'password' => Hash::make('TemporaryPass123!'),
+            'is_active' => true,
+            'email_verified_at' => null,
+        ]);
+
+        Invitation::create([
+            'name' => 'Single Use User',
+            'email' => 'singleuse@example.com',
+            'role' => 'member',
+            'token_hash' => $tokenHash,
+            'expires_at' => now()->addHours(72),
+        ]);
+
+        $response1 = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
+        $response1->assertOk();
+
+        $response2 = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
+        $response2->assertStatus(410);
+    });
+
+    it('activation stores chosen password and verifies email', function () {
+        $token = Str::random(64);
+        $tokenHash = hash('sha256', $token);
+
+        $user = User::create([
+            'name' => 'Chosen Password User',
+            'email' => 'chosenpass@example.com',
+            'password' => Hash::make('TemporaryPass123!'),
+            'is_active' => true,
+            'email_verified_at' => null,
+        ]);
+
+        Invitation::create([
+            'name' => 'Chosen Password User',
+            'email' => 'chosenpass@example.com',
+            'role' => 'member',
+            'token_hash' => $tokenHash,
+            'expires_at' => now()->addHours(72),
+        ]);
+
+        $response = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'MyChosenPassword123!',
+            'password_confirmation' => 'MyChosenPassword123!',
+        ]);
+
+        $response->assertOk();
+        $user->refresh();
+        expect($user->email_verified_at)->not->toBeNull();
+        expect(Hash::check('MyChosenPassword123!', $user->password))->toBeTrue();
+        expect(Hash::check('TemporaryPass123!', $user->password))->toBeFalse();
     });
 });

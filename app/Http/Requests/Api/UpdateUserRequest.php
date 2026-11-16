@@ -33,7 +33,7 @@ class UpdateUserRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255', 'unique:users,email,'.$userId],
             'password' => ['nullable', 'confirmed', Password::defaults()],
-            'role' => ['sometimes', 'required', 'string', Rule::in(Roles::slugs())],
+            'role' => ['sometimes', 'required', 'string', Rule::in(Roles::assignableBy($this->user()))],
             'is_active' => ['sometimes', 'boolean'],
             'avatar' => ['nullable', 'string', 'max:2048'],
         ];

@@ -2446,7 +2446,6 @@ function curlForEndpoint(endpoint: EndpointSummary): string {
                         <option :value="30">30 hari</option>
                         <option :value="90">90 hari</option>
                         <option :value="365">1 tahun</option>
-                        <option :value="0">Tidak pernah kedaluwarsa</option>
                     </select>
                 </div>
 

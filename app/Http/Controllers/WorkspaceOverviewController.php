@@ -213,7 +213,12 @@ class WorkspaceOverviewController extends Controller
 
         $stats = [
             'total' => (clone $baseQuery)->count(),
-            'today' => (clone $baseQuery)->whereDate('created_at', Carbon::now($userTimezone)->toDateString())->count(),
+            'today' => (clone $baseQuery)
+                ->whereBetween('created_at', [
+                    Carbon::now($userTimezone)->startOfDay()->utc(),
+                    Carbon::now($userTimezone)->endOfDay()->utc(),
+                ])
+                ->count(),
             'contributors' => (clone $baseQuery)->whereNotNull('user_id')->distinct()->count('user_id'),
             'tasks' => (clone $baseQuery)->distinct()->count('task_id'),
             'task_activities' => (clone $baseQuery)->where('activity_type', 'like', 'task.%')->count(),

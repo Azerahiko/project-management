@@ -65,17 +65,20 @@ describe('End to end Onboarding Flow', function () {
         $this->get("/invite/{$rawToken}")->assertOk();
 
         // 5. User confirms invitation at /api/invite/{token}/activate
-        $activateResponse = $this->postJson("/api/invite/{$rawToken}/activate");
+        $activateResponse = $this->postJson("/api/invite/{$rawToken}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
         $activateResponse->assertOk();
 
         $user = User::where('email', 'e2e-user@example.com')->firstOrFail();
         expect($user->email_verified_at)->not->toBeNull();
         expect($user->invitation->isAccepted())->toBeTrue();
 
-        // 6. User logs in using temporary password (verify it works)
+        // 6. User logs in using the password chosen during activation
         $loginResponse = $this->post('/login', [
             'email' => 'e2e-user@example.com',
-            'password' => $tempPassword,
+            'password' => 'ActivationPass123!',
         ]);
         $loginResponse->assertRedirect();
         $this->assertAuthenticatedAs($user);
@@ -99,7 +102,7 @@ describe('End to end Onboarding Flow', function () {
 
         $user->refresh();
         expect($user->onboarding_password_changed_at)->not->toBeNull();
-        // Temporary password no longer works
+        // Temporary/admin-issued password no longer works
         expect(Hash::check($tempPassword, $user->password))->toBeFalse();
         expect(Hash::check($newPassword, $user->password))->toBeTrue();
 

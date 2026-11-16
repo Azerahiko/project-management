@@ -91,7 +91,7 @@ class Task extends Model
      */
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assignee_id');
+        return $this->belongsTo(User::class, 'assignee_id')->withTrashed();
     }
 
     /**
@@ -101,7 +101,7 @@ class Task extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'creator_id');
+        return $this->belongsTo(User::class, 'creator_id')->withTrashed();
     }
 
     /**
@@ -136,8 +136,10 @@ class Task extends Model
             return $query;
         }
 
-        return $query->whereHas('project', function ($q) use ($user) {
-            $q->accessibleBy($user);
+        return $query->where(function ($q) use ($user) {
+            $q->whereHas('project', fn ($projectQuery) => $projectQuery->accessibleBy($user))
+                ->orWhere('assignee_id', $user->id)
+                ->orWhere('creator_id', $user->id);
         });
     }
 

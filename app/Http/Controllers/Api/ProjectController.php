@@ -146,8 +146,9 @@ class ProjectController extends Controller
         $this->authorize('update', $project);
 
         $data = $request->validated();
-        $newOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : $project->owner_id;
-        $ownerChanged = $newOwnerId !== $project->owner_id;
+        $previousOwnerId = $project->owner_id;
+        $newOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : $previousOwnerId;
+        $ownerChanged = $newOwnerId !== $previousOwnerId;
         $previousStatus = $project->status->value;
 
         // Only the current owner or an administrator may transfer ownership.
@@ -168,9 +169,7 @@ class ProjectController extends Controller
             }
         }
 
-        DB::transaction(function () use ($project, $data, $newOwnerId, $ownerChanged, $request) {
-            $previousOwnerId = $project->owner_id;
-
+        DB::transaction(function () use ($project, $data, $newOwnerId, $previousOwnerId, $ownerChanged, $request) {
             $project->fill($data);
             $project->save();
 
@@ -196,19 +195,18 @@ class ProjectController extends Controller
 
         // Dispatch ownership transfer webhook and notifications after commit
         if ($ownerChanged) {
-            $previousOwnerId = $project->getOriginal('owner_id');
-            $previousOwner = User::find($previousOwnerId);
-            $newOwner = User::find($newOwnerId);
             $transferredBy = $request->user();
 
             DB::afterCommit(function () use ($project, $previousOwnerId, $newOwnerId, $transferredBy) {
-                $previousOwner = User::query()->where('id', $previousOwnerId)->first();
+                $previousOwner = User::withTrashed()->where('id', $previousOwnerId)->first();
                 $newOwner = User::query()->where('id', $newOwnerId)->first();
 
                 // Webhook
                 $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_OWNERSHIP_TRANSFERRED, [
                     'project_id' => $project->id,
                     'name' => $project->name,
+                    'previous_owner_id' => $previousOwnerId,
+                    'new_owner_id' => $newOwnerId,
                     'previous_owner' => $previousOwner ? [
                         'id' => $previousOwner->id,
                         'name' => $previousOwner->name,
@@ -230,6 +228,9 @@ class ProjectController extends Controller
                     $this->notificationSender->send($previousOwner, ProjectOwnershipTransferred::class, [
                         'project_id' => $project->id,
                         'project_name' => $project->name,
+                        'previous_owner_id' => $previousOwnerId,
+                        'new_owner_id' => $newOwnerId,
+                        'action' => 'ownership_transferred',
                         'previous_owner_name' => $previousOwner->name,
                         'new_owner_name' => $newOwner instanceof User ? $newOwner->name : '',
                         'transferred_by_name' => $transferredBy->name,
@@ -242,6 +243,9 @@ class ProjectController extends Controller
                     $this->notificationSender->send($newOwner, ProjectOwnershipTransferred::class, [
                         'project_id' => $project->id,
                         'project_name' => $project->name,
+                        'previous_owner_id' => $previousOwnerId,
+                        'new_owner_id' => $newOwnerId,
+                        'action' => 'ownership_transferred',
                         'previous_owner_name' => $previousOwner instanceof User ? $previousOwner->name : '',
                         'new_owner_name' => $newOwner->name,
                         'transferred_by_name' => $transferredBy->name,
@@ -374,7 +378,7 @@ class ProjectController extends Controller
     {
         $this->authorize('manageMembers', $project);
 
-        $perPage = min(max((int) $request->query('per_page', 20), 5), 50);
+        $perPage = Pagination::perPage($request, 20, 50);
         $search = $request->query('search', '');
 
         $query = User::query()
@@ -490,7 +494,7 @@ class ProjectController extends Controller
         $this->authorize('viewAny', Project::class);
 
         $user = $request->user();
-        $perPage = $request->integer('per_page', 15);
+        $perPage = Pagination::perPage($request, 15, 100);
         $projects = Project::onlyTrashed()
             ->where(function ($query) use ($user) {
                 $query->where('owner_id', $user->id)

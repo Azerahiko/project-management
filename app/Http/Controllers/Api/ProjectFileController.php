@@ -51,6 +51,10 @@ class ProjectFileController extends Controller
             'local'
         );
 
+        if ($storagePath === false) {
+            return response()->json(['message' => 'Berkas gagal disimpan.'], 500);
+        }
+
         try {
             $file = $project->files()->create([
                 'original_name' => $upload->getClientOriginalName(),
@@ -79,11 +83,15 @@ class ProjectFileController extends Controller
     {
         $this->authorize('view', $project);
 
+        if (! Storage::disk('local')->exists($file->storage_path)) {
+            abort(404);
+        }
+
         try {
             return Storage::disk('local')->download($file->storage_path, $file->original_name, [
                 'X-Content-Type-Options' => 'nosniff',
             ]);
-        } catch (\League\Flysystem\UnableToRetrieveMetadata $e) {
+        } catch (Throwable) {
             abort(404);
         }
     }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -90,5 +91,39 @@ class Webhook extends Model
     public function listensTo(string $event): bool
     {
         return in_array($event, $this->events ?? [], true);
+    }
+
+    /**
+     * URL safe to show in the UI: credentials and query string removed.
+     */
+    public function redactedUrl(): string
+    {
+        $parts = parse_url($this->url);
+
+        if ($parts === false || ! isset($parts['host'])) {
+            return '[url]';
+        }
+
+        $url = ($parts['scheme'] ?? 'https').'://'.$parts['host'];
+        $url .= isset($parts['port']) ? ':'.$parts['port'] : '';
+        $url .= $parts['path'] ?? '';
+        $url .= isset($parts['query']) ? '?***' : '';
+
+        return $url;
+    }
+
+    /**
+     * Delivery errors can contain endpoints or tokens; keep them out of responses.
+     */
+    public function redactedError(): ?string
+    {
+        if ($this->last_delivery_error === null) {
+            return null;
+        }
+
+        return Str::limit(
+            (string) preg_replace('/https?:\/\/\S+/', '[url]', $this->last_delivery_error),
+            200,
+        );
     }
 }

@@ -17,6 +17,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const unreadCount = ref(0);
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let visibilityHandler: (() => void) | null = null;
 let isInitialized = false;
 
 // --- Internal helpers ---
@@ -89,12 +90,32 @@ function startPolling(): void {
     // Initial fetch immediate
     void doFetchUnreadCount();
     pollTimer = setInterval(doFetchUnreadCount, 30_000);
+
+    // Pause network work while the tab is hidden, resume when visible again.
+    if (typeof document !== 'undefined' && !visibilityHandler) {
+        visibilityHandler = () => {
+            if (document.hidden) {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+            } else {
+                startPolling();
+            }
+        };
+        document.addEventListener('visibilitychange', visibilityHandler);
+    }
 }
 
 function stopPolling(): void {
     if (pollTimer) {
         clearInterval(pollTimer);
         pollTimer = null;
+    }
+
+    if (visibilityHandler) {
+        document.removeEventListener('visibilitychange', visibilityHandler);
+        visibilityHandler = null;
     }
 }
 

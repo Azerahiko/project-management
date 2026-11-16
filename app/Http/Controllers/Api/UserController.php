@@ -6,17 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreUserRequest;
 use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
-use App\Mail\InvitationCreated;
 use App\Models\Invitation;
 use App\Models\User;
+use App\Services\InvitationService;
 use App\Support\Pagination;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -73,45 +71,20 @@ class UserController extends Controller
     /**
      * Store a newly created user.
      */
-    public function store(StoreUserRequest $request): JsonResponse
+    public function store(StoreUserRequest $request, InvitationService $invitations): JsonResponse
     {
-        $expiresAt = now()->addHours(config('activation.expiry_hours', 72));
-        $token = Str::random(64);
-        $tokenHash = hash('sha256', $token);
-
-        $result = DB::transaction(function () use ($request, $expiresAt, $tokenHash, $token) {
-            $user = User::create([
-                'name' => $request->validated('name'),
-                'email' => $request->validated('email'),
-                'password' => Hash::make($request->validated('temporary_password')),
-                'is_active' => $request->boolean('is_active', true),
-                'avatar' => $request->validated('avatar'),
-                'email_verified_at' => null,
-            ]);
-
-            $user->syncRoles($this->assignableRoles($request, [$request->validated('role')]));
-
-            $invitation = Invitation::updateOrCreate(
-                ['email' => $user->email],
-                [
-                    'name' => $user->name,
-                    'role' => $request->validated('role'),
-                    'token_hash' => $tokenHash,
-                    'expires_at' => $expiresAt,
-                    'accepted_at' => null,
-                    'invited_by' => $request->user()?->id,
-                ]
-            );
-
-            Mail::to($user->email)->send(
-                new InvitationCreated($invitation, $token, $request->validated('temporary_password'))
-            );
-
-            return [
-                'user' => $user,
-                'invitation' => $invitation,
-            ];
-        });
+        $data = $request->safe()->only(['name', 'email', 'role', 'is_active', 'avatar']);
+        $result = $invitations->create(
+            [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => $data['role'],
+                'is_active' => $data['is_active'] ?? true,
+                'avatar' => $data['avatar'] ?? null,
+            ],
+            $request->validated('temporary_password'),
+            $request->user(),
+        );
 
         return response()->json([
             'data' => UserResource::make($result['user']->load(['roles', 'invitation'])),
@@ -171,6 +144,10 @@ class UserController extends Controller
     {
         $this->authorize('delete', $user);
 
+        if ($user->ownedProjects()->withTrashed()->exists()) {
+            abort(422, 'Pindahkan kepemilikan proyek pengguna ini sebelum menghapus akun.');
+        }
+
         DB::transaction(function () use ($user) {
             Invitation::where('email', $user->email)->delete();
             $user->delete();
@@ -203,14 +180,7 @@ class UserController extends Controller
      */
     protected function assignableRoles(Request $request, array $roles): array
     {
-        if ($request->user()?->hasRole(Roles::ADMINISTRATOR)) {
-            return $roles;
-        }
-
-        return array_values(array_filter(
-            $roles,
-            fn (string $role) => $role !== Roles::ADMINISTRATOR,
-        ));
+        return array_values(array_intersect($roles, Roles::assignableBy($request->user())));
     }
 
     /**

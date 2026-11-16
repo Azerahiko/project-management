@@ -7,6 +7,7 @@ use App\Models\Webhook;
 use App\Services\WebhookDispatcher;
 use App\Services\WebhookUrlValidator;
 use App\Support\Permissions;
+use App\Support\Roles;
 use App\Support\WebhookEvents;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
@@ -53,24 +54,28 @@ class ApiIntegrationController extends Controller
             'created_at' => $token->created_at?->translatedFormat('d M Y'),
         ]);
 
-        $perPage = (int) $request->query('webhooks_per_page', 15);
-        $perPage = min(max($perPage, 5), 50); // Clamp between 5 and 50
+        $perPage = min(max((int) $request->query('webhooks_per_page', 15), 5), 50);
 
-        $webhooksPaginator = Webhook::query()
+        $webhookQuery = Webhook::query()
+            ->when(! $user->hasRole(Roles::ADMINISTRATOR), fn ($query) => $query->where('user_id', $user->id));
+
+        $webhooksPaginator = (clone $webhookQuery)
             ->with('user:id,name')
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
 
-        $canManageWebhooks = $user->can(Permissions::ROLES_MANAGE);
+        $canManageWebhooks = Gate::allows('create', Webhook::class);
         $canViewWebhookSecrets = $user->can(Permissions::WEBHOOKS_VIEW_SECRETS);
         $flashedSecret = $canViewWebhookSecrets ? $request->session()->get('new_webhook_secret') : null;
 
         $activeTokens = $tokenData->reject(fn (array $token): bool => $token['is_expired']);
-        $webhooks = $webhooksPaginator->getCollection();
-        $activeWebhooks = $webhooks->where('is_active', true);
-        $deliveredWebhooks = $webhooks->whereNotNull('last_delivery_status');
-        $successfulWebhooks = $webhooks->where('last_delivery_status', 'success');
+
+        $webhooksCount = (clone $webhookQuery)->count();
+        $activeWebhooksCount = (clone $webhookQuery)->where('is_active', true)->count();
+        $deliveredWebhooksCount = (clone $webhookQuery)->whereNotNull('last_delivery_status')->count();
+        $successfulWebhooksCount = (clone $webhookQuery)->where('last_delivery_status', 'success')->count();
+        $failedWebhooksCount = (clone $webhookQuery)->where('last_delivery_status', 'failed')->count();
 
         return Inertia::render('Integrations/Index', [
             'tokens' => $tokenData,
@@ -115,17 +120,17 @@ class ApiIntegrationController extends Controller
             'webhooks' => $webhooksPaginator->through(fn (Webhook $webhook): array => [
                 'id' => $webhook->id,
                 'name' => $webhook->name,
-                'url' => $webhook->url,
+                'url' => $webhook->redactedUrl(),
                 'secret' => null, // Secret only shown once via flashed session on create
                 'events' => $webhook->events ?? [],
                 'is_active' => $webhook->is_active,
                 'last_delivery_status' => $webhook->last_delivery_status,
                 'last_delivery_code' => $webhook->last_delivery_code,
                 'last_delivery_latency_ms' => $webhook->last_delivery_latency_ms,
-                'last_delivery_error' => $webhook->last_delivery_error,
+                'last_delivery_error' => $webhook->redactedError(),
                 'last_delivery_at' => $webhook->last_delivery_at?->diffForHumans(),
                 'last_delivery_at_iso' => $webhook->last_delivery_at?->toISOString(),
-                'created_by' => $webhook->user->name,
+                'created_by' => $webhook->user->name ?? 'Pengguna dihapus',
                 'created_at' => $webhook->created_at?->translatedFormat('d M Y'),
             ]),
             'webhook_events' => WebhookEvents::all(),
@@ -135,13 +140,13 @@ class ApiIntegrationController extends Controller
                 'tokens_count' => $tokens->count(),
                 'active_tokens_count' => $activeTokens->count(),
                 'expired_tokens_count' => $tokens->count() - $activeTokens->count(),
-                'webhooks_count' => $webhooksPaginator->total(),
-                'active_webhooks_count' => $activeWebhooks->count(),
-                'successful_deliveries_count' => $successfulWebhooks->count(),
-                'failed_deliveries_count' => $deliveredWebhooks->where('last_delivery_status', 'failed')->count(),
-                'delivery_success_rate' => $deliveredWebhooks->isEmpty()
+                'webhooks_count' => $webhooksCount,
+                'active_webhooks_count' => $activeWebhooksCount,
+                'successful_deliveries_count' => $successfulWebhooksCount,
+                'failed_deliveries_count' => $failedWebhooksCount,
+                'delivery_success_rate' => $deliveredWebhooksCount === 0
                     ? null
-                    : (int) round(($successfulWebhooks->count() / $deliveredWebhooks->count()) * 100),
+                    : (int) round(($successfulWebhooksCount / $deliveredWebhooksCount) * 100),
             ],
         ]);
     }
@@ -157,7 +162,7 @@ class ApiIntegrationController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'abilities' => ['nullable', 'array'],
             'abilities.*' => ['string', Rule::in(array_keys($this->availableScopes()))],
-            'expires_in_days' => ['nullable', 'integer', 'in:0,7,30,90,365'],
+            'expires_in_days' => ['nullable', 'integer', 'in:7,30,90,365'],
         ], [
             'name.required' => 'Nama token wajib diisi.',
             'name.max' => 'Nama token maksimal 100 karakter.',
@@ -180,8 +185,8 @@ class ApiIntegrationController extends Controller
                 ->withInput();
         }
 
-        $expiresInDays = (int) ($validated['expires_in_days'] ?? 0);
-        $expiresAt = $expiresInDays > 0 ? Carbon::now()->addDays($expiresInDays) : null;
+        $expiresInDays = (int) ($validated['expires_in_days'] ?? 30);
+        $expiresAt = Carbon::now()->addDays($expiresInDays);
 
         $token = $request->user()->createToken(
             name: trim($validated['name']),
@@ -193,7 +198,7 @@ class ApiIntegrationController extends Controller
             ->with('new_token', [
                 'name' => $validated['name'],
                 'plain_text_token' => $token->plainTextToken,
-                'expires_at' => $expiresAt?->translatedFormat('d M Y, H:i') ?? 'Tidak pernah kedaluwarsa',
+                'expires_at' => $expiresAt->translatedFormat('d M Y, H:i'),
             ])
             ->with('success', 'Kunci API berhasil dibuat. Salin kunci Anda sekarang.');
     }
@@ -284,9 +289,7 @@ class ApiIntegrationController extends Controller
      */
     public function storeWebhook(Request $request): RedirectResponse
     {
-        Log::info('storeWebhook called', ['url' => $request->input('url')]);
-
-        $this->authorizeWebhookManagement($request);
+        Gate::authorize('create', Webhook::class);
 
         $validated = $this->validateWebhook($request);
 
@@ -312,7 +315,7 @@ class ApiIntegrationController extends Controller
      */
     public function updateWebhook(Request $request, Webhook $webhook): RedirectResponse
     {
-        $this->authorizeWebhookManagement($request);
+        $this->authorize('update', $webhook);
 
         $validated = $this->validateWebhook($request);
 
@@ -331,7 +334,7 @@ class ApiIntegrationController extends Controller
      */
     public function toggleWebhook(Request $request, Webhook $webhook): RedirectResponse
     {
-        $this->authorizeWebhookManagement($request);
+        $this->authorize('update', $webhook);
 
         $webhook->update(['is_active' => ! $webhook->is_active]);
 
@@ -346,7 +349,7 @@ class ApiIntegrationController extends Controller
      */
     public function destroyWebhook(Request $request, Webhook $webhook): RedirectResponse
     {
-        $this->authorizeWebhookManagement($request);
+        $this->authorize('delete', $webhook);
 
         $webhook->delete();
 
@@ -358,7 +361,7 @@ class ApiIntegrationController extends Controller
      */
     public function testWebhook(Request $request, Webhook $webhook): RedirectResponse
     {
-        $this->authorizeWebhookManagement($request);
+        $this->authorize('test', $webhook);
 
         $result = $this->webhookDispatcher->sendSync($webhook, 'webhook.test', [
             'message' => 'Ini adalah payload uji dari DigitalCode Tasks Flow.',
@@ -379,18 +382,11 @@ class ApiIntegrationController extends Controller
         );
     }
 
-    private function authorizeWebhookManagement(Request $request): void
-    {
-        Gate::authorize(Permissions::ROLES_MANAGE);
-    }
-
     /**
      * @return array{name: string, url: string, events: list<string>, is_active?: bool}
      */
     private function validateWebhook(Request $request): array
     {
-        Log::info('validateWebhook called', ['url' => $request->input('url')]);
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'url' => ['required', 'string', 'url:http,https', 'max:2048'],
@@ -406,15 +402,13 @@ class ApiIntegrationController extends Controller
             'events.*.in' => 'Pilihan event webhook tidak valid.',
         ]);
 
-        Log::info('Initial validation passed', ['url' => $validated['url']]);
-
         // SSRF protection: validate URL at creation/update time
         try {
             WebhookUrlValidator::validate($validated['url']);
         } catch (InvalidArgumentException $e) {
             // Add error to validator and throw
-            Log::info('SSRF validation failed', [
-                'url' => $validated['url'],
+            Log::warning('Webhook URL rejected by SSRF protection', [
+                'host' => parse_url($validated['url'], PHP_URL_HOST),
                 'error' => $e->getMessage(),
             ]);
             $validator = Validator::make($validated, []);

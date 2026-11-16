@@ -5,6 +5,7 @@ import { getIcon } from './icons';
 import { LogOut, X, Sparkles } from '@lucide/vue';
 import { gsap } from 'gsap';
 import { prefersReducedMotion } from '@/lib/motion';
+import { useNotifications } from '@/composables/useNotifications';
 import { logout } from '@/routes';
 import tasks from '@/routes/tasks';
 import projects from '@/routes/projects';
@@ -69,6 +70,7 @@ function can(perm?: string): boolean {
 }
 
 const stats = computed(() => (page.props.stats as any) || {});
+const { unreadCount } = useNotifications();
 
 // Organized categories with useful features (active features + upcoming placeholder features)
 const menuSections = computed<MenuSection[]>(() => [
@@ -124,7 +126,7 @@ const menuSections = computed<MenuSection[]>(() => [
                 href: '/notifications',
                 icon: 'Bell',
                 permission: 'notifications.view',
-                badge: stats.value.notifications_unread,
+                badge: unreadCount.value,
             },
             {
                 label: 'Papan Kolaborasi',

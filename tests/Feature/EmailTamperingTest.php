@@ -42,7 +42,10 @@ describe('Invitation Verification Boundary', function () {
             'invited_by' => $this->admin->id,
         ]);
 
-        $response = $this->postJson("/api/invite/{$token}/activate");
+        $response = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
         $response->assertOk();
 
         $user->refresh();
@@ -74,7 +77,10 @@ describe('Invitation Verification Boundary', function () {
             'invited_by' => $this->admin->id,
         ]);
 
-        $response = $this->postJson("/api/invite/{$token}/activate");
+        $response = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
         $response->assertStatus(410);
 
         $user->refresh();
@@ -104,7 +110,10 @@ describe('Invitation Verification Boundary', function () {
             'invited_by' => $this->admin->id,
         ]);
 
-        $response = $this->postJson("/api/invite/{$token}/activate");
+        $response = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
         $response->assertStatus(410);
     });
 });

@@ -75,18 +75,16 @@ class TaskCommentController extends Controller
         if ($recipients->isNotEmpty()) {
             $commentPreview = Str::limit($comment->content, 100);
             DB::afterCommit(function () use ($task, $comment, $commentPreview, $request, $recipients) {
-                foreach ($recipients as $user) {
-                    $this->notificationSender->send($user, TaskCommentAdded::class, [
-                        'task_id' => $task->id,
-                        'task_title' => $task->title,
-                        'project_id' => $task->project_id,
-                        'project_name' => $task->project->name,
-                        'comment_id' => $comment->id,
-                        'comment_preview' => $commentPreview,
-                        'author_name' => $request->user()->name,
-                        'action' => 'comment',
-                    ]);
-                }
+                $this->notificationSender->sendMany($recipients, TaskCommentAdded::class, [
+                    'task_id' => $task->id,
+                    'task_title' => $task->title,
+                    'project_id' => $task->project_id,
+                    'project_name' => $task->project->name,
+                    'comment_id' => $comment->id,
+                    'comment_preview' => $commentPreview,
+                    'author_name' => $request->user()->name,
+                    'action' => 'comment',
+                ]);
             });
         }
 
@@ -164,7 +162,7 @@ class TaskCommentController extends Controller
     {
         $this->authorize('view', $task);
 
-        $perPage = $request->integer('per_page', 15);
+        $perPage = Pagination::perPage($request, 15, 100);
         $comments = TaskComment::onlyTrashed()
             ->where('task_id', $task->id)
             ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {

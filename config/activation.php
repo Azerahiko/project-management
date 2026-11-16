@@ -4,23 +4,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Activation Code Length
+    | Invitation Expiry
     |--------------------------------------------------------------------------
     |
-    | The length of the numeric activation code generated for new users.
-    | Must be between 6 and 10 digits.
-    |
-    */
-
-    'code_length' => env('ACTIVATION_CODE_LENGTH', 8),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Activation Code Expiry
-    |--------------------------------------------------------------------------
-    |
-    | The number of hours an activation code remains valid after it has been
-    | issued. After this window the code is rejected and must be regenerated.
+    | The number of hours an invitation activation link remains valid after
+    | it has been issued. After this window the link is rejected and an
+    | administrator must resend the invitation.
     |
     */
 
@@ -28,7 +17,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Rate Limiting
+    | Activation Rate Limiting
     |--------------------------------------------------------------------------
     |
     | Maximum activation attempts per IP + email combination within the

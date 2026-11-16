@@ -33,7 +33,7 @@ class ProjectFileResource extends JsonResource
     /**
      * @return array<string, mixed>|null
      */
-    private function uploaderData(File $file): array|null
+    private function uploaderData(File $file): ?array
     {
         if (! $file->relationLoaded('uploader') || ! $file->uploader) {
             return null;

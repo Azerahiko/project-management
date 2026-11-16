@@ -137,7 +137,7 @@ class DeliverWebhook implements ShouldQueue
             Log::warning('Webhook delivery blocked by SSRF protection', [
                 'webhook_id' => $webhook->id,
                 'payload_id' => $this->payloadId,
-                'url' => $webhook->url,
+                'host' => parse_url($webhook->url, PHP_URL_HOST),
                 'reason' => $e->getMessage(),
             ]);
 

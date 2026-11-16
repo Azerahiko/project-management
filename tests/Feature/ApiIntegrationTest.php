@@ -206,7 +206,7 @@ it('hides webhook secrets from users without view secrets permission', function 
         'is_active' => true,
     ]);
 
-    // Member cannot view secrets (no WEBHOOKS_VIEW_SECRETS permission)
+    // Member cannot view secrets and only sees their own webhooks
     $this->actingAs($member)
         ->get('/integrations')
         ->assertOk()
@@ -214,8 +214,8 @@ it('hides webhook secrets from users without view secrets permission', function 
             ->component('Integrations/Index')
             ->where('can_manage_webhooks', false)
             ->where('can_view_webhook_secrets', false)
-            ->where('webhooks.data.0.id', $webhook->id)
-            ->where('webhooks.data.0.secret', null)
+            ->has('webhooks.data', 0)
+            ->where('stats.webhooks_count', 0)
         );
 
     // Admin has WEBHOOKS_VIEW_SECRETS permission but secret is only shown once on create via flashed session
@@ -1043,4 +1043,110 @@ it('web session requests bypass token scope checks', function () {
             'priority' => 'medium',
         ])
         ->assertCreated();
+});
+
+it('shows administrators every webhook while other users only see their own', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $member = User::factory()->create(['is_active' => true]);
+    $member->assignRole('member');
+
+    $adminHook = Webhook::query()->create([
+        'user_id' => $admin->id,
+        'name' => 'Admin Hook',
+        'url' => 'https://example.test/hooks/admin',
+        'secret' => 'admin-secret',
+        'events' => ['task.created'],
+        'is_active' => true,
+    ]);
+
+    $memberHook = Webhook::query()->create([
+        'user_id' => $member->id,
+        'name' => 'Member Hook',
+        'url' => 'https://example.test/hooks/member',
+        'secret' => 'member-secret',
+        'events' => ['comment.added'],
+        'is_active' => false,
+    ]);
+
+    $this->actingAs($member)
+        ->get('/integrations')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('webhooks.data', 1)
+            ->where('webhooks.data.0.id', $memberHook->id)
+            ->where('stats.webhooks_count', 1)
+            ->where('stats.active_webhooks_count', 0)
+        );
+
+    $this->actingAs($admin)
+        ->get('/integrations')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('webhooks.data', 2)
+            ->where('stats.webhooks_count', 2)
+            ->where('stats.active_webhooks_count', 1)
+        );
+});
+
+it('denies non-owners from changing another users webhook', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $owner = User::factory()->create(['is_active' => true]);
+    $owner->assignRole('member');
+
+    $other = User::factory()->create(['is_active' => true]);
+    $other->assignRole('member');
+
+    $webhook = Webhook::query()->create([
+        'user_id' => $owner->id,
+        'name' => 'Owner Hook',
+        'url' => 'https://example.test/hooks/owner',
+        'secret' => 'owner-secret',
+        'events' => ['task.created'],
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($other)
+        ->delete("/integrations/webhooks/{$webhook->id}")
+        ->assertForbidden();
+
+    $this->actingAs($other)
+        ->patch("/integrations/webhooks/{$webhook->id}/toggle")
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('webhooks', ['id' => $webhook->id]);
+
+    $this->actingAs($admin)
+        ->delete("/integrations/webhooks/{$webhook->id}")
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('webhooks', ['id' => $webhook->id]);
+});
+
+it('redacts webhook credentials and delivery errors from the page payload', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $webhook = Webhook::query()->create([
+        'user_id' => $admin->id,
+        'name' => 'Secret Hook',
+        'url' => 'https://user:pass@example.test/hooks/secret?token=abc123',
+        'secret' => 'super-secret',
+        'events' => ['task.created'],
+        'is_active' => true,
+        'last_delivery_status' => 'failed',
+        'last_delivery_error' => 'Connection to https://user:pass@example.test/hooks/secret?token=abc123 failed',
+    ]);
+
+    $this->actingAs($admin)
+        ->get('/integrations')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('webhooks.data.0.id', $webhook->id)
+            ->where('webhooks.data.0.url', 'https://example.test/hooks/secret?***')
+            ->where('webhooks.data.0.last_delivery_error', 'Connection to [url] failed')
+        );
 });

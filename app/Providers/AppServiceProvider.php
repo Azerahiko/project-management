@@ -50,29 +50,25 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Validate activation configuration early so bad values fail clearly.
+     * Validate invitation configuration early so bad values fail clearly.
      */
     protected function validateActivationConfig(): void
     {
-        $length = (int) config('activation.code_length', 8);
-        $expiry = (int) config('activation.expiry_hours', 72);
-        $attempts = (int) config('activation.max_attempts', 5);
-
-        if ($length < 6 || $length > 10) {
-            throw new \RuntimeException(
-                'Invalid activation.code_length: must be integer between 6 and 10.'
-            );
-        }
-
-        if ($expiry < 1) {
+        if ((int) config('activation.expiry_hours', 72) < 1) {
             throw new \RuntimeException(
                 'Invalid activation.expiry_hours: must be a positive integer.'
             );
         }
 
-        if ($attempts < 1) {
+        if ((int) config('activation.max_attempts', 5) < 1) {
             throw new \RuntimeException(
                 'Invalid activation.max_attempts: must be a positive integer.'
+            );
+        }
+
+        if ((int) config('activation.lockout_minutes', 15) < 1) {
+            throw new \RuntimeException(
+                'Invalid activation.lockout_minutes: must be a positive integer.'
             );
         }
     }

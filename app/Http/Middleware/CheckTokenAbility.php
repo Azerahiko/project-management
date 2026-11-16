@@ -32,7 +32,6 @@ class CheckTokenAbility
             return response()->json([
                 'message' => 'Token does not have the required scope.',
                 'required_scope' => $ability,
-                'token_scopes' => $abilities,
             ], Response::HTTP_FORBIDDEN);
         }
 

@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -35,9 +36,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property string|null $activation_code_hash
- * @property Carbon|null $activation_code_expires_at
- * @property int $activation_code_attempts
+ * @property Carbon|null $deleted_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -48,12 +47,12 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection<int, ProjectMember> $projectMemberships
  * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'timezone', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at', 'activation_code_hash', 'activation_code_expires_at', 'activation_code_attempts'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'timezone', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -71,7 +70,6 @@ class User extends Authenticatable implements PasskeyUser
             'onboarding_password_changed_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
-            'activation_code_expires_at' => 'datetime',
         ];
     }
 
@@ -328,35 +326,5 @@ class User extends Authenticatable implements PasskeyUser
     public function needsOnboarding(): bool
     {
         return ! $this->isOnboarded();
-    }
-
-    /**
-     * Increment the activation code attempts counter.
-     */
-    public function incrementActivationAttempts(): void
-    {
-        $this->increment('activation_code_attempts');
-    }
-
-    /**
-     * Clear the activation code data (permanently invalidate).
-     */
-    public function clearActivationCode(): void
-    {
-        $this->forceFill([
-            'activation_code_hash' => null,
-            'activation_code_expires_at' => null,
-            'activation_code_attempts' => 0,
-        ])->save();
-    }
-
-    /**
-     * Check if the user has a valid activation code.
-     */
-    public function hasValidActivationCode(): bool
-    {
-        return $this->activation_code_hash !== null
-            && $this->activation_code_expires_at !== null
-            && $this->activation_code_expires_at->isFuture();
     }
 }

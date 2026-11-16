@@ -801,3 +801,53 @@ describe('Project Management', function () {
         });
     });
 });
+
+describe('Ownership transfer notifications (H-4)', function () {
+    it('notifies previous and new owners with correct payload and project URL', function () {
+        [$admin, $pm, $member] = createTestUsers();
+        [$project] = createTestProjects($admin, $pm, $member);
+
+        $this->actingAs($admin)
+            ->putJson("/api/projects/{$project->id}", [
+                'owner_id' => $pm->id,
+            ])
+            ->assertOk();
+
+        // Previous owner (admin) should receive notification
+        $adminNotifications = $admin->fresh()->notifications;
+        expect($adminNotifications)->toHaveCount(1);
+        $adminNotif = $adminNotifications->first();
+        expect($adminNotif->data['action'])->toBe('ownership_transferred');
+        expect($adminNotif->data['project_id'])->toBe($project->id);
+        expect($adminNotif->data['previous_owner_id'])->toBe($admin->id);
+        expect($adminNotif->data['new_owner_id'])->toBe($pm->id);
+        expect($adminNotif->data['role'])->toBe('previous_owner');
+        expect($adminNotif->data['url'])->toBe(route('projects.show', $project->id, false));
+
+        // New owner (pm) should receive notification
+        $pmNotifications = $pm->fresh()->notifications;
+        expect($pmNotifications)->toHaveCount(1);
+        $pmNotif = $pmNotifications->first();
+        expect($pmNotif->data['action'])->toBe('ownership_transferred');
+        expect($pmNotif->data['project_id'])->toBe($project->id);
+        expect($pmNotif->data['previous_owner_id'])->toBe($admin->id);
+        expect($pmNotif->data['new_owner_id'])->toBe($pm->id);
+        expect($pmNotif->data['role'])->toBe('new_owner');
+        expect($pmNotif->data['url'])->toBe(route('projects.show', $project->id, false));
+    });
+
+    it('uses idempotency key with project and owner ids', function () {
+        [$admin, $pm, $member] = createTestUsers();
+        [$project] = createTestProjects($admin, $pm, $member);
+
+        // Transfer twice
+        $this->actingAs($admin)->putJson("/api/projects/{$project->id}", ['owner_id' => $pm->id])->assertOk();
+        $this->actingAs($admin)->putJson("/api/projects/{$project->id}", ['owner_id' => $admin->id])->assertOk();
+
+        // Should only create 2 notifications per user (one per transfer)
+        $adminNotifs = $admin->fresh()->notifications;
+        $pmNotifs = $pm->fresh()->notifications;
+        expect($adminNotifs)->toHaveCount(2);
+        expect($pmNotifs)->toHaveCount(2);
+    });
+});

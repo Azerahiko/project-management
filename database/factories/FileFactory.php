@@ -20,7 +20,8 @@ class FileFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->words(3, true);
+        $words = $this->faker->words(3);
+        $name = is_array($words) ? implode(' ', $words) : $words;
 
         return [
             'project_id' => Project::factory(),

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { activate } from '@/routes/api/invitations';
 import web from '@/lib/web';
 import Button from '@/components/ui/Button.vue';
+import Input from '@/components/ui/Input.vue';
 import { useToast } from '@/composables/useToast';
 
 defineOptions({
@@ -24,19 +25,28 @@ const name = page.props.name;
 
 const processing = ref(false);
 const submitted = ref(false);
+const errors = ref<Record<string, string[]>>({});
+
+const form = reactive({
+    password: '',
+    password_confirmation: '',
+});
 
 async function handleVerify(): Promise<void> {
     processing.value = true;
+    errors.value = {};
 
     try {
-        const response = await web.post(activate.url({ token }));
+        const response = await web.post(activate.url({ token }), form);
         submitted.value = true;
         success('Verifikasi Berhasil', response.data.message);
         setTimeout(() => {
             router.visit('/login');
         }, 2000);
     } catch (err: any) {
-        if (err.response?.data?.message) {
+        if (err.response?.data?.errors) {
+            errors.value = err.response.data.errors;
+        } else if (err.response?.data?.message) {
             toastError('Gagal', err.response.data.message);
         } else {
             toastError(
@@ -82,16 +92,33 @@ function goToLogin(): void {
                     <h2
                         class="text-lg font-semibold text-surface-900 dark:text-surface-100"
                     >
-                        Konfirmasi Email & Undangan
+                        Aktifkan Akun Anda
                     </h2>
                     <p class="text-sm text-surface-600 dark:text-surface-400">
-                        Klik tombol di bawah untuk memverifikasi email Anda.
-                        Setelah terverifikasi, Anda dapat masuk menggunakan kata
-                        sandi sementara yang diberikan oleh administrator.
+                        Buat kata sandi untuk akun Anda. Kata sandi ini akan
+                        digunakan untuk masuk setelah email terverifikasi.
                     </p>
                 </div>
 
                 <div class="space-y-4">
+                    <Input
+                        v-model="form.password"
+                        type="password"
+                        label="Kata Sandi"
+                        placeholder="Buat kata sandi"
+                        required
+                        autocomplete="new-password"
+                        :error="errors.password?.[0]"
+                    />
+                    <Input
+                        v-model="form.password_confirmation"
+                        type="password"
+                        label="Konfirmasi Kata Sandi"
+                        placeholder="Ulangi kata sandi"
+                        required
+                        autocomplete="new-password"
+                        :error="errors.password_confirmation?.[0]"
+                    />
                     <Button
                         type="button"
                         variant="primary"
@@ -99,7 +126,7 @@ function goToLogin(): void {
                         :loading="processing"
                         @click="handleVerify"
                     >
-                        Konfirmasi & Verifikasi Akun
+                        Aktifkan Akun
                     </Button>
                 </div>
 

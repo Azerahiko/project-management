@@ -235,18 +235,16 @@ class TaskController extends Controller
             if ($recipients->isNotEmpty()) {
                 $eventId = Str::uuid()->toString();
                 DB::afterCommit(function () use ($task, $recipients, $oldStatus, $newStatus, $eventId) {
-                    foreach ($recipients as $recipient) {
-                        $this->notificationSender->send($recipient, TaskStatusChanged::class, [
-                            'task_id' => $task->id,
-                            'task_title' => $task->title,
-                            'project_id' => $task->project_id,
-                            'project_name' => $task->project->name,
-                            'old_status' => $oldStatus,
-                            'new_status' => $newStatus,
-                            'action' => 'status_changed',
-                            'event_id' => $eventId,
-                        ]);
-                    }
+                    $this->notificationSender->sendMany($recipients, TaskStatusChanged::class, [
+                        'task_id' => $task->id,
+                        'task_title' => $task->title,
+                        'project_id' => $task->project_id,
+                        'project_name' => $task->project->name,
+                        'old_status' => $oldStatus,
+                        'new_status' => $newStatus,
+                        'action' => 'status_changed',
+                        'event_id' => $eventId,
+                    ]);
                 });
             }
 
@@ -356,7 +354,7 @@ class TaskController extends Controller
     {
         $this->authorize('view', $project);
 
-        $perPage = $request->integer('per_page', 15);
+        $perPage = Pagination::perPage($request, 15, 100);
         $tasks = Task::onlyTrashed()
             ->where('project_id', $project->id)
             ->with(['assignee', 'creator'])

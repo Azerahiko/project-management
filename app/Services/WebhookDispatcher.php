@@ -23,8 +23,8 @@ class WebhookDispatcher
     {
         $webhooks = Webhook::query()
             ->active()
-            ->get()
-            ->filter(fn (Webhook $webhook): bool => $webhook->listensTo($event));
+            ->whereJsonContains('events', $event)
+            ->get();
 
         foreach ($webhooks as $webhook) {
             $payloadId = (string) Str::uuid();
@@ -60,7 +60,7 @@ class WebhookDispatcher
         } catch (InvalidArgumentException $e) {
             Log::warning('Webhook sync delivery blocked by SSRF protection', [
                 'webhook_id' => $webhook->id,
-                'url' => $webhook->url,
+                'host' => parse_url($webhook->url, PHP_URL_HOST),
                 'reason' => $e->getMessage(),
             ]);
 

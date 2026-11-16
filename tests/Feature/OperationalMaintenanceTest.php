@@ -145,7 +145,6 @@ describe('File download missing returns 404 (M-8)', function () {
 });
 
 describe('Activity log today uses user timezone (M-7)', function () {
-    beforeEach(function () {});
     afterEach(function () {
         Carbon::setTestNow();
     });

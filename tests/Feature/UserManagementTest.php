@@ -2,6 +2,10 @@
 
 use App\Mail\InvitationCreated;
 use App\Models\Invitation;
+use App\Models\Project;
+use App\Models\ProjectMember;
+use App\Models\Task;
+use App\Models\TaskComment;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -108,7 +112,7 @@ describe('User Management RBAC', function () {
                 ->deleteJson("/api/users/{$target->id}")
                 ->assertNoContent();
 
-            $this->assertDatabaseMissing('users', ['id' => $target->id]);
+            $this->assertSoftDeleted('users', ['id' => $target->id]);
             $this->assertDatabaseMissing('invitations', ['email' => $target->email]);
         });
 
@@ -204,7 +208,7 @@ describe('User Management RBAC', function () {
                 ->deleteJson("/api/users/{$target->id}")
                 ->assertNoContent();
 
-            $this->assertDatabaseMissing('users', ['id' => $target->id]);
+            $this->assertSoftDeleted('users', ['id' => $target->id]);
         });
 
         it('denies non-admin deleting user via API', function () {
@@ -421,6 +425,99 @@ describe('User Management RBAC', function () {
             $this->actingAs($this->user)
                 ->getJson('/api/roles')
                 ->assertForbidden();
+        });
+    });
+
+    describe('User deletion integrity (C-1)', function () {
+        it('prevents deleting a user who owns projects', function () {
+            $project = Project::factory()->create(['owner_id' => $this->user->id]);
+            ProjectMember::create([
+                'project_id' => $project->id,
+                'user_id' => $this->user->id,
+                'role' => 'owner',
+            ]);
+
+            $this->actingAs($this->admin)
+                ->deleteJson("/api/users/{$this->user->id}")
+                ->assertUnprocessable();
+
+            $this->assertDatabaseHas('users', ['id' => $this->user->id]);
+            $this->assertDatabaseHas('projects', ['id' => $project->id, 'owner_id' => $this->user->id]);
+        });
+
+        it('soft deletes user without owned projects and preserves history', function () {
+            // User creates a task in another's project
+            $project = Project::factory()->create(['owner_id' => $this->admin->id]);
+            ProjectMember::create([
+                'project_id' => $project->id,
+                'user_id' => $this->user->id,
+                'role' => 'member',
+            ]);
+
+            $task = Task::factory()->create([
+                'project_id' => $project->id,
+                'creator_id' => $this->user->id,
+                'assignee_id' => $this->user->id,
+            ]);
+
+            $comment = TaskComment::factory()->create([
+                'task_id' => $task->id,
+                'user_id' => $this->user->id,
+            ]);
+
+            $this->actingAs($this->admin)
+                ->deleteJson("/api/users/{$this->user->id}")
+                ->assertNoContent();
+
+            // User is soft deleted
+            $this->assertSoftDeleted('users', ['id' => $this->user->id]);
+
+            // Task and comment remain; creator/assignee still accessible via withTrashed
+            $task->refresh();
+            expect($task->creator->id)->toBe($this->user->id);
+            expect($task->assignee->id)->toBe($this->user->id);
+
+        });
+    });
+
+    describe('Role privilege escalation prevention (H-2)', function () {
+        it('blocks non-administrators from assigning administrator role via user API even with users.create permission', function () {
+            // Grant users.create permission directly to a project_manager
+            $pm = User::factory()->create(['is_active' => true]);
+            $pm->assignRole('project_manager');
+            $pm->givePermissionTo('users.create');
+
+            $response = $this->actingAs($pm)
+                ->postJson('/api/users', [
+                    'name' => 'New Admin',
+                    'email' => 'newadmin@example.com',
+                    'temporary_password' => 'TemporaryPass123!',
+                    'role' => 'administrator',
+                    'is_active' => true,
+                ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['role']);
+
+            $this->assertDatabaseMissing('users', ['email' => 'newadmin@example.com']);
+        });
+
+        it('allows non-administrators with users.create permission to assign member role', function () {
+            $pm = User::factory()->create(['is_active' => true]);
+            $pm->assignRole('project_manager');
+            $pm->givePermissionTo('users.create');
+
+            $response = $this->actingAs($pm)
+                ->postJson('/api/users', [
+                    'name' => 'New Member',
+                    'email' => 'newmember@example.com',
+                    'temporary_password' => 'TemporaryPass123!',
+                    'role' => 'member',
+                    'is_active' => true,
+                ]);
+
+            $response->assertCreated();
+            $this->assertDatabaseHas('users', ['email' => 'newmember@example.com', 'name' => 'New Member']);
         });
     });
 });

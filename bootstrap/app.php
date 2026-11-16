@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\CleanupNotificationIdempotencyKeys;
+use App\Console\Commands\CleanupOrphanFiles;
 use App\Http\Middleware\CheckTokenAbility;
 use App\Http\Middleware\EnsureOnboardingIsComplete;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         CleanupNotificationIdempotencyKeys::class,
+        CleanupOrphanFiles::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
@@ -40,9 +42,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('notifications:cleanup-idempotency-keys --days=90')
+        $schedule->command('notifications:cleanup-idempotency-keys --days=90 --force')
             ->daily()
             ->at('02:00')
+            ->withoutOverlapping();
+
+        $schedule->command('files:cleanup-orphans --force')
+            ->weekly()
+            ->at('03:00')
             ->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {

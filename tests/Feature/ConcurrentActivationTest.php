@@ -46,7 +46,10 @@ describe('Concurrent Activation Protection', function () {
         $threads = 3;
 
         for ($i = 0; $i < $threads; $i++) {
-            $results[$i] = $this->postJson("/api/invite/{$token}/activate");
+            $results[$i] = $this->postJson("/api/invite/{$token}/activate", [
+                'password' => 'ActivationPass123!',
+                'password_confirmation' => 'ActivationPass123!',
+            ]);
         }
 
         $successCount = 0;
@@ -69,7 +72,7 @@ describe('Concurrent Activation Protection', function () {
 
         $user->refresh();
         expect($user->email_verified_at)->not->toBeNull();
-        expect(Hash::check('TemporaryPass123!', $user->password))->toBeTrue();
+        expect(Hash::check('ActivationPass123!', $user->password))->toBeTrue();
 
         $invitation->refresh();
         expect($invitation->accepted_at)->not->toBeNull();
@@ -98,10 +101,16 @@ describe('Concurrent Activation Protection', function () {
             'invited_by' => $this->admin->id,
         ]);
 
-        $response1 = $this->postJson("/api/invite/{$token}/activate");
+        $response1 = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
         $response1->assertOk();
 
-        $response2 = $this->postJson("/api/invite/{$token}/activate");
+        $response2 = $this->postJson("/api/invite/{$token}/activate", [
+            'password' => 'ActivationPass123!',
+            'password_confirmation' => 'ActivationPass123!',
+        ]);
         expect($response2->status())->toBe(410);
     });
 });

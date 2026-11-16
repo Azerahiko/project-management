@@ -16,16 +16,22 @@ class EnsureUserIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($user = $request->user()) {
-            if (! $user->is_active) {
-                Auth::guard()->logout();
+        $user = $request->user();
 
+        if ($user && ! $user->is_active) {
+            if ($request->hasSession()) {
+                Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
                 return redirect()->route('login')
                     ->with('error', 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.');
             }
+
+            // Stateless API token requests have no session to invalidate.
+            return response()->json([
+                'message' => 'Akun Anda telah dinonaktifkan.',
+            ], Response::HTTP_FORBIDDEN);
         }
 
         return $next($request);

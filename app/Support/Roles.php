@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\User;
+
 class Roles
 {
     public const ADMINISTRATOR = 'administrator';
@@ -41,5 +43,21 @@ class Roles
     public static function slugs(): array
     {
         return array_keys(self::all());
+    }
+
+    /**
+     * Roles the given actor is allowed to assign.
+     *
+     * Only administrators may grant the administrator role.
+     *
+     * @return list<string>
+     */
+    public static function assignableBy(?User $actor): array
+    {
+        if ($actor?->hasRole(self::ADMINISTRATOR)) {
+            return self::slugs();
+        }
+
+        return array_values(array_diff(self::slugs(), [self::ADMINISTRATOR]));
     }
 }

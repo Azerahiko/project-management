@@ -19,7 +19,7 @@ class InvitationCreated extends Mailable
     public function __construct(
         public Invitation $invitation,
         public string $token,
-        public string $temporaryPassword,
+        public ?string $temporaryPassword = null,
     ) {}
 
     /**

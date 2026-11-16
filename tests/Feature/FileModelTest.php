@@ -87,13 +87,15 @@ describe('File model', function () {
         $this->assertDatabaseMissing('files', ['id' => $file->id]);
     });
 
-    it('keeps the row and nulls the uploader when the user is deleted', function () {
+    it('keeps the row and preserves the uploader reference when the user is soft deleted', function () {
         $uploader = User::factory()->create();
         $file = File::factory()->create(['uploaded_by' => $uploader->id]);
 
         $uploader->delete();
 
-        $this->assertDatabaseHas('files', ['id' => $file->id, 'uploaded_by' => null]);
+        $this->assertDatabaseHas('files', ['id' => $file->id, 'uploaded_by' => $uploader->id]);
+        // The uploader relation with withTrashed() still returns the soft-deleted user
+        expect($file->fresh()->uploader->id)->toBe($uploader->id);
     });
 
     it('rejects a duplicate storage path', function () {
