@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_DB: project_management_test
           POSTGRES_USER: project_management
-          POSTGRES_PASSWORD: 0501
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -72,17 +72,17 @@ jobs:
           DB_PORT: 5432
           DB_DATABASE: project_management_test
           DB_USERNAME: project_management
-          DB_PASSWORD: 0501
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-      - name: Run tests
-        run: PEST_PARALLEL=false php artisan test
+      - name: Run tests with parallel execution
+        run: php artisan test --parallel --processes=4
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
           DB_PORT: 5432
           DB_DATABASE: project_management_test
           DB_USERNAME: project_management
-          DB_PASSWORD: 0501
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
   lint:
     runs-on: ubuntu-latest

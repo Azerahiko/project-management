@@ -75,7 +75,13 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "PEST_PARALLEL=false php artisan test"
+            "php artisan test"
+        ],
+        "parallel-test": [
+            "@php artisan config:clear --ansi",
+            "@lint:check",
+            "@types:check",
+            "php artisan test --parallel --processes=2"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
