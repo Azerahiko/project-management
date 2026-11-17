@@ -241,7 +241,7 @@ function getRoleLabel(role: string): string {
             <div class="flex items-center gap-4">
                 <div class="relative">
                     <div
-                        class="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0F5132] to-[#14643f] text-2xl font-bold text-white"
+                        class="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 text-2xl font-bold text-white"
                     >
                         {{ initialUser.initials }}
                     </div>
@@ -703,7 +703,7 @@ function getRoleLabel(role: string): string {
         <!-- Error State -->
         <div
             v-if="errors.form"
-            class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+            class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 rounded-lg p-4"
         >
             {{ errors.form[0] }}
         </div>

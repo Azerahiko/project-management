@@ -693,7 +693,7 @@ function relativeDueLabel(value: string): string {
                                 class="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold transition"
                                 :class="
                                     selectedPriority === p.val
-                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-600'
                                         : 'bg-white text-surface-600 hover:bg-surface-100 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300'
                                 "
                                 @click="selectedPriority = p.val"
@@ -741,10 +741,10 @@ function relativeDueLabel(value: string): string {
                                         ? 'cursor-pointer bg-white hover:bg-surface-50/90 dark:bg-surface-900 dark:hover:bg-surface-800/40'
                                         : 'bg-surface-50/50 dark:bg-surface-950/40',
                                     cell.isToday
-                                        ? 'bg-primary-50/40 ring-1 ring-[#0F5132]/30 ring-inset dark:bg-primary-950/20 dark:ring-primary-500/40'
+                                        ? 'bg-primary-50/40 ring-1 ring-primary-600/30 ring-inset dark:bg-primary-950/20 dark:ring-primary-500/40'
                                         : '',
                                     cell.iso === selectedDate
-                                        ? 'ring-2 ring-[#0F5132] ring-inset dark:ring-primary-400'
+                                        ? 'ring-2 ring-primary-600 ring-inset dark:ring-primary-400'
                                         : '',
                                 ]"
                                 @click="selectDate(cell)"
@@ -755,7 +755,7 @@ function relativeDueLabel(value: string): string {
                                         class="flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold"
                                         :class="[
                                             cell.isToday
-                                                ? 'bg-[#0F5132] text-white dark:bg-primary-500 dark:text-primary-950'
+                                                ? 'bg-primary-600 text-white dark:bg-primary-500 dark:text-primary-950'
                                                 : cell.iso === selectedDate
                                                   ? 'bg-surface-200 font-black text-surface-900 dark:bg-surface-700 dark:text-white'
                                                   : cell.isCurrentMonth
@@ -770,7 +770,7 @@ function relativeDueLabel(value: string): string {
 
                                     <span
                                         v-if="cell.isToday"
-                                        class="text-[9px] font-bold text-[#0F5132] uppercase dark:text-primary-300"
+                                        class="text-[9px] font-bold text-primary-600 uppercase dark:text-primary-300"
                                     >
                                         Hari Ini
                                     </span>
@@ -841,7 +841,7 @@ function relativeDueLabel(value: string): string {
                                         class="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold"
                                         :class="
                                             group.isToday
-                                                ? 'bg-[#0F5132] text-white dark:bg-primary-600'
+                                                ? 'bg-primary-600 text-white dark:bg-primary-600'
                                                 : 'bg-surface-100 text-surface-800 dark:bg-surface-800 dark:text-surface-200'
                                         "
                                     >
@@ -853,7 +853,7 @@ function relativeDueLabel(value: string): string {
                                     </span>
                                     <span
                                         v-if="group.isToday"
-                                        class="text-[11px] font-bold text-[#0F5132] uppercase dark:text-primary-400"
+                                        class="text-[11px] font-bold text-primary-600 uppercase dark:text-primary-400"
                                     >
                                         (Hari Ini)
                                     </span>
@@ -981,7 +981,7 @@ function relativeDueLabel(value: string): string {
                                     class="h-1.5 w-full overflow-hidden rounded-full bg-surface-200/80 dark:bg-surface-800"
                                 >
                                     <div
-                                        class="h-full rounded-full bg-[#0F5132] transition-all duration-500 dark:bg-[#b7d9c1]"
+                                        class="h-full rounded-full bg-primary-600 transition-all duration-500 dark:bg-primary-300"
                                         :style="{
                                             width: `${proj.completionRate}%`,
                                         }"

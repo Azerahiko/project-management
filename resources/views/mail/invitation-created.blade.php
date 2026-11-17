@@ -5,65 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Undangan Bergabung</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Undangan Bergabung ke {{ $appName }}</h1>
-    </div>
-
-    <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
-        <p style="margin-top: 0;">Halo,</p>
-
-        <p>Anda telah diundang untuk bergabung sebagai anggota di <strong>{{ $appName }}</strong>.</p>
-
-        <p style="margin-bottom: 30px;">Silakan klik tombol di bawah untuk mengaktifkan akun dan membuat kata sandi Anda:</p>
-
-        <div style="text-align: center; margin-bottom: 30px;">
-            <a href="{{ $invitationUrl }}" style="display: inline-block; background: #3b82f6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                Verifikasi Email
-            </a>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #090c10; background-color: #f6f8fa; margin: 0; padding: 32px 16px;">
+    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e7ee; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);">
+        <div style="background-color: #0f131a; padding: 24px 32px; border-bottom: 2px solid #214fe6;">
+            <div style="display: inline-block; font-family: monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #8eb8ff; text-transform: uppercase; margin-bottom: 6px;">Workspace Invitation</div>
+            <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">Undangan Bergabung ke {{ $appName }}</h1>
         </div>
 
-        <p style="color: #6b7280; font-size: 14px; margin-bottom: 0;">
-            Jika tombol tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:<br>
-            <span style="word-break: break-all;">{{ $invitationUrl }}</span>
-        </p>
+        <div style="padding: 32px;">
+            <p style="margin-top: 0; font-size: 15px; color: #090c10;">Halo,</p>
 
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            <p style="font-size: 14px; color: #454f5b;">Anda telah diundang untuk bergabung dalam workspace kolaborasi <strong>{{ $appName }}</strong>.</p>
 
-        @if ($temporaryPassword)
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <p style="margin: 0 0 12px; font-weight: 600; color: #1e40af;">Password Sementara Anda:</p>
-            <div style="background: #ffffff; border: 2px solid #3b82f6; border-radius: 6px; padding: 15px; text-align: center; font-family: monospace; font-size: 18px; font-weight: 600; letter-spacing: 2px; color: #1e40af; word-break: break-all;">
-                {{ $temporaryPassword }}
+            <p style="font-size: 14px; color: #454f5b; margin-bottom: 28px;">Silakan klik tombol di bawah untuk memverifikasi alamat email dan mengatur kata sandi akun Anda:</p>
+
+            <div style="text-align: left; margin-bottom: 28px;">
+                <a href="{{ $invitationUrl }}" style="display: inline-block; background-color: #214fe6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; letter-spacing: -0.01em;">
+                    Verifikasi Akun & Atur Password &rarr;
+                </a>
             </div>
-            <p style="margin: 12px 0 0; font-size: 13px; color: #475569;">
-                Password ini hanya berlaku sampai Anda menyelesaikan aktivasi akun.
+
+            <p style="color: #637381; font-size: 12px; margin-bottom: 0;">
+                Jika tombol tidak berfungsi, salin dan tempel tautan berikut ke browser:<br>
+                <span style="font-family: monospace; font-size: 11px; color: #214fe6; word-break: break-all;">{{ $invitationUrl }}</span>
+            </p>
+
+            @if ($temporaryPassword)
+            <div style="background: #f6f8fa; border: 1px solid #cbd3df; border-radius: 6px; padding: 18px; margin-top: 24px;">
+                <p style="margin: 0 0 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #454f5b;">Password Sementara:</p>
+                <div style="background: #ffffff; border: 1px solid #214fe6; border-radius: 4px; padding: 12px; text-align: center; font-family: monospace; font-size: 16px; font-weight: 700; letter-spacing: 2px; color: #193cc0; word-break: break-all;">
+                    {{ $temporaryPassword }}
+                </div>
+                <p style="margin: 8px 0 0; font-size: 12px; color: #637381;">
+                    Password ini hanya aktif untuk proses aktivasi akun awal. Segera perbarui setelah berhasil masuk.
+                </p>
+            </div>
+            @endif
+
+            <hr style="border: none; border-top: 1px solid #e2e7ee; margin: 28px 0 20px;">
+
+            <p style="color: #919eab; font-size: 12px; margin: 0; line-height: 1.5;">
+                Tautan ini berlaku selama {{ config('activation.expiry_hours', 72) }} jam. Jika Anda merasa tidak meminta akses ini, abaikan email ini dengan aman.
             </p>
         </div>
-        @endif
-
-        @if ($temporaryPassword)
-        <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
-            <p style="margin: 0 0 8px; font-weight: 600; color: #991b1b;">Peringatan Keamanan:</p>
-            <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #7f1d1d;">
-                <li style="margin-bottom: 4px;">Password sementara ini hanya untuk penggunaan sementara</li>
-                <li style="margin-bottom: 4px;">Anda harus mengubahnya segera setelah login pertama</li>
-                <li style="margin-bottom: 4px;">Jangan simpan password ini di tempat yang tidak aman</li>
-                <li style="margin-bottom: 4px;">Jangan bagikan email atau password ini kepada siapa pun</li>
-            </ul>
-        </div>
-        @endif
-
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-
-        <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-            Tautan ini akan kedaluwarsa dalam {{ config('activation.expiry_hours', 72) }} jam.
-            Jika Anda tidak meminta undangan ini, abaikan email ini.
-        </p>
     </div>
 
-    <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">
-        &copy; {{ date('Y') }} {{ $appName }}. All rights reserved.
-    </p>
+    <div style="text-align: center; color: #919eab; font-size: 11px; margin-top: 20px; font-family: monospace;">
+        &copy; {{ date('Y') }} {{ $appName }} &bull; Workspace Management
+    </div>
 </body>
 </html>

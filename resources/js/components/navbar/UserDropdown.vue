@@ -40,49 +40,30 @@ function handleLogout(): void {
     router.post(logout.url(), {}, { preserveScroll: true });
 }
 
-function animateOpen(): void {
+watch(open, async (isOpen) => {
+    if (!isOpen) {
+        dropdownCtx?.revert();
+        dropdownCtx = null;
+        return;
+    }
+
+    await nextTick();
+
     if (!root.value) return;
     const content = root.value.querySelector<HTMLElement>(
         '[data-dropdown-content]',
     );
     if (!content) return;
 
+    dropdownCtx?.revert();
     dropdownCtx = gsap.context(() => {
         gsap.fromTo(
             content,
             { opacity: 0, scale: 0.95, y: -8 },
             { opacity: 1, scale: 1, y: 0, duration: 0.18, ease: 'power2.out' },
         );
-    });
-}
-
-function animateClose(): void {
-    if (!root.value) return;
-    const content = root.value.querySelector<HTMLElement>(
-        '[data-dropdown-content]',
-    );
-    if (!content) return;
-
-    gsap.to(content, {
-        opacity: 0,
-        scale: 0.95,
-        y: -4,
-        duration: 0.12,
-        ease: 'power2.in',
-        onComplete: close,
-    });
-}
-
-watch(
-    () => open.value,
-    (isOpen) => {
-        if (isOpen) {
-            nextTick(() => animateOpen());
-        } else {
-            animateClose();
-        }
-    },
-);
+    }, content);
+});
 
 onMounted(() => {
     document.addEventListener('click', onDocumentClick);
@@ -130,7 +111,7 @@ onUnmounted(() => {
         </button>
 
         <div
-            v-if="open"
+            v-show="open"
             role="menu"
             data-dropdown-content
             class="animate-scale-in dropdown absolute right-0 z-50 mt-2.5 min-w-[220px] origin-top-right"
@@ -149,7 +130,7 @@ onUnmounted(() => {
                     {{ props.user.email }}
                 </p>
                 <div
-                    v-if="props.user.roles.length"
+                    v-if="props.user.roles && props.user.roles.length"
                     class="mt-2 flex flex-wrap gap-1"
                 >
                     <span

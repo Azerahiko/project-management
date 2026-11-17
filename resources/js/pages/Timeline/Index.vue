@@ -385,7 +385,7 @@ const priorityDotColors: Record<string, string> = {
 const priorityBarColors: Record<string, string> = {
     urgent: 'bg-rose-500/90 text-white',
     high: 'bg-amber-600/90 text-white',
-    medium: 'bg-[#0F5132]/90 text-white dark:bg-primary-600/90',
+    medium: 'bg-primary-600/90 text-white dark:bg-primary-600/90',
     low: 'bg-surface-500/80 text-white dark:bg-surface-600',
 };
 
@@ -554,7 +554,7 @@ if (rawProjects.value.length > 0) {
                     class="shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition"
                     :class="
                         statusFilter === s.val
-                            ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                            ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-600'
                             : 'bg-surface-100 text-surface-700 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
                     "
                     @click="statusFilter = s.val"
@@ -745,7 +745,7 @@ if (rawProjects.value.length > 0) {
                                             project.status === 'completed'
                                                 ? 'bg-emerald-500'
                                                 : project.status === 'active'
-                                                  ? 'bg-[#0F5132] dark:bg-primary-400'
+                                                  ? 'bg-primary-600 dark:bg-primary-400'
                                                   : 'bg-amber-500'
                                         "
                                     />
@@ -975,7 +975,7 @@ if (rawProjects.value.length > 0) {
                                                 project.end_date,
                                             ).isVisible
                                         "
-                                        class="group absolute top-2.5 h-9 overflow-hidden rounded-xl bg-[#0F5132] px-3 text-white shadow-xs transition hover:brightness-110 dark:bg-primary-600"
+                                        class="group absolute top-2.5 h-9 overflow-hidden rounded-xl bg-primary-600 px-3 text-white shadow-xs transition hover:brightness-110 dark:bg-primary-600"
                                         :style="{
                                             left: `${getBarCoords(project.start_date, project.end_date).left}%`,
                                             width: `${getBarCoords(project.start_date, project.end_date).width}%`,

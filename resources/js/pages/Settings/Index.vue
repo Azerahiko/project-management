@@ -874,7 +874,7 @@ onMounted(() => {
                             class="group flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left text-xs font-semibold transition"
                             :class="
                                 activePanel === item.key
-                                    ? 'bg-[#0F5132] text-white shadow-xs dark:bg-primary-600'
+                                    ? 'bg-primary-600 text-white shadow-xs dark:bg-primary-600'
                                     : 'text-surface-700 hover:bg-surface-100/70 hover:text-surface-950 dark:text-surface-300 dark:hover:bg-surface-800/60 dark:hover:text-surface-50'
                             "
                             @click="openPanel(item.key)"
@@ -1243,7 +1243,7 @@ onMounted(() => {
                                 class="relative flex flex-col justify-between rounded-2xl border p-5 text-left transition-all"
                                 :class="
                                     option.active
-                                        ? 'border-[#0F5132] bg-primary-50/40 ring-2 ring-[#0F5132]/20 dark:border-primary-500 dark:bg-primary-950/30'
+                                        ? 'border-primary-600 bg-primary-50/40 ring-2 ring-primary-600/20 dark:border-primary-500 dark:bg-primary-950/30'
                                         : 'border-surface-200 bg-white hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700'
                                 "
                                 :aria-pressed="option.active"
@@ -1256,7 +1256,7 @@ onMounted(() => {
                                         class="grid h-11 w-11 place-items-center rounded-xl transition-colors"
                                         :class="
                                             option.active
-                                                ? 'bg-[#0F5132] text-white'
+                                                ? 'bg-primary-600 text-white'
                                                 : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
                                         "
                                     >
@@ -1267,7 +1267,7 @@ onMounted(() => {
                                     </div>
                                     <span
                                         v-if="option.active"
-                                        class="inline-flex items-center gap-1 rounded-full bg-[#0F5132] px-2 py-0.5 text-[10px] font-bold text-white dark:bg-primary-500 dark:text-surface-950"
+                                        class="inline-flex items-center gap-1 rounded-full bg-primary-600 px-2 py-0.5 text-[10px] font-bold text-white dark:bg-primary-500 dark:text-surface-950"
                                     >
                                         <component
                                             :is="getIcon('Check')"

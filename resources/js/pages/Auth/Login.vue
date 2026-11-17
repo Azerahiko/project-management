@@ -184,15 +184,15 @@ const errorMessage = computed(() => {
 
                 <!-- Brand Color Decorative Accent -->
                 <div class="mt-3 flex items-center justify-center gap-1.5">
-                    <span class="h-1 w-8 rounded-full bg-[#008081]" />
-                    <span class="h-1 w-2.5 rounded-full bg-[#F2C32D]" />
+                    <span class="h-1 w-8 rounded-full bg-primary-600" />
+                    <span class="h-1 w-2.5 rounded-full bg-amber-400" />
                 </div>
             </div>
 
             <!-- Error Notification Alert -->
             <div
                 v-if="errorMessage"
-                class="mt-5 rounded-xl border border-accent-200 bg-accent-50 px-4 py-2.5 text-center text-xs font-semibold text-accent-700 shadow-xs"
+                class="border-accent-200 bg-accent-50 text-accent-700 mt-5 rounded-xl border px-4 py-2.5 text-center text-xs font-semibold shadow-xs"
                 role="alert"
             >
                 {{ errorMessage }}
@@ -213,15 +213,15 @@ const errorMessage = computed(() => {
                             Email address
                         </label>
                         <div
-                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008081] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008081]/12"
+                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-primary-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-primary-600/12"
                             :class="{
-                                'border-accent-400 bg-accent-50/30 ring-2 ring-accent-400/20':
+                                'border-accent-400 bg-accent-50/30 ring-accent-400/20 ring-2':
                                     form.errors.email,
                             }"
                         >
                             <!-- Mail Icon -->
                             <svg
-                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-[#008081]"
+                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-primary-600"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -263,15 +263,15 @@ const errorMessage = computed(() => {
                             Password
                         </label>
                         <div
-                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008081] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008081]/12"
+                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-primary-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-primary-600/12"
                             :class="{
-                                'border-accent-400 bg-accent-50/30 ring-2 ring-accent-400/20':
+                                'border-accent-400 bg-accent-50/30 ring-accent-400/20 ring-2':
                                     form.errors.password,
                             }"
                         >
                             <!-- Lock Icon -->
                             <svg
-                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-[#008081]"
+                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-primary-600"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -303,7 +303,7 @@ const errorMessage = computed(() => {
                             <!-- Password Eye Toggle -->
                             <button
                                 type="button"
-                                class="rounded-md p-1 text-surface-600 transition-colors hover:text-[#008081]"
+                                class="rounded-md p-1 text-surface-600 transition-colors hover:text-primary-600"
                                 :aria-label="
                                     showPassword
                                         ? 'Hide password'
@@ -358,7 +358,7 @@ const errorMessage = computed(() => {
                             <input
                                 v-model="form.remember"
                                 type="checkbox"
-                                class="h-4 w-4 rounded border-surface-300 text-[#008081] accent-[#008081] focus:ring-[#008081]/30"
+                                class="h-4 w-4 rounded border-surface-300 text-primary-600 accent-primary-600 focus:ring-primary-600/30"
                             />
                             <span class="text-xs font-medium text-surface-700">
                                 Remember me
@@ -366,7 +366,7 @@ const errorMessage = computed(() => {
                         </label>
                         <Link
                             :href="password.request.url()"
-                            class="text-xs font-semibold text-[#008081] transition-colors hover:text-[#006B69] hover:underline"
+                            class="text-xs font-semibold text-primary-600 transition-colors hover:text-primary-700 hover:underline"
                         >
                             Forgot your password?
                         </Link>

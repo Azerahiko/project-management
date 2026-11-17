@@ -6,6 +6,7 @@ import NotificationDropdown from './NotificationDropdown.vue';
 import { getIcon } from '@/components/sidebar/icons';
 import { useTheme } from '@/composables/useTheme';
 import { useToast } from '@/composables/useToast';
+import { Plus, Search, Moon, Sun, Menu } from '@lucide/vue';
 import tasks from '@/routes/tasks';
 
 interface Props {
@@ -23,14 +24,6 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const { nextTheme, toggleTheme } = useTheme();
 
-const themeToggle = computed(() => {
-    if (nextTheme.value === 'dark') {
-        return { title: 'Ubah ke Mode Gelap', icon: 'Moon' };
-    }
-
-    return { title: 'Ubah ke Mode Terang', icon: 'Sun' };
-});
-
 const searchQuery = ref('');
 const searchInputRef = ref<HTMLInputElement | null>(null);
 
@@ -45,13 +38,13 @@ const pageTitle = computed(() => {
     if (p.startsWith('/tasks')) return 'Tugas Tim';
     if (p.startsWith('/projects')) return 'Proyek Tim';
     if (p.startsWith('/calendar')) return 'Jadwal & Kalender';
-    if (p.startsWith('/timeline')) return 'Timeline Proyek';
+    if (p.startsWith('/timeline')) return 'Timeline & Roadmap';
     if (p.startsWith('/documents')) return 'Berkas Dokumen';
     if (p.startsWith('/reports')) return 'Laporan & KPI';
     if (p.startsWith('/activity-log')) return 'Log Aktivitas';
     if (p.startsWith('/notifications')) return 'Notifikasi';
     if (p.startsWith('/announcements')) return 'Pengumuman Tim';
-    if (p.startsWith('/roles')) return 'Role & Permission';
+    if (p.startsWith('/roles')) return 'Role & Permissions';
     if (p.startsWith('/teams') || p.startsWith('/users')) return 'Anggota Tim';
     if (p.startsWith('/collaboration')) return 'Papan Kolaborasi';
     if (p.startsWith('/integrations')) return 'Integrasi API';
@@ -68,104 +61,11 @@ function handleSearchSubmit(): void {
     );
 }
 
-let pendingG = false;
-let gTimeout: ReturnType<typeof setTimeout> | null = null;
-
-function isInputFocused(): boolean {
-    const el = document.activeElement;
-    if (!el) return false;
-    const tag = el.tagName.toLowerCase();
-    return (
-        tag === 'input' ||
-        tag === 'textarea' ||
-        tag === 'select' ||
-        (el as HTMLElement).isContentEditable
-    );
-}
-
 function handleGlobalKeydown(e: KeyboardEvent): void {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        const supportSearch = document.getElementById(
-            'support-search-input',
-        ) as HTMLInputElement | null;
-        if (supportSearch) {
-            supportSearch.focus();
-            supportSearch.select();
-            supportSearch.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-            });
-        } else {
-            searchInputRef.value?.focus();
-            searchInputRef.value?.select();
-        }
-        return;
-    }
-
-    if (isInputFocused()) {
-        return;
-    }
-
-    if (e.key === 'Escape') {
-        pendingG = false;
-        if (gTimeout) clearTimeout(gTimeout);
-        return;
-    }
-
-    const key = e.key.toLowerCase();
-
-    if (pendingG) {
-        pendingG = false;
-        if (gTimeout) clearTimeout(gTimeout);
-
-        if (key === 'd') {
-            e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Dashboard (G + D)');
-            router.visit('/dashboard');
-        } else if (key === 't') {
-            e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Papan Tugas (G + T)');
-            router.visit('/tasks');
-        } else if (key === 'p') {
-            e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Daftar Proyek (G + P)');
-            router.visit('/projects');
-        } else if (key === 'c') {
-            e.preventDefault();
-            toast.info(
-                'Pintasan Keyboard',
-                'Beralih ke Kalender Kerja (G + C)',
-            );
-            router.visit('/calendar');
-        } else if (key === 's') {
-            e.preventDefault();
-            toast.info(
-                'Pintasan Keyboard',
-                'Beralih ke Pengaturan Akun (G + S)',
-            );
-            router.visit('/settings');
-        } else if (key === 'i') {
-            e.preventDefault();
-            toast.info('Pintasan Keyboard', 'Beralih ke Integrasi API (G + I)');
-            router.visit('/integrations');
-        } else if (key === 'h' || key === '?') {
-            e.preventDefault();
-            toast.info(
-                'Pintasan Keyboard',
-                'Beralih ke Pusat Bantuan & Support (G + H)',
-            );
-            router.visit('/support');
-        }
-        return;
-    }
-
-    if (key === 'g' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-        pendingG = true;
-        if (gTimeout) clearTimeout(gTimeout);
-        gTimeout = setTimeout(() => {
-            pendingG = false;
-        }, 1500);
+        searchInputRef.value?.focus();
+        searchInputRef.value?.select();
     }
 }
 
@@ -175,120 +75,91 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeydown);
-    if (gTimeout) clearTimeout(gTimeout);
 });
 </script>
 
 <template>
     <header
-        class="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-surface-200/80 bg-white/85 px-4 backdrop-blur-md transition-colors sm:px-6 lg:px-8 dark:border-surface-800/20 dark:bg-surface-950/85"
+        class="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-surface-200/90 bg-white/90 px-4 backdrop-blur-md transition-colors sm:px-6 lg:px-8 dark:border-surface-800/80 dark:bg-surface-950/85"
     >
-        <!-- Left: Mobile Toggle & Minimalist Breadcrumbs -->
-        <div class="flex min-w-0 flex-1 items-center gap-3">
+        <!-- Left: Mobile Toggle & Clean Breadcrumb -->
+        <div class="flex min-w-0 items-center gap-3">
             <button
                 type="button"
-                class="rounded-xl p-2 text-surface-500 transition hover:bg-surface-100 hover:text-surface-800 active:scale-95 lg:hidden dark:text-surface-400 dark:hover:bg-white/10 dark:hover:text-white"
+                class="rounded-lg p-1.5 text-surface-500 hover:bg-surface-100 hover:text-surface-800 active:scale-95 lg:hidden dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-white"
                 aria-label="Buka menu"
                 @click="$emit('toggle-sidebar')"
             >
-                <component :is="getIcon('Menu')" class="h-5 w-5" />
+                <Menu class="h-4 w-4" />
             </button>
 
-            <!-- Breadcrumbs (Clean Calm System typography, no pill badges) -->
-            <nav class="flex min-w-0 items-center gap-2.5 text-xs">
+            <!-- Minimalist Linear-style Breadcrumb -->
+            <nav class="flex min-w-0 items-center gap-2 text-xs">
                 <Link
                     href="/dashboard"
-                    class="hidden items-center gap-1.5 font-serif text-sm font-normal whitespace-nowrap text-surface-800 transition hover:text-primary-700 lg:flex dark:text-surface-200 dark:hover:text-primary-300"
+                    class="hidden items-center gap-1.5 font-medium text-surface-500 hover:text-surface-900 lg:flex dark:text-surface-400 dark:hover:text-surface-100 transition-colors"
                 >
-                    <span
-                        class="h-1.5 w-1.5 rounded-full bg-primary-700 dark:bg-primary-300"
-                    />
-                    {{ page.props.app.name }}
+                    <span>{{ page.props.app.shortName || page.props.app.name }}</span>
                 </Link>
-                <span
-                    class="hidden text-surface-300 lg:inline dark:text-surface-700"
-                >
-                    /
-                </span>
-                <span
-                    class="truncate font-sans text-xs font-semibold tracking-tight text-surface-900 dark:text-white"
-                >
+                <span class="hidden text-surface-300 lg:inline dark:text-surface-700">/</span>
+                <span class="truncate font-semibold text-surface-900 dark:text-surface-100">
                     {{ pageTitle }}
                 </span>
             </nav>
         </div>
 
-        <!-- Center / Right: Search & Actions -->
-        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-            <!-- Sleek Global Search Pill with Kbd shortcut badge (Calm System 04 INPUT FIELD) -->
+        <!-- Center: Command Search Bar -->
+        <div class="flex flex-1 justify-center max-w-md px-4 hidden md:flex">
             <form
                 @submit.prevent="handleSearchSubmit"
-                class="relative hidden md:block"
+                class="relative w-full"
             >
-                <div
-                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
-                >
-                    <component :is="getIcon('Search')" class="h-3.5 w-3.5" />
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-surface-400">
+                    <Search class="h-3.5 w-3.5" />
                 </div>
                 <input
                     ref="searchInputRef"
                     v-model="searchQuery"
                     type="search"
-                    placeholder="Cari tugas, proyek..."
-                    class="h-9 w-40 rounded-full border border-surface-300 bg-surface-50/90 pr-10 pl-8 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition-all duration-200 focus:w-56 focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden lg:w-52 lg:focus:w-64 xl:w-64 xl:focus:w-72 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100 dark:placeholder-surface-400 dark:focus:border-primary-400"
+                    placeholder="Cari tugas, proyek, aktivitas..."
+                    class="h-8 w-full rounded-lg border border-surface-200/90 bg-surface-50/80 pr-9 pl-8 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition-all focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 focus:outline-hidden dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-100 dark:placeholder-surface-400 dark:focus:border-primary-400"
                 />
-                <div
-                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5"
-                >
-                    <kbd
-                        class="rounded-md border border-surface-200 bg-surface-100 px-1.5 py-0.5 text-[9px] font-semibold text-surface-500 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-400"
-                    >
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                    <kbd class="rounded border border-surface-200 bg-surface-100 px-1 py-0.2 text-[9px] font-semibold text-surface-400 dark:border-surface-700 dark:bg-surface-800">
                         ⌘K
                     </kbd>
                 </div>
             </form>
+        </div>
 
-            <!-- Quick action: Tugas Baru (Calm System 03 BUTTONS) -->
+        <!-- Right: Actions Toolbar -->
+        <div class="flex shrink-0 items-center gap-2 sm:gap-2.5">
+            <!-- + New Task Primary Action (Linear Style) -->
             <Link
-                :href="tasks.create.url()"
-                class="flex items-center gap-1.5 rounded-full bg-[#0F5132] px-4 py-2 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
-                title="Buat Tugas Baru"
+                :href="tasks.index.url()"
+                class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary-600 px-2.5 text-xs font-medium text-white shadow-xs transition-all hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
             >
-                <component
-                    :is="getIcon('Plus')"
-                    class="h-3.5 w-3.5 stroke-[2.5]"
-                />
-                <span class="hidden md:inline">Tugas Baru</span>
+                <Plus class="h-3.5 w-3.5 stroke-[2.5]" />
+                <span class="hidden sm:inline">Tugas Baru</span>
             </Link>
 
-            <!-- Theme Toggle Icon Button -->
+            <div class="h-4 w-px bg-surface-200 dark:bg-surface-800 mx-0.5" />
+
+            <!-- Theme Toggle -->
             <button
                 type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-surface-200/80 bg-white text-surface-500 shadow-2xs transition hover:border-surface-300 hover:bg-surface-50 hover:text-surface-900 active:scale-95 dark:border-surface-800/20 dark:bg-surface-900 dark:text-surface-400 dark:hover:border-surface-700 dark:hover:bg-white/10 dark:hover:text-white"
-                :title="themeToggle.title"
-                :aria-label="themeToggle.title"
+                class="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 hover:text-surface-900 transition-colors dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-white"
+                :title="nextTheme === 'dark' ? 'Mode Gelap' : 'Mode Terang'"
                 @click="toggleTheme"
             >
-                <component
-                    :is="getIcon(themeToggle.icon)"
-                    class="h-4 w-4"
-                    :class="
-                        nextTheme === 'light'
-                            ? 'text-amber-400'
-                            : 'text-surface-600 dark:text-surface-300'
-                    "
-                />
+                <Moon v-if="nextTheme === 'dark'" class="h-4 w-4" />
+                <Sun v-else class="h-4 w-4" />
             </button>
 
             <!-- Notifications Dropdown -->
             <NotificationDropdown v-if="user" :user="user" />
 
-            <!-- Divider -->
-            <div
-                class="hidden h-5 w-px bg-surface-200 sm:block dark:bg-surface-800/10"
-            />
-
-            <!-- User Profile Dropdown -->
+            <!-- User Dropdown Menu -->
             <UserDropdown v-if="user" :user="user" />
         </div>
     </header>

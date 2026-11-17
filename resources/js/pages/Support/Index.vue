@@ -476,7 +476,7 @@ function submitSupportTicket(): void {
         >
             <!-- Background Radial Glow Pattern -->
             <div
-                class="pointer-events-none absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-60 dark:bg-[radial-gradient(#262626_1px,transparent_1px)] dark:opacity-40"
+                class="pointer-events-none absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-60 dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] dark:opacity-40"
             />
             <div
                 class="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl dark:bg-emerald-500/15"
@@ -938,7 +938,7 @@ function submitSupportTicket(): void {
 
                         <div
                             v-show="activeFaqIndex === faq.id"
-                            class="border-t border-surface-100 bg-[#FAF9F4]/40 px-4.5 pt-3 pb-4 text-xs leading-relaxed text-surface-600 sm:text-sm dark:border-surface-800 dark:bg-surface-950/40 dark:text-surface-300"
+                            class="border-t border-surface-100 bg-surface-50/40 px-4.5 pt-3 pb-4 text-xs leading-relaxed text-surface-600 sm:text-sm dark:border-surface-800 dark:bg-surface-950/40 dark:text-surface-300"
                         >
                             <p>{{ faq.answer }}</p>
 
@@ -1538,7 +1538,7 @@ function submitSupportTicket(): void {
 
                 <!-- Card 3: Akses Cepat Pengaturan Akun & Keamanan -->
                 <div
-                    class="rounded-3xl border border-surface-200/80 bg-gradient-to-br from-[#FAF9F4] to-surface-100/60 p-5 shadow-2xs dark:border-surface-800 dark:from-surface-900 dark:to-surface-950"
+                    class="rounded-3xl border border-surface-200/80 bg-gradient-to-br from-surface-50 to-surface-100/60 p-5 shadow-2xs dark:border-surface-800 dark:from-surface-900 dark:to-surface-950"
                 >
                     <div class="flex items-center gap-2">
                         <Sparkles

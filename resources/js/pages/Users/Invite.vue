@@ -106,8 +106,8 @@ function copyToClipboard(text: string): void {
                     class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
                     Kirim undangan melalui email untuk mendaftarkan pengguna
-                    baru. Kode aktivasi akan dikirim via email dan ditampilkan
-                    di sini.
+                    baru. Tautan aktivasi aman akan dikirimkan langsung ke email
+                    pengguna.
                 </p>
             </div>
             <Link :href="users.index.url()">

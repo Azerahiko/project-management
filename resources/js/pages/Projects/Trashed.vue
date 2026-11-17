@@ -102,15 +102,15 @@ function formatDate(value: string | null): string {
     });
 }
 
-const projectCovers = [
-    '/images/folder-marble-blue.jpg',
-    '/images/folder-marble-dark.jpg',
-    '/images/project-cover-sunset.jpg',
-    '/images/project-cover-hills.jpg',
+const projectCoverGradients = [
+    'bg-gradient-to-br from-primary-200 via-primary-50 to-surface-100 dark:from-primary-900 dark:via-surface-900 dark:to-surface-950',
+    'bg-gradient-to-br from-surface-300 via-surface-100 to-primary-100 dark:from-surface-700 dark:via-surface-900 dark:to-primary-950',
+    'bg-gradient-to-br from-amber-200 via-surface-100 to-surface-200 dark:from-amber-900 dark:via-surface-900 dark:to-surface-950',
+    'bg-gradient-to-br from-sky-200 via-surface-100 to-surface-200 dark:from-sky-900 dark:via-surface-900 dark:to-surface-950',
 ];
 
 function getProjectCover(id: number): string {
-    return projectCovers[id % projectCovers.length];
+    return projectCoverGradients[id % projectCoverGradients.length];
 }
 
 function canUpdateProject(project: Project): boolean {
@@ -299,23 +299,23 @@ watch(
         <!-- Error -->
         <div
             v-if="error"
-            class="flex flex-col items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-accent-700/40 dark:bg-accent-900/20"
+            class="border-accent-200 bg-accent-50 dark:border-accent-700/40 dark:bg-accent-900/20 flex flex-col items-start gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
             role="alert"
         >
             <div class="flex items-start gap-3">
                 <span
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-accent-700 dark:bg-surface-900/40 dark:text-accent-300"
+                    class="text-accent-700 dark:text-accent-300 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 dark:bg-surface-900/40"
                 >
                     <component :is="getIcon('AlertTriangle')" class="h-4 w-4" />
                 </span>
                 <div>
                     <p
-                        class="text-sm font-bold text-accent-800 dark:text-accent-200"
+                        class="text-accent-800 dark:text-accent-200 text-sm font-bold"
                     >
                         Gagal memuat daftar proyek
                     </p>
                     <p
-                        class="mt-0.5 text-xs text-accent-700 dark:text-accent-300"
+                        class="text-accent-700 dark:text-accent-300 mt-0.5 text-xs"
                     >
                         {{ error }}
                     </p>
@@ -417,10 +417,10 @@ watch(
                 <div
                     class="relative h-44 w-full overflow-hidden rounded-[26px] shadow-xs"
                 >
-                    <img
-                        :src="getProjectCover(project.id)"
-                        :alt="project.name"
-                        class="h-full w-full object-cover opacity-60 transition-transform duration-700 ease-out group-hover:scale-105"
+                    <div
+                        :class="getProjectCover(project.id)"
+                        class="h-full w-full opacity-60 transition-transform duration-700 ease-out group-hover:scale-105"
+                        aria-hidden="true"
                     />
                     <!-- Subtle top sheen and dark gradient at bottom for depth -->
                     <div

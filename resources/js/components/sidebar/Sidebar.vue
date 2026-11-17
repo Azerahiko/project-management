@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePage, Link, router } from '@inertiajs/vue3';
 import { getIcon } from './icons';
-import { LogOut, X, Sparkles } from '@lucide/vue';
+import { LogOut, X, Sparkles, ChevronDown, Plus, Search } from '@lucide/vue';
 import { gsap } from 'gsap';
 import { prefersReducedMotion } from '@/lib/motion';
 import { useNotifications } from '@/composables/useNotifications';
@@ -42,7 +42,6 @@ defineEmits<Emits>();
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 
-// Reactive URL tracking for instant active state switching without page reload
 const currentPath = computed(() => {
     const rawUrl = page.url || '';
     return rawUrl.split('?')[0].split('#')[0];
@@ -72,13 +71,12 @@ function can(perm?: string): boolean {
 const stats = computed(() => (page.props.stats as any) || {});
 const { unreadCount } = useNotifications();
 
-// Organized categories with useful features (active features + upcoming placeholder features)
 const menuSections = computed<MenuSection[]>(() => [
     {
-        title: 'MANAJEMEN & ALUR KERJA',
+        title: 'UTAMA',
         items: [
             {
-                label: 'Overview',
+                label: 'Dashboard',
                 href: '/dashboard',
                 icon: 'Home',
                 permission: 'dashboard.view',
@@ -104,7 +102,7 @@ const menuSections = computed<MenuSection[]>(() => [
                 permission: 'calendar.view',
             },
             {
-                label: 'Timeline Proyek',
+                label: 'Timeline & Roadmap',
                 href: '/timeline',
                 icon: 'TrendingUp',
                 permission: 'projects.view',
@@ -112,7 +110,7 @@ const menuSections = computed<MenuSection[]>(() => [
         ],
     },
     {
-        title: 'KOLABORASI & ANGGOTA',
+        title: 'KOLABORASI',
         items: [
             {
                 label: 'Anggota Tim',
@@ -122,7 +120,7 @@ const menuSections = computed<MenuSection[]>(() => [
                 badge: stats.value.team_members_count,
             },
             {
-                label: 'Pesan & Notifikasi',
+                label: 'Notifikasi',
                 href: '/notifications',
                 icon: 'Bell',
                 permission: 'notifications.view',
@@ -143,7 +141,7 @@ const menuSections = computed<MenuSection[]>(() => [
         ],
     },
     {
-        title: 'LAPORAN & DOKUMEN',
+        title: 'DOKUMEN & KPI',
         items: [
             {
                 label: 'Laporan & KPI',
@@ -166,36 +164,29 @@ const menuSections = computed<MenuSection[]>(() => [
         ],
     },
     {
-        title: 'SISTEM & BANTUAN',
+        title: 'SISTEM',
         items: [
-            {
-                label: 'Pengaturan Akun',
-                href: '/settings',
-                icon: 'Settings',
-                permission: 'settings.view',
-            },
             {
                 label: 'Role & Permissions',
                 href: '/roles/permissions',
                 icon: 'Shield',
-                permission: 'roles.manage',
+                permission: 'roles.view',
             },
             {
                 label: 'Integrasi API',
                 href: '/integrations',
-                icon: 'Cpu',
-                permission: 'settings.view',
+                icon: 'Webhook',
+                permission: 'webhooks.view',
             },
             {
-                label: 'Bantuan & Support',
-                href: '/support',
-                icon: 'HelpCircle',
+                label: 'Pengaturan Akun',
+                href: '/settings',
+                icon: 'Settings',
             },
         ],
     },
 ]);
 
-// Modal states for upcoming features and support
 const comingSoonModal = ref<{
     isOpen: boolean;
     title: string;
@@ -225,7 +216,7 @@ function handleLogout(): void {
 }
 
 const MOBILE_BREAKPOINT = 1024;
-const SIDEBAR_WIDTH = 260;
+const SIDEBAR_WIDTH = 250;
 
 let drawerCtx: gsap.Context | null = null;
 
@@ -280,7 +271,7 @@ watch(
         drawerCtx = gsap.context(() => {
             gsap.to(drawer(), {
                 x: open ? 0 : -SIDEBAR_WIDTH,
-                duration: open ? 0.32 : 0.24,
+                duration: open ? 0.3 : 0.22,
                 ease: open ? 'power3.out' : 'power2.in',
             });
         });
@@ -291,44 +282,39 @@ watch(
 <template>
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[265px] shrink-0 flex-col justify-between overflow-y-auto border-r border-surface-200 bg-white px-3.5 py-5 transition-transform duration-300 select-none lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-surface-700 dark:bg-surface-950"
+        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between overflow-y-auto border-r border-surface-200/90 bg-white/95 backdrop-blur-md px-3 py-4 transition-transform duration-200 select-none lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-surface-800/80 dark:bg-surface-950/90"
         aria-label="Navigasi Utama"
     >
-        <!-- Top Section: Natural Brand Logo & Categorized Menus -->
-        <div class="flex flex-col gap-5">
-            <!-- Brand Logo with dynamic application branding -->
-            <div class="flex items-center justify-between px-2 pt-1 pb-2">
+        <!-- Top: Workspace Header & Navigation Menus -->
+        <div class="flex flex-col gap-3.5">
+            <!-- Workspace Selector Header (Linear/Vercel style) -->
+            <div class="flex items-center justify-between pb-1">
                 <Link
                     href="/dashboard"
-                    class="group flex items-center gap-2.5 transition-opacity hover:opacity-90"
+                    class="group flex w-full items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-surface-200/60 dark:hover:bg-surface-900"
                 >
-                    <div
-                        class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-700/10 p-1 ring-1 ring-primary-700/20 dark:bg-primary-300/10 dark:ring-primary-300/20"
-                    >
-                        <img
-                            src="/images/logo-mark.png"
-                            :alt="page.props.app.name"
-                            class="h-7 w-7 object-contain transition-transform duration-200 group-hover:scale-105"
-                        />
-                    </div>
-                    <div class="flex flex-col">
-                        <span
-                            class="font-serif text-lg font-normal tracking-tight text-surface-950 dark:text-surface-50"
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white shadow-xs font-semibold text-xs tracking-tight dark:bg-primary-500 dark:text-surface-950"
                         >
-                            {{ page.props.app.name }}
-                        </span>
-                        <span
-                            class="text-[10px] font-medium tracking-wider text-surface-500 uppercase dark:text-surface-400"
-                        >
-                            {{ page.props.app.shortName }}
-                        </span>
+                            {{ (page.props.app.shortName || 'PX').slice(0, 2).toUpperCase() }}
+                        </div>
+                        <div class="flex flex-col min-w-0 text-left">
+                            <span class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100">
+                                {{ page.props.app.name }}
+                            </span>
+                            <span class="text-[10px] text-surface-400 font-medium tracking-wide">
+                                Workspace Tim
+                            </span>
+                        </div>
                     </div>
+                    <ChevronDown class="h-3.5 w-3.5 text-surface-400 transition-transform group-hover:text-surface-600 dark:group-hover:text-surface-300" />
                 </Link>
 
-                <!-- Mobile Close Button (Only visible on small mobile screens) -->
+                <!-- Mobile Close Button -->
                 <button
                     type="button"
-                    class="rounded-lg p-1.5 text-surface-400 hover:bg-surface-200/60 hover:text-surface-700 lg:hidden dark:text-surface-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    class="rounded-lg p-1.5 text-surface-400 hover:bg-surface-200 hover:text-surface-700 lg:hidden dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-white"
                     @click="$emit('close')"
                     aria-label="Tutup menu"
                 >
@@ -336,92 +322,79 @@ watch(
                 </button>
             </div>
 
+            <!-- Quick Action Button -->
+            <div class="px-0.5">
+                <Link
+                    :href="tasks.index.url()"
+                    class="flex h-8 w-full items-center justify-between rounded-lg border border-surface-200/90 bg-white px-2.5 text-xs font-medium text-surface-600 shadow-2xs transition-all hover:border-primary-300 hover:text-surface-900 dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-300 dark:hover:border-primary-800 dark:hover:text-white"
+                >
+                    <div class="flex items-center gap-2">
+                        <Search class="h-3.5 w-3.5 text-surface-400" />
+                        <span>Cari cepat...</span>
+                    </div>
+                    <kbd class="rounded border border-surface-200 bg-surface-100 px-1 py-0.2 text-[9px] font-semibold text-surface-400 dark:border-surface-700 dark:bg-surface-800">
+                        ⌘K
+                    </kbd>
+                </Link>
+            </div>
+
             <!-- Categorized Navigation Groups -->
-            <div class="flex flex-col gap-4">
+            <nav class="flex flex-col gap-3.5 pt-1">
                 <div
                     v-for="section in menuSections"
                     :key="section.title"
-                    class="flex flex-col gap-1"
+                    class="flex flex-col gap-0.5"
                 >
-                    <!-- Category Title Header -->
+                    <!-- Category Header -->
                     <div
-                        class="px-3 pb-1 text-[11px] font-semibold tracking-wider text-surface-600 uppercase dark:text-surface-300"
+                        class="px-2 pb-1 text-[10px] font-semibold tracking-wider text-surface-400 uppercase dark:text-surface-500"
                     >
                         {{ section.title }}
                     </div>
 
-                    <!-- Items inside this Category -->
+                    <!-- Items -->
                     <template v-for="item in section.items" :key="item.label">
-                        <!-- 1. Upcoming Feature (Placeholder with informative popup) -->
-                        <button
-                            v-if="item.isComingSoon"
-                            type="button"
-                            class="group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-surface-700 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white"
-                            @click="openComingSoon(item)"
-                        >
-                            <div class="flex items-center gap-3">
-                                <component
-                                    :is="getIcon(item.icon)"
-                                    class="h-4.5 w-4.5 stroke-[2] text-surface-400 group-hover:text-surface-700 dark:text-surface-300 dark:group-hover:text-surface-200"
-                                />
-                                <span>{{ item.label }}</span>
-                            </div>
-                            <!-- "Segera" Badge (Sleek rounded-md, no pill) -->
-                            <span
-                                class="rounded-md bg-surface-200/70 px-1.5 py-0.5 text-[9.5px] font-bold text-surface-600 dark:bg-white/10 dark:text-surface-300"
-                            >
-                                {{ item.badgeLabel || 'Segera' }}
-                            </span>
-                        </button>
-
-                        <!-- 3. Active Real Routes -->
                         <Link
-                            v-else-if="can(item.permission)"
+                            v-if="can(item.permission)"
                             :href="item.href!"
-                            class="group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-all duration-150"
+                            class="group relative flex h-8 items-center justify-between rounded-lg px-2 text-xs transition-all duration-150"
                             :class="
                                 isActive(item.href)
-                                    ? 'bg-primary-50/90 font-semibold text-primary-900 shadow-2xs ring-1 ring-primary-200/80 dark:bg-primary-950/40 dark:text-primary-100 dark:ring-primary-700/40'
-                                    : 'font-medium text-surface-700 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-200 dark:hover:bg-white/5 dark:hover:text-white'
+                                    ? 'bg-primary-600/10 font-semibold text-primary-900 dark:bg-primary-400/15 dark:text-primary-200'
+                                    : 'font-medium text-surface-600 hover:bg-surface-200/50 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-900/60 dark:hover:text-white'
                             "
                             @click="isMobile() ? $emit('close') : undefined"
                         >
-                            <!-- Active Accent Bar -->
+                            <!-- Active Accent Indicator -->
                             <span
                                 v-if="isActive(item.href)"
-                                class="absolute top-2 bottom-2 left-0 w-1 rounded-r-full bg-primary-600 dark:bg-primary-400"
+                                class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-sm bg-primary-600 dark:bg-primary-400"
                             />
 
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
                                 <component
                                     :is="getIcon(item.icon)"
-                                    class="h-4.5 w-4.5 stroke-[2] transition-colors"
+                                    class="h-4 w-4 shrink-0 transition-colors"
                                     :class="
                                         isActive(item.href)
                                             ? 'text-primary-700 dark:text-primary-300'
                                             : 'text-surface-400 group-hover:text-surface-700 dark:text-surface-400 dark:group-hover:text-surface-200'
                                     "
                                 />
-                                <span class="tracking-tight">{{
-                                    item.label
-                                }}</span>
+                                <span class="truncate">{{ item.label }}</span>
                             </div>
 
-                            <!-- Real Item Count Badge (Sleek rounded-md, no pill) -->
+                            <!-- Count Badge -->
                             <div
-                                v-if="
-                                    item.badge !== undefined &&
-                                    item.badge !== null &&
-                                    item.badge > 0
-                                "
+                                v-if="item.badge !== undefined && item.badge !== null && item.badge > 0"
                                 class="flex items-center"
                             >
                                 <span
-                                    class="rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors"
+                                    class="rounded px-1.5 py-0.2 text-[10px] font-bold tabular-nums transition-colors"
                                     :class="
                                         isActive(item.href)
-                                            ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-500 dark:text-surface-950'
-                                            : 'bg-surface-200/80 text-surface-700 dark:bg-white/10 dark:text-surface-300'
+                                            ? 'bg-primary-600 text-white dark:bg-primary-400 dark:text-surface-950'
+                                            : 'bg-surface-200/70 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
                                     "
                                 >
                                     {{ item.badge }}
@@ -430,116 +403,85 @@ watch(
                         </Link>
                     </template>
                 </div>
-            </div>
+            </nav>
         </div>
 
-        <!-- Bottom: User Account Footer -->
-        <div
-            class="mt-6 border-t border-surface-200/70 pt-3 dark:border-surface-800/10"
-        >
-            <div
-                class="px-3 pb-1.5 text-[11px] font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
-            >
-                AKUN
-            </div>
-
+        <!-- Bottom: User Card Footer -->
+        <div class="mt-4 border-t border-surface-200/80 pt-2.5 dark:border-surface-800/80">
             <div
                 v-if="user"
-                class="flex items-center justify-between gap-2 rounded-2xl border border-surface-200/70 bg-surface-50/70 p-2 transition-all hover:border-surface-300 hover:bg-surface-100/70 dark:border-surface-800/20 dark:bg-surface-900/40 dark:hover:border-surface-700 dark:hover:bg-surface-900/80"
+                class="flex items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-surface-200/50 dark:hover:bg-surface-900/60"
             >
-                <div class="flex min-w-0 items-center gap-2.5">
-                    <!-- Circular Avatar with Online Dot -->
+                <Link
+                    href="/settings"
+                    class="flex min-w-0 items-center gap-2 flex-1"
+                >
                     <div class="relative shrink-0">
                         <img
                             v-if="user.avatar"
                             :src="user.avatar"
                             :alt="user.name"
-                            class="h-8.5 w-8.5 rounded-full object-cover ring-1 ring-surface-200 dark:ring-surface-800"
+                            class="h-7 w-7 rounded-full object-cover ring-1 ring-surface-200 dark:ring-surface-700"
                         />
                         <div
                             v-else
-                            class="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-primary-700 text-[11px] font-bold text-white shadow-2xs"
+                            class="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-[10px] font-bold text-white shadow-2xs dark:bg-primary-600"
                         >
-                            {{
-                                user.initials ||
-                                user.name.slice(0, 2).toUpperCase()
-                            }}
+                            {{ user.initials || user.name.slice(0, 2).toUpperCase() }}
                         </div>
                         <span
-                            class="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-950"
-                            title="Aktif"
+                            class="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-950"
+                            title="Online"
                         />
                     </div>
-
-                    <!-- Name & Role -->
                     <div class="flex min-w-0 flex-col leading-tight">
-                        <span
-                            class="truncate text-xs font-bold text-surface-900 dark:text-white"
-                        >
+                        <span class="truncate text-xs font-medium text-surface-900 dark:text-surface-100">
                             {{ user.name }}
                         </span>
-                        <span
-                            class="truncate text-[10.5px] font-medium text-surface-500 dark:text-surface-400"
-                        >
-                            {{ user.roles?.[0] || 'Team Member' }}
+                        <span class="truncate text-[10px] text-surface-400">
+                            {{ user.roles?.[0] || 'Member' }}
                         </span>
                     </div>
-                </div>
+                </Link>
 
-                <!-- Clean Logout Action -->
                 <button
                     type="button"
-                    class="rounded-xl p-1.5 text-surface-400 transition hover:bg-white hover:text-rose-600 hover:shadow-2xs dark:hover:bg-white/10 dark:hover:text-rose-400"
+                    class="rounded-lg p-1.5 text-surface-400 hover:bg-surface-200 hover:text-rose-600 dark:hover:bg-surface-800 dark:hover:text-rose-400 transition"
                     title="Keluar"
                     @click="handleLogout"
                 >
-                    <LogOut class="h-4 w-4 stroke-[2]" />
+                    <LogOut class="h-3.5 w-3.5 stroke-[2]" />
                 </button>
             </div>
         </div>
 
-        <!-- Upcoming Feature Information Modal -->
+        <!-- Modal info -->
         <div
             v-if="comingSoonModal.isOpen"
             class="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/50 p-4 backdrop-blur-xs"
             @click.self="closeComingSoon"
         >
             <div
-                class="w-full max-w-sm rounded-3xl bg-white p-6 text-surface-900 shadow-2xl dark:bg-surface-900 dark:text-white"
+                class="w-full max-w-sm rounded-2xl bg-white p-5 text-surface-900 shadow-xl dark:bg-surface-900 dark:text-white"
             >
                 <div class="flex items-center justify-between pb-3">
                     <div class="flex items-center gap-2">
-                        <span
-                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400"
-                        >
+                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400">
                             <Sparkles class="h-4 w-4" />
                         </span>
-                        <h3 class="text-base font-bold">
-                            {{ comingSoonModal.title }}
-                        </h3>
+                        <h3 class="text-sm font-bold">{{ comingSoonModal.title }}</h3>
                     </div>
                     <button
                         type="button"
-                        class="rounded-xl p-1.5 text-surface-400 hover:bg-surface-100 dark:hover:bg-white/10"
+                        class="rounded-lg p-1 text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800"
                         @click="closeComingSoon"
                     >
                         <X class="h-4 w-4" />
                     </button>
                 </div>
-                <p
-                    class="text-xs leading-relaxed text-surface-600 dark:text-surface-300"
-                >
+                <p class="text-xs text-surface-600 dark:text-surface-300 leading-relaxed">
                     {{ comingSoonModal.desc }}
                 </p>
-                <div class="mt-5 flex justify-end">
-                    <button
-                        type="button"
-                        class="rounded-xl bg-surface-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-black dark:bg-white dark:text-surface-900"
-                        @click="closeComingSoon"
-                    >
-                        Mengerti
-                    </button>
-                </div>
             </div>
         </div>
     </aside>

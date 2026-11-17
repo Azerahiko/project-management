@@ -224,36 +224,26 @@ watch(
 
 <template>
     <div class="space-y-6">
-        <!-- 1. Header Section: Calm System Style -->
+        <!-- 1. Header Section -->
         <div
             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
-            <div>
-                <div
-                    class="flex items-center gap-2 text-xs font-medium text-surface-500"
-                >
-                    <span
-                        class="h-1.5 w-1.5 rounded-full bg-[#0F5132] dark:bg-[#b7d9c1]"
-                    />
-                    <span>Direktori Tim</span>
-                    <span class="text-surface-300 dark:text-surface-700"
-                        >·</span
-                    >
-                    <span
-                        >{{ page.props.app.name }}
-                        {{ page.props.app.shortName }} Workspace</span
-                    >
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                    <span class="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                        Direktori Pengguna
+                    </span>
                 </div>
                 <h1
-                    class="mt-1 font-serif text-2xl font-normal tracking-tight text-surface-950 sm:text-3xl dark:text-surface-50"
+                    class="text-xl sm:text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-50"
                 >
                     Anggota & Peran
                 </h1>
                 <p
-                    class="mt-1 max-w-xl text-xs text-surface-600 sm:text-sm dark:text-surface-400"
+                    class="text-xs text-surface-500 dark:text-surface-400"
                 >
-                    Kelola seluruh akses pengguna, otorisasi peran, dan
-                    kolaborator proyek tim dalam ruang kerja yang terorganisir.
+                    Kelola seluruh akses pengguna, otorisasi peran, dan kolaborator proyek tim dalam ruang kerja yang terorganisir.
                 </p>
             </div>
 
@@ -261,153 +251,122 @@ watch(
                 v-if="
                     page.props.auth.user?.permissions.includes('users.create')
                 "
-                class="flex items-center gap-2.5"
+                class="flex items-center gap-2"
             >
                 <Link
                     :href="users.invite.url()"
-                    class="inline-flex shrink-0 items-center gap-2 rounded-full border border-surface-300 bg-white px-4 py-2.5 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 active:scale-95 sm:text-sm dark:border-surface-700 dark:bg-surface-800 dark:text-surface-200 dark:hover:bg-surface-700"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 transition"
                 >
-                    <component :is="getIcon('Mail')" class="h-4 w-4" />
+                    <component :is="getIcon('Mail')" class="h-3.5 w-3.5" />
                     <span>Undang Pengguna</span>
                 </Link>
 
                 <Link
                     :href="users.create.url()"
-                    class="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#0F5132] px-5 py-2.5 text-xs font-medium text-white shadow-xs transition hover:bg-[#0c4329] active:scale-95 sm:text-sm dark:bg-[#0F5132] dark:hover:bg-[#14643f]"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400 transition"
                 >
-                    <component :is="getIcon('UserPlus')" class="h-4 w-4" />
+                    <component :is="getIcon('UserPlus')" class="h-3.5 w-3.5 stroke-[2.5]" />
                     <span>Tambah Pengguna</span>
                 </Link>
             </div>
         </div>
 
-        <!-- 2. KPI Summary Cards Row (Calm System Reference Style) -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- 2. KPI Summary Telemetry Strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-xl border border-surface-200/90 bg-white divide-y divide-surface-200/80 sm:divide-y-0 sm:divide-x dark:border-surface-800 dark:bg-surface-900/90 dark:divide-surface-800/80 shadow-card overflow-hidden">
             <!-- Stat 1: Total Pengguna -->
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Total Pengguna</span
-                    >
+            <div class="p-4">
+                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
+                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Total Pengguna</span>
                     <component
                         :is="getIcon('Users')"
-                        class="h-4 w-4 text-[#0F5132] dark:text-[#b7d9c1]"
+                        class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400"
                     />
                 </div>
-                <div
-                    class="mt-2 font-serif text-3xl font-normal text-surface-950 dark:text-surface-50"
-                >
+                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
                     {{ meta?.total ?? userList.length }}
                 </div>
-                <p class="mt-1 text-[11px] text-surface-500">
+                <p class="mt-1 text-[11px] text-surface-400">
                     Akun terdaftar dalam sistem
                 </p>
             </div>
 
             <!-- Stat 2: Pengguna Aktif -->
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Pengguna Aktif</span
-                    >
+            <div class="p-4">
+                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
+                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Pengguna Aktif</span>
                     <component
                         :is="getIcon('CheckCircle')"
-                        class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                        class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
                     />
                 </div>
-                <div
-                    class="mt-2 font-serif text-3xl font-normal text-emerald-700 dark:text-emerald-400"
-                >
+                <div class="mt-2 font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {{ activeUsersCount }}
                 </div>
-                <div
-                    class="mt-1 flex items-center gap-1.5 text-[11px] text-surface-500"
-                >
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span>Siap berkolaborasi dalam tugas</span>
-                </div>
+                <p class="mt-1 text-[11px] text-surface-400">
+                    Siap berkolaborasi dalam tugas
+                </p>
             </div>
 
             <!-- Stat 3: Administrator & PM -->
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Manajemen & Admin</span
-                    >
+            <div class="p-4">
+                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
+                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Manajemen & Admin</span>
                     <component
                         :is="getIcon('Shield')"
-                        class="h-4 w-4 text-primary-700 dark:text-primary-300"
+                        class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400"
                     />
                 </div>
-                <div
-                    class="mt-2 font-serif text-3xl font-normal text-surface-950 dark:text-surface-50"
-                >
+                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
                     {{ adminAndPmCount }}
                 </div>
-                <p class="mt-1 text-[11px] text-surface-500">
+                <p class="mt-1 text-[11px] text-surface-400">
                     Akses pengelola & pengawas
                 </p>
             </div>
 
             <!-- Stat 4: Anggota Reguler -->
-            <div
-                class="rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs dark:border-surface-800 dark:bg-surface-900"
-            >
-                <div class="flex items-center justify-between text-surface-400">
-                    <span
-                        class="text-[11px] font-semibold tracking-wider uppercase"
-                        >Anggota Tim</span
-                    >
+            <div class="p-4">
+                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
+                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Anggota Tim</span>
                     <component
                         :is="getIcon('Briefcase')"
-                        class="h-4 w-4 text-surface-600 dark:text-surface-300"
+                        class="h-3.5 w-3.5 text-surface-400"
                     />
                 </div>
-                <div
-                    class="mt-2 font-serif text-3xl font-normal text-surface-950 dark:text-surface-50"
-                >
+                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
                     {{ memberCount }}
                 </div>
-                <p class="mt-1 text-[11px] text-surface-500">
+                <p class="mt-1 text-[11px] text-surface-400">
                     Eksekutor alur kerja utama
                 </p>
             </div>
         </div>
 
-        <!-- 3. Filter & View Switcher Bar (Calm System 04 & 07 Style) -->
+        <!-- 3. Filter & View Switcher Bar -->
         <div
-            class="flex flex-col gap-4 rounded-3xl border border-surface-200/80 bg-white p-4 shadow-xs lg:flex-row lg:items-center lg:justify-between dark:border-surface-800 dark:bg-surface-900"
+            class="flex flex-col gap-3 rounded-xl border border-surface-200 bg-white p-4 shadow-xs lg:flex-row lg:items-center lg:justify-between dark:border-surface-800 dark:bg-surface-900"
         >
             <!-- Search & Filters -->
-            <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="flex flex-1 flex-col gap-2.5 sm:flex-row sm:items-center">
                 <!-- Search Field -->
                 <div class="relative flex-1">
                     <div
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-surface-400"
+                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
                     >
-                        <component :is="getIcon('Search')" class="h-4 w-4" />
+                        <component :is="getIcon('Search')" class="h-3.5 w-3.5" />
                     </div>
                     <input
                         v-model="search"
                         type="search"
                         placeholder="Cari nama anggota atau email..."
-                        class="h-10 w-full rounded-full border border-surface-300 bg-surface-50/80 pr-4 pl-9 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition focus:border-primary-600 focus:bg-white focus:ring-2 focus:ring-primary-600/15 focus:outline-hidden dark:border-surface-700 dark:bg-surface-800/80 dark:text-surface-100 dark:placeholder-surface-500 dark:focus:border-primary-400"
+                        class="h-9 w-full rounded-lg border border-surface-200/90 bg-surface-50/80 pr-4 pl-8.5 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 focus:outline-hidden dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-100 dark:placeholder-surface-400"
                     />
                 </div>
 
                 <!-- Role Filter -->
                 <select
                     v-model="filters.role"
-                    class="h-10 rounded-full border border-surface-300 bg-surface-50/80 px-4 text-xs font-medium text-surface-700 shadow-2xs transition focus:border-primary-600 focus:bg-white focus:outline-hidden sm:w-44 dark:border-surface-700 dark:bg-surface-800/80 dark:text-surface-200 dark:focus:border-primary-400"
+                    class="h-9 rounded-lg border border-surface-200/90 bg-surface-50/80 px-3 text-xs font-medium text-surface-700 shadow-2xs transition focus:border-primary-500 focus:bg-white focus:outline-hidden sm:w-40 dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-200"
                     @change="filters.page = 1"
                 >
                     <option
@@ -422,7 +381,7 @@ watch(
                 <!-- Status Filter -->
                 <select
                     v-model="filters.is_active"
-                    class="h-10 rounded-full border border-surface-300 bg-surface-50/80 px-4 text-xs font-medium text-surface-700 shadow-2xs transition focus:border-primary-600 focus:bg-white focus:outline-hidden sm:w-36 dark:border-surface-700 dark:bg-surface-800/80 dark:text-surface-200 dark:focus:border-primary-400"
+                    class="h-9 rounded-lg border border-surface-200/90 bg-surface-50/80 px-3 text-xs font-medium text-surface-700 shadow-2xs transition focus:border-primary-500 focus:bg-white focus:outline-hidden sm:w-36 dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-200"
                     @change="filters.page = 1"
                 >
                     <option
@@ -437,7 +396,7 @@ watch(
                 <!-- Sort Filter -->
                 <select
                     v-model="sortValue"
-                    class="h-10 rounded-full border border-surface-300 bg-surface-50/80 px-4 text-xs font-medium text-surface-700 shadow-2xs transition focus:border-primary-600 focus:bg-white focus:outline-hidden sm:w-36 dark:border-surface-700 dark:bg-surface-800/80 dark:text-surface-200 dark:focus:border-primary-400"
+                    class="h-9 rounded-lg border border-surface-200/90 bg-surface-50/80 px-3 text-xs font-medium text-surface-700 shadow-2xs transition focus:border-primary-500 focus:bg-white focus:outline-hidden sm:w-36 dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-200"
                     @change="handleSortChange(sortValue)"
                 >
                     <option
@@ -450,38 +409,38 @@ watch(
                 </select>
             </div>
 
-            <!-- View Switcher Tabs (Calm 07 TABS) -->
+            <!-- View Switcher -->
             <div
-                class="flex shrink-0 items-center rounded-full border border-surface-200 bg-surface-100 p-1 dark:border-surface-800 dark:bg-surface-800"
+                class="flex items-center rounded-lg border border-surface-200 bg-surface-50/80 p-0.5 dark:border-surface-800 dark:bg-surface-900/60"
             >
                 <button
                     type="button"
-                    class="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition active:scale-95"
+                    class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                     :class="
                         viewMode === 'grid'
-                            ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-[#0F5132]'
-                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
+                            ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white'
+                            : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
                     "
+                    title="Tampilan Kartu"
                     @click="viewMode = 'grid'"
                 >
                     <component
                         :is="getIcon('LayoutGrid')"
                         class="h-3.5 w-3.5"
                     />
-                    <span>Kartu</span>
                 </button>
                 <button
                     type="button"
-                    class="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition active:scale-95"
+                    class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                     :class="
                         viewMode === 'table'
-                            ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-[#0F5132]'
-                            : 'text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white'
+                            ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white'
+                            : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
                     "
+                    title="Tampilan Tabel"
                     @click="viewMode = 'table'"
                 >
                     <component :is="getIcon('List')" class="h-3.5 w-3.5" />
-                    <span>Tabel</span>
                 </button>
             </div>
         </div>
@@ -500,7 +459,7 @@ watch(
             class="flex items-center justify-center py-20"
         >
             <div
-                class="h-8 w-8 animate-spin rounded-full border-3 border-[#0F5132] border-t-transparent dark:border-[#b7d9c1]"
+                class="h-8 w-8 animate-spin rounded-full border-3 border-primary-600 border-t-transparent dark:border-primary-300"
             />
         </div>
 
@@ -510,7 +469,7 @@ watch(
             class="flex flex-col items-center justify-center rounded-3xl border border-surface-200/80 bg-white p-12 text-center shadow-xs dark:border-surface-800 dark:bg-surface-900"
         >
             <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0F5132]/10 text-[#0F5132] dark:bg-[#b7d9c1]/10 dark:text-[#b7d9c1]"
+                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-600/10 text-primary-600 dark:bg-primary-300/10 dark:text-primary-300"
             >
                 <component :is="getIcon('Users')" class="h-7 w-7" />
             </div>
@@ -537,7 +496,7 @@ watch(
             </button>
         </div>
 
-        <!-- 4A. GRID VIEW: Modern Tactile Profile Cards (NO status badge pills!) -->
+        <!-- 4A. GRID VIEW: Directory Profile Cards -->
         <div
             v-else-if="viewMode === 'grid'"
             class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
@@ -545,7 +504,7 @@ watch(
             <article
                 v-for="userItem in userList"
                 :key="userItem.id"
-                class="group relative flex flex-col justify-between rounded-3xl border border-surface-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-[#0F5132]/40 hover:shadow-md dark:border-surface-800 dark:bg-surface-900"
+                class="group relative flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-4.5 shadow-card hover:border-surface-300 hover:shadow-panel hover:-translate-y-0.5 dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700 transition-all duration-180"
             >
                 <!-- Top Card: Avatar & Quick Action -->
                 <div>
@@ -556,10 +515,10 @@ watch(
                                 :initials="userItem.initials"
                                 :src="userItem.avatar"
                                 :alt="userItem.name"
-                                size="lg"
+                                size="md"
                             />
                             <span
-                                class="absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full ring-2 ring-white dark:ring-surface-900"
+                                class="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-surface-900"
                                 :class="
                                     userItem.is_active
                                         ? 'bg-emerald-500'
@@ -644,16 +603,16 @@ watch(
                     </div>
 
                     <!-- User Name & Email -->
-                    <div class="mt-4">
+                    <div class="mt-3.5">
                         <h2
-                            class="truncate font-serif text-base font-normal text-surface-950 transition group-hover:text-[#0F5132] dark:text-surface-50 dark:group-hover:text-[#b7d9c1]"
+                            class="truncate text-sm font-bold text-surface-900 transition group-hover:text-primary-600 dark:text-surface-100 dark:group-hover:text-primary-400"
                             :title="userItem.name"
                         >
                             {{ userItem.name }}
                         </h2>
                         <button
                             type="button"
-                            class="mt-1 flex items-center gap-1.5 truncate text-xs text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200"
+                            class="mt-1 flex items-center gap-1.5 truncate text-[11px] text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200"
                             :title="`Salin ${userItem.email}`"
                             @click="copyEmail(userItem.email)"
                         >
@@ -665,12 +624,12 @@ watch(
                         </button>
                     </div>
 
-                    <!-- Roles List (Clean rounded-md tags, NO pill badges!) -->
-                    <div class="mt-3.5 flex flex-wrap gap-1.5">
+                    <!-- Roles List -->
+                    <div class="mt-3 flex flex-wrap gap-1.5">
                         <span
                             v-for="role in userItem.roles"
                             :key="role"
-                            class="inline-flex items-center rounded-md border border-surface-200/80 bg-surface-50 px-2 py-0.5 text-[11px] font-medium text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                            class="inline-flex items-center rounded border border-surface-200/80 bg-surface-50 px-1.5 py-0.2 text-[10.5px] font-medium text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
                         >
                             {{ role }}
                         </span>
@@ -748,10 +707,10 @@ watch(
             </article>
         </div>
 
-        <!-- 4B. TABLE VIEW: Polished Clean Table (NO pill badges) -->
+        <!-- 4B. TABLE VIEW: Polished Clean Table -->
         <div
             v-else
-            class="overflow-hidden rounded-3xl border border-surface-200/80 bg-white shadow-xs dark:border-surface-800 dark:bg-surface-900"
+            class="overflow-hidden rounded-xl border border-surface-200/90 bg-white shadow-card dark:border-surface-800 dark:bg-surface-900/90"
         >
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">

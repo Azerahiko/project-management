@@ -800,7 +800,7 @@ onBeforeUnmount(() => {
                     class="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition"
                     :class="
                         viewMode === 'manage'
-                            ? 'bg-[#0F5132] text-white shadow-xs dark:bg-primary-600'
+                            ? 'bg-primary-600 text-white shadow-xs dark:bg-primary-600'
                             : 'text-surface-600 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800'
                     "
                     @click="switchView('manage')"
@@ -818,7 +818,7 @@ onBeforeUnmount(() => {
                     class="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition"
                     :class="
                         viewMode === 'matrix'
-                            ? 'bg-[#0F5132] text-white shadow-xs dark:bg-primary-600'
+                            ? 'bg-primary-600 text-white shadow-xs dark:bg-primary-600'
                             : 'text-surface-600 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800'
                     "
                     @click="switchView('matrix')"
@@ -937,7 +937,7 @@ onBeforeUnmount(() => {
                                 class="flex w-full items-center gap-3 rounded-2xl border p-2.5 text-left transition-all"
                                 :class="
                                     selectedRole === role.name
-                                        ? 'border-[#0F5132] bg-primary-50/50 shadow-2xs ring-1 ring-[#0F5132]/20 dark:border-primary-500 dark:bg-primary-950/30'
+                                        ? 'border-primary-600 bg-primary-50/50 shadow-2xs ring-1 ring-primary-600/20 dark:border-primary-500 dark:bg-primary-950/30'
                                         : 'border-transparent hover:border-surface-200 hover:bg-surface-50 dark:hover:border-surface-800 dark:hover:bg-surface-800/40'
                                 "
                                 @click="selectRole(role.name)"
@@ -946,7 +946,7 @@ onBeforeUnmount(() => {
                                     class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xs font-bold transition-colors"
                                     :class="
                                         selectedRole === role.name
-                                            ? 'bg-[#0F5132] text-white dark:bg-primary-600'
+                                            ? 'bg-primary-600 text-white dark:bg-primary-600'
                                             : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300'
                                     "
                                 >
@@ -1099,7 +1099,7 @@ onBeforeUnmount(() => {
                                                 class="inline-flex items-center gap-1.5 rounded-full border border-primary-200/80 bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-800 dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300"
                                             >
                                                 <span
-                                                    class="h-1.5 w-1.5 animate-pulse rounded-full bg-[#0F5132] dark:bg-primary-400"
+                                                    class="h-1.5 w-1.5 animate-pulse rounded-full bg-primary-600 dark:bg-primary-400"
                                                 />
                                                 Belum disimpan
                                             </span>
@@ -1126,7 +1126,7 @@ onBeforeUnmount(() => {
                                                 class="h-1.5 w-36 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
                                             >
                                                 <div
-                                                    class="h-full rounded-full bg-[#0F5132] transition-all duration-500 dark:bg-primary-400"
+                                                    class="h-full rounded-full bg-primary-600 transition-all duration-500 dark:bg-primary-400"
                                                     :style="{
                                                         width: `${permissionProgress}%`,
                                                     }"
@@ -1230,7 +1230,7 @@ onBeforeUnmount(() => {
                                     class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
                                     :class="
                                         permissionStateFilter === filter.value
-                                            ? 'bg-[#0F5132] text-white dark:bg-primary-600'
+                                            ? 'bg-primary-600 text-white dark:bg-primary-600'
                                             : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
                                     "
                                     @click="
@@ -1353,7 +1353,7 @@ onBeforeUnmount(() => {
                                                 isAdministratorSelected ||
                                                 saving
                                             "
-                                            class="h-4 w-4 rounded border-surface-300 text-[#0F5132] focus:ring-2 focus:ring-[#0F5132]/20 disabled:cursor-not-allowed dark:border-surface-600 dark:bg-surface-800"
+                                            class="h-4 w-4 rounded border-surface-300 text-primary-600 focus:ring-2 focus:ring-primary-600/20 disabled:cursor-not-allowed dark:border-surface-600 dark:bg-surface-800"
                                             @change="
                                                 togglePermission(
                                                     permission.name,
@@ -1381,7 +1381,7 @@ onBeforeUnmount(() => {
 
                                         <span
                                             v-if="permission.checked"
-                                            class="h-2 w-2 rounded-full bg-[#0F5132] dark:bg-primary-400"
+                                            class="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400"
                                         />
                                     </label>
                                 </div>

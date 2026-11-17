@@ -129,6 +129,9 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Audit Composer dependencies
+        run: composer audit
+
       - name: Run Pint
         run: vendor/bin/pint --parallel --test
 

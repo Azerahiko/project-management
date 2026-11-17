@@ -1120,7 +1120,7 @@ function curlForEndpoint(endpoint: EndpointSummary): string {
                     class="flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-xs font-semibold whitespace-nowrap transition-colors sm:text-sm"
                     :class="
                         activeTab === tab.key
-                            ? 'border-[#0F5132] text-[#0F5132] dark:border-primary-400 dark:text-primary-300'
+                            ? 'border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-300'
                             : 'border-transparent text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-surface-200'
                     "
                     @click="switchTab(tab.key)"

@@ -24,6 +24,6 @@ void createInertiaApp({
         return createSSRApp({ render: () => h(App, props) }).use(plugin);
     },
     progress: {
-        color: '#4B5563',
+        color: '#16a34a',
     },
 });

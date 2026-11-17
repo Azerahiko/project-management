@@ -130,14 +130,14 @@ onUnmounted(() => {
 
                 <!-- Brand Color Decorative Bar -->
                 <div class="mt-3 flex items-center justify-center gap-1">
-                    <span class="h-1 w-7 rounded-full bg-[#008081]" />
-                    <span class="h-1 w-2.5 rounded-full bg-[#F2C32D]" />
+                    <span class="h-1 w-7 rounded-full bg-primary-600" />
+                    <span class="h-1 w-2.5 rounded-full bg-amber-400" />
                 </div>
             </div>
 
             <div
                 v-if="errorMessage"
-                class="mt-5 rounded-xl border border-accent-200 bg-accent-50 px-4 py-2.5 text-center text-xs font-semibold text-accent-700 shadow-xs"
+                class="border-accent-200 bg-accent-50 text-accent-700 mt-5 rounded-xl border px-4 py-2.5 text-center text-xs font-semibold shadow-xs"
                 role="alert"
             >
                 {{ errorMessage }}
@@ -199,14 +199,14 @@ onUnmounted(() => {
                             New password
                         </label>
                         <div
-                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008081] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008081]/12"
+                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-primary-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-primary-600/12"
                             :class="{
-                                'border-accent-400 bg-accent-50/30 ring-2 ring-accent-400/20':
+                                'border-accent-400 bg-accent-50/30 ring-accent-400/20 ring-2':
                                     form.errors.password,
                             }"
                         >
                             <svg
-                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-[#008081]"
+                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-primary-600"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -236,7 +236,7 @@ onUnmounted(() => {
                             />
                             <button
                                 type="button"
-                                class="rounded-md p-1 text-surface-600 transition-colors hover:text-[#008081]"
+                                class="rounded-md p-1 text-surface-600 transition-colors hover:text-primary-600"
                                 :aria-label="
                                     showPassword
                                         ? 'Hide password'
@@ -290,10 +290,10 @@ onUnmounted(() => {
                             Confirm password
                         </label>
                         <div
-                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-[#008081] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#008081]/12"
+                            class="group flex h-12 items-center rounded-xl border border-surface-200 bg-surface-50 px-3.5 shadow-2xs transition-all duration-200 focus-within:border-primary-600 focus-within:bg-white focus-within:ring-4 focus-within:ring-primary-600/12"
                         >
                             <svg
-                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-[#008081]"
+                                class="h-5 w-5 shrink-0 text-surface-600 transition-colors group-focus-within:text-primary-600"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -362,7 +362,7 @@ onUnmounted(() => {
             <div class="mt-6 text-center">
                 <Link
                     :href="login.url()"
-                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-700 transition-colors hover:text-[#008081]"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-700 transition-colors hover:text-primary-600"
                 >
                     <svg
                         class="h-3.5 w-3.5"

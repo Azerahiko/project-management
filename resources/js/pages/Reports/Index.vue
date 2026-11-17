@@ -150,26 +150,26 @@ const statusBreakdown = computed(() => {
         {
             key: 'todo',
             label: 'Belum Mulai (To Do)',
-            color: '#D6D3C8',
-            bgClass: 'bg-[#D6D3C8]',
+            color: '#cbd5e1',
+            bgClass: 'bg-surface-300',
         },
         {
             key: 'in_progress',
             label: 'Sedang Berjalan',
-            color: '#88C199',
-            bgClass: 'bg-[#88C199]',
+            color: '#86efac',
+            bgClass: 'bg-primary-300',
         },
         {
             key: 'review',
             label: 'Peninjauan (Review)',
-            color: '#B7D9C1',
-            bgClass: 'bg-[#B7D9C1]',
+            color: '#22c55e',
+            bgClass: 'bg-primary-500',
         },
         {
             key: 'done',
             label: 'Selesai (Done)',
-            color: '#0F5132',
-            bgClass: 'bg-[#0F5132]',
+            color: '#16a34a',
+            bgClass: 'bg-primary-600',
         },
     ] as const;
 
@@ -188,7 +188,7 @@ const donutGradient = computed(() => {
     const total = totalTasks.value;
 
     if (total === 0) {
-        return 'conic-gradient(#eae6db 0% 100%)';
+        return 'conic-gradient(#e2e8f0 0% 100%)';
     }
 
     let cumulative = 0;
@@ -378,7 +378,7 @@ const filteredProjects = computed(() => {
                     class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
                 >
                     <div
-                        class="h-full rounded-full bg-[#0F5132] transition-all duration-700 dark:bg-primary-400"
+                        class="h-full rounded-full bg-primary-600 transition-all duration-700 dark:bg-primary-400"
                         :style="{ width: `${stat.progress}%` }"
                     />
                 </div>
@@ -421,7 +421,7 @@ const filteredProjects = computed(() => {
                                 class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
                                 :class="
                                     selectedStatusFilter === 'all'
-                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-600'
                                         : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
                                 "
                                 @click="selectedStatusFilter = 'all'"
@@ -433,7 +433,7 @@ const filteredProjects = computed(() => {
                                 class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
                                 :class="
                                     selectedStatusFilter === 'active'
-                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-600'
                                         : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
                                 "
                                 @click="selectedStatusFilter = 'active'"
@@ -445,7 +445,7 @@ const filteredProjects = computed(() => {
                                 class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
                                 :class="
                                     selectedStatusFilter === 'completed'
-                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-600'
                                         : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
                                 "
                                 @click="selectedStatusFilter = 'completed'"
@@ -457,7 +457,7 @@ const filteredProjects = computed(() => {
                                 class="rounded-xl px-2.5 py-1 text-xs font-semibold transition"
                                 :class="
                                     selectedStatusFilter === 'other'
-                                        ? 'bg-[#0F5132] text-white shadow-2xs dark:bg-primary-600'
+                                        ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-600'
                                         : 'bg-surface-100 text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300'
                                 "
                                 @click="selectedStatusFilter = 'other'"
@@ -611,7 +611,7 @@ const filteredProjects = computed(() => {
                                             :class="
                                                 projectProgress(project) === 100
                                                     ? 'bg-emerald-600 dark:bg-emerald-400'
-                                                    : 'bg-[#0F5132] dark:bg-primary-400'
+                                                    : 'bg-primary-600 dark:bg-primary-400'
                                             "
                                             :style="{
                                                 width: `${projectProgress(project)}%`,

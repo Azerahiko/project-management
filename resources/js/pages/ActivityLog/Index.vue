@@ -172,9 +172,9 @@ const typeSummary = computed(() => {
             description: 'Catatan dan feedback tim',
             count: stats.value.comment_activities,
             icon: 'MessageSquare',
-            bar: 'bg-[#6f9bc0]',
+            bar: 'bg-sky-400',
             iconClass:
-                'bg-[#e7f0f9] text-[#28506f] dark:bg-sky-950/40 dark:text-sky-200',
+                'bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-200',
         },
     ].map((item) => ({
         ...item,
@@ -338,14 +338,14 @@ function typeMeta(type: string): ActivityTypeMeta {
             return {
                 label: 'Komentar baru',
                 icon: 'MessageSquare',
-                badge: 'bg-[#e7f0f9] text-[#28506f] dark:bg-sky-950/40 dark:text-sky-200',
-                marker: 'bg-[#3f6f95] text-white',
+                badge: 'bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-200',
+                marker: 'bg-sky-700 text-white',
             };
         case 'comment.updated':
             return {
                 label: 'Komentar diperbarui',
                 icon: 'MessageSquare',
-                badge: 'bg-[#f7eed6] text-[#7a5a14] dark:bg-amber-950/40 dark:text-amber-200',
+                badge: 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
                 marker: 'bg-amber-500 text-white',
             };
         case 'comment.deleted':
@@ -500,7 +500,7 @@ function contributorPercent(count: number): number {
 
             <div class="card flex items-start gap-4 !p-4">
                 <span
-                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#e7f0f9] text-[#28506f] dark:bg-sky-950/40 dark:text-sky-200"
+                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-800 dark:bg-sky-950/40 dark:text-sky-200"
                 >
                     <component :is="getIcon('Clock')" class="h-5 w-5" />
                 </span>
@@ -523,7 +523,7 @@ function contributorPercent(count: number): number {
 
             <div class="card flex items-start gap-4 !p-4">
                 <span
-                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#f7eed6] text-[#7a5a14] dark:bg-amber-950/40 dark:text-amber-200"
+                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
                 >
                     <component :is="getIcon('Users')" class="h-5 w-5" />
                 </span>
@@ -546,7 +546,7 @@ function contributorPercent(count: number): number {
 
             <div class="card flex items-start gap-4 !p-4">
                 <span
-                    class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                    class="bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 grid h-11 w-11 shrink-0 place-items-center rounded-xl"
                 >
                     <component :is="getIcon('CheckSquare')" class="h-5 w-5" />
                 </span>

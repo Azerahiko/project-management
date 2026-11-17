@@ -4,8 +4,7 @@ import ToastContainer from '@/components/ui/ToastContainer.vue';
 
 <template>
     <div
-        class="relative min-h-screen w-full overflow-x-hidden bg-surface-950 bg-cover bg-[center_left] bg-no-repeat select-none lg:bg-center"
-        style="background-image: url('/images/auth-bg.png')"
+        class="relative min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-surface-950 via-surface-900 to-primary-950 select-none"
     >
         <!-- Keep the photo secondary to the form. -->
         <div
