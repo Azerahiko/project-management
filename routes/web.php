@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
-use App\Http\Controllers\ApiIntegrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\OnboardingController;
@@ -52,8 +51,6 @@ Route::middleware(['auth', 'onboarding.incomplete'])->prefix('onboarding')->name
     Route::put('/password', [OnboardingController::class, 'updatePassword'])->name('password.update');
     Route::get('/two-factor', [OnboardingController::class, 'twoFactor'])->name('two-factor');
     Route::post('/two-factor/confirmed', [OnboardingController::class, 'confirmTwoFactor'])->name('two-factor.confirmed');
-    Route::get('/passkey', [OnboardingController::class, 'passkey'])->name('passkey');
-    Route::post('/passkey/skip', [OnboardingController::class, 'skipPasskey'])->name('passkey.skip');
     Route::post('/complete', [OnboardingController::class, 'complete'])->name('complete');
 });
 
@@ -214,19 +211,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
         Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
         Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
-        Route::put('/settings/timezone', [SettingsController::class, 'updateTimezone'])->name('settings.timezone.update');
-    });
-
-    // API & Webhook Integrations
-    Route::middleware('can:settings.view')->group(function () {
-        Route::get('/integrations', [ApiIntegrationController::class, 'index'])->name('integrations.index');
-        Route::post('/integrations/tokens', [ApiIntegrationController::class, 'storeToken'])->name('integrations.tokens.store');
-        Route::delete('/integrations/tokens/{token}', [ApiIntegrationController::class, 'destroyToken'])->name('integrations.tokens.destroy');
-        Route::post('/integrations/webhooks', [ApiIntegrationController::class, 'storeWebhook'])->name('integrations.webhooks.store');
-        Route::put('/integrations/webhooks/{webhook}', [ApiIntegrationController::class, 'updateWebhook'])->name('integrations.webhooks.update');
-        Route::patch('/integrations/webhooks/{webhook}/toggle', [ApiIntegrationController::class, 'toggleWebhook'])->name('integrations.webhooks.toggle');
-        Route::delete('/integrations/webhooks/{webhook}', [ApiIntegrationController::class, 'destroyWebhook'])->name('integrations.webhooks.destroy');
-        Route::post('/integrations/webhooks/{webhook}/test', [ApiIntegrationController::class, 'testWebhook'])->name('integrations.webhooks.test');
     });
 
     // Support & Help Center (accessible to all authenticated users)

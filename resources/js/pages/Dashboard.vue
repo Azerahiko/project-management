@@ -31,9 +31,6 @@ defineOptions({
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
-const userTimezone = computed(
-    () => (page.props.userTimezone as string) ?? 'UTC',
-);
 
 const stats = computed(() => page.props.stats as DashboardStats | undefined);
 const tasksByStatus = computed(
@@ -84,7 +81,6 @@ const focusMetrics = computed<FocusMetrics>(() => {
 const greetingTime = computed(() => {
     const hour = Number(
         new Intl.DateTimeFormat('en-GB', {
-            timeZone: userTimezone.value,
             hour: '2-digit',
             hour12: false,
         }).format(new Date()),

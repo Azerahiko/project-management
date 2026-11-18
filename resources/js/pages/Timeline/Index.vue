@@ -50,12 +50,9 @@ const rawProjects = computed(
 const canViewTasks = computed(() => Boolean(page.props.can_view_tasks));
 
 // Date helpers
-const userTimezone = computed(
-    () => (page.props.userTimezone as string) ?? 'UTC',
-);
 const now = (() => {
     const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: userTimezone.value,
+        timeZone: 'UTC',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',

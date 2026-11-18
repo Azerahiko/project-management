@@ -45,12 +45,11 @@ interface WeekDay {
 }
 
 const page = usePage();
-const userTimezone = (page.props.userTimezone as string) ?? 'UTC';
 
-// Get current date in user's timezone using Intl.DateTimeFormat
+// Get current date in UTC timezone using Intl.DateTimeFormat
 const now = new Date();
 const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: userTimezone,
+    timeZone: 'UTC',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

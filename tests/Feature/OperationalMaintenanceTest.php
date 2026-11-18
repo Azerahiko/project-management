@@ -4,16 +4,13 @@ use App\Models\File;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\Task;
-use App\Models\TaskActivity;
 use App\Models\User;
-use Carbon\Carbon;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class, InteractsWithTime::class);
 
@@ -141,64 +138,6 @@ describe('File download missing returns 404 (M-8)', function () {
         $this->actingAs($admin)
             ->get("/api/projects/{$project->id}/files/{$file->id}/download")
             ->assertNotFound();
-    });
-});
-
-describe('Activity log today uses user timezone (M-7)', function () {
-    afterEach(function () {
-        Carbon::setTestNow();
-    });
-    it('counts activities for today in user timezone', function () {
-        // Freeze time to a specific moment: 2024-01-15 10:00 UTC (which is 17:00 Jakarta, UTC+7)
-        // This makes "today" in Jakarta = 2024-01-15
-        Carbon::setTestNow(Carbon::create(2024, 1, 15, 10, 0, 0, 'UTC'));
-
-        $admin = User::factory()->create([
-            'is_active' => true,
-            'email_verified_at' => now(),
-            'onboarding_completed_at' => now(),
-            'timezone' => 'Asia/Jakarta', // UTC+7
-        ]);
-        $admin->assignRole('administrator');
-
-        $project = Project::factory()->create(['owner_id' => $admin->id]);
-        ProjectMember::factory()->create(['project_id' => $project->id, 'user_id' => $admin->id, 'role' => 'owner']);
-
-        $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'creator_id' => $admin->id,
-            'assignee_id' => $admin->id,
-        ]);
-
-        // Jakarta midnight UTC = 2024-01-14 17:00 UTC (since Jakarta is UTC+7)
-        // Jakarta "today" (2024-01-15) runs from UTC 2024-01-14 17:00 to 2024-01-15 16:59:59
-        // Our frozen time is 2024-01-15 10:00 UTC = 2024-01-15 17:00 Jakarta (today)
-        $jakartaDayStartUtc = Carbon::create(2024, 1, 14, 17, 0, 0, 'UTC'); // Start of Jakarta day 2024-01-15
-
-        // Activity at 02:00 UTC = 09:00 Jakarta on 2024-01-15 (today)
-        TaskActivity::factory()->create([
-            'task_id' => $task->id,
-            'user_id' => $admin->id,
-            'description' => 'Test activity',
-            'created_at' => $jakartaDayStartUtc->copy()->addHours(2),
-        ]);
-
-        // Activity at 23:00 UTC on 2024-01-14 = 06:00 Jakarta on 2024-01-15 (today)
-        // This is within the Jakarta day range (after 17:00 UTC on 2024-01-14)
-        TaskActivity::factory()->create([
-            'task_id' => $task->id,
-            'user_id' => $admin->id,
-            'description' => 'Test activity 2',
-            'created_at' => Carbon::create(2024, 1, 14, 23, 0, 0, 'UTC'),
-        ]);
-
-        $this->actingAs($admin)
-            ->get(route('activity-log'))
-            ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page
-                ->component('ActivityLog/Index')
-                ->where('stats.today', 2)
-            );
     });
 });
 

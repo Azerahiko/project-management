@@ -47,7 +47,6 @@ const pageTitle = computed(() => {
     if (p.startsWith('/roles')) return 'Role & Permissions';
     if (p.startsWith('/teams') || p.startsWith('/users')) return 'Anggota Tim';
     if (p.startsWith('/collaboration')) return 'Papan Kolaborasi';
-    if (p.startsWith('/integrations')) return 'Integrasi API';
     if (p.startsWith('/settings')) return 'Pengaturan Akun';
     return 'Ruang Kerja';
 });

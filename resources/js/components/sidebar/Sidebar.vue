@@ -173,12 +173,6 @@ const menuSections = computed<MenuSection[]>(() => [
                 permission: 'roles.view',
             },
             {
-                label: 'Integrasi API',
-                href: '/integrations',
-                icon: 'Webhook',
-                permission: 'webhooks.view',
-            },
-            {
                 label: 'Pengaturan Akun',
                 href: '/settings',
                 icon: 'Settings',

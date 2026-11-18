@@ -223,22 +223,6 @@ describe('Onboarding Bypass Prevention', function () {
         $response->assertRedirect('/onboarding/password');
     });
 
-    it('cannot access passkey step without 2FA', function () {
-        $user = User::factory()->create([
-            'email' => 'bypass2@example.com',
-            'password' => Hash::make('password'),
-            'is_active' => true,
-            'email_verified_at' => now(),
-            'onboarding_password_changed_at' => now(),
-            'two_factor_confirmed_at' => null,
-            'onboarding_completed_at' => null,
-        ]);
-
-        $response = $this->actingAs($user)->get('/onboarding/passkey');
-
-        $response->assertRedirect('/onboarding/two-factor');
-    });
-
     it('cannot complete onboarding without 2FA', function () {
         $user = User::factory()->create([
             'email' => 'bypass3@example.com',
@@ -426,28 +410,6 @@ describe('Onboarding Findings Verification', function () {
         $user->refresh();
         expect($user->two_factor_secret)->not->toBeNull();
         expect($user->twoFactorQrCodeSvg())->toContain('<svg');
-    });
-
-    it('permits passkey options and store for user on passkey step (F-06)', function () {
-        $user = User::factory()->create([
-            'email' => 'passkeyuser@example.com',
-            'is_active' => true,
-            'email_verified_at' => now(),
-            'onboarding_password_changed_at' => now(),
-            'two_factor_confirmed_at' => now(),
-            'onboarding_completed_at' => null,
-        ]);
-        $user->assignRole('member');
-
-        // Passkey step is reachable
-        $this->actingAs($user)->get('/onboarding/passkey')->assertOk();
-
-        // Registration options endpoint is accessible with password confirmed session without getting redirected back to onboarding
-        $response = $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
-            ->getJson('/user/passkeys/options');
-        $response->assertOk();
-        expect($response->json('options'))->not->toBeNull();
     });
 
     it('renders branded error view on 410 (F-05)', function () {

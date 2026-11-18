@@ -94,7 +94,7 @@ class OnboardingController extends Controller
         }
 
         if ($user->two_factor_confirmed_at !== null && ! session('recoveryCodes')) {
-            return redirect()->route('onboarding.passkey');
+            return redirect()->route('onboarding.complete');
         }
 
         // Generate secret and recovery codes if not set
@@ -107,7 +107,7 @@ class OnboardingController extends Controller
 
         return Inertia::render('Onboarding/TwoFactor', [
             'step' => 'two_factor',
-            'nextStep' => 'passkey',
+            'nextStep' => 'complete',
             'qrCodeSvg' => $qrCodeSvg,
             'qrCodeUrl' => sprintf('otpauth://totp/%s:%s?secret=%s&issuer=%s', rawurlencode(config('app.name')), rawurlencode($user->email), $secret, rawurlencode(config('app.name'))),
             'secret' => $secret,
@@ -128,7 +128,7 @@ class OnboardingController extends Controller
         }
 
         if ($user->two_factor_confirmed_at !== null) {
-            return redirect()->route('onboarding.passkey');
+            return redirect()->route('onboarding.complete');
         }
 
         $validated = $request->validate([
@@ -148,37 +148,7 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Show the passkey step.
-     */
-    public function passkey(Request $request): InertiaResponse|RedirectResponse
-    {
-        $user = $request->user();
-
-        if ($user->onboarding_password_changed_at === null) {
-            return redirect()->route('onboarding.password');
-        }
-
-        if ($user->two_factor_confirmed_at === null) {
-            return redirect()->route('onboarding.two-factor');
-        }
-
-        return Inertia::render('Onboarding/Passkey', [
-            'step' => 'passkey',
-            'nextStep' => 'complete',
-            'passkeys' => $user->passkeys()->select(['id', 'name', 'last_used_at', 'created_at'])->get(),
-        ]);
-    }
-
-    /**
-     * Skip passkey registration.
-     */
-    public function skipPasskey(Request $request): RedirectResponse
-    {
-        return $this->complete($request);
-    }
-
-    /**
-     * Complete onboarding.
+     * Show the complete onboarding step (passkey step removed).
      */
     public function complete(Request $request): RedirectResponse
     {

@@ -663,7 +663,7 @@ function getRoleLabel(role: string): string {
                             Pengguna wajib mengaktifkan 2FA (TOTP) saat
                             onboarding.
                         </li>
-                        <li>Passkey bersifat opsional.</li>
+                        <li>Pendaftaran passkey tidak tersedia.</li>
                     </ul>
                 </div>
 

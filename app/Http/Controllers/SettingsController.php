@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Support\Permissions;
-use DateTimeZone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +14,6 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Laravel\Passkeys\Passkey;
 
 class SettingsController extends Controller
 {
@@ -28,8 +26,6 @@ class SettingsController extends Controller
 
         $user = $request->user();
 
-        $timezones = array_map(fn ($tz) => ['value' => $tz, 'label' => $tz], DateTimeZone::listIdentifiers(DateTimeZone::ALL));
-
         return Inertia::render('Settings/Index', [
             'account' => [
                 'name' => $user->name,
@@ -37,14 +33,9 @@ class SettingsController extends Controller
                 'is_active' => (bool) $user->is_active,
                 'email_verified' => $user->email_verified_at !== null,
                 'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
-                'passkeys_count' => Passkey::query()
-                    ->where('user_id', $user->id)
-                    ->count(),
                 'member_since' => $user->created_at?->toISOString(),
                 'roles' => $user->getRoleNames()->toArray(),
             ],
-            'timezone' => $user->getTimezone(),
-            'timezones' => $timezones,
             'notification_preferences' => $user->notificationPreferences(),
             'notification_options' => [
                 'task_updates' => [
@@ -190,34 +181,5 @@ class SettingsController extends Controller
         ])->save();
 
         return back()->with('success', 'Preferensi notifikasi berhasil disimpan.');
-    }
-
-    /**
-     * Update the authenticated user's timezone preference.
-     */
-    public function updateTimezone(Request $request): RedirectResponse
-    {
-        Gate::authorize(Permissions::SETTINGS_VIEW);
-
-        $user = $request->user();
-
-        $validated = $request->validate([
-            'timezone' => ['required', 'string', 'max:50'],
-        ], [
-            'timezone.required' => 'Zona waktu wajib dipilih.',
-        ]);
-
-        // Validate timezone exists
-        if (! in_array($validated['timezone'], DateTimeZone::listIdentifiers(DateTimeZone::ALL), true)) {
-            throw ValidationException::withMessages([
-                'timezone' => 'Zona waktu yang dipilih tidak valid.',
-            ]);
-        }
-
-        $user->forceFill([
-            'timezone' => $validated['timezone'],
-        ])->save();
-
-        return back()->with('success', 'Zona waktu berhasil diperbarui.');
     }
 }

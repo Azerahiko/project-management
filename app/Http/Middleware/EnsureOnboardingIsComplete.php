@@ -33,16 +33,10 @@ class EnsureOnboardingIsComplete
             'onboarding.password.update',
             'onboarding.two-factor',
             'onboarding.two-factor.confirmed',
-            'onboarding.passkey',
-            'onboarding.passkey.skip',
             'onboarding.complete',
         ];
 
         if (in_array($request->route()?->getName(), $onboardingRoutes)) {
-            return $next($request);
-        }
-
-        if ($request->routeIs('passkey.*') || $request->is('user/passkeys*') || $request->is('passkeys/*')) {
             return $next($request);
         }
 

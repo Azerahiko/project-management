@@ -11,9 +11,7 @@ use App\Models\TaskComment;
 use App\Notifications\TaskCommentAdded;
 use App\Services\NotificationSender;
 use App\Services\TaskActivityLogger;
-use App\Services\WebhookDispatcher;
 use App\Support\Pagination;
-use App\Support\WebhookEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -25,7 +23,6 @@ class TaskCommentController extends Controller
     public function __construct(
         protected TaskActivityLogger $activityLogger,
         protected NotificationSender $notificationSender,
-        protected WebhookDispatcher $webhookDispatcher,
     ) {}
 
     public function index(Request $request, Task $task): AnonymousResourceCollection
@@ -89,23 +86,6 @@ class TaskCommentController extends Controller
         }
 
         $comment->load('user');
-
-        $this->webhookDispatcher->dispatch(WebhookEvents::COMMENT_ADDED, [
-            'comment_id' => $comment->id,
-            'content' => Str::limit($comment->content, 500),
-            'task' => [
-                'id' => $task->id,
-                'title' => $task->title,
-            ],
-            'project' => [
-                'id' => $task->project->id,
-                'name' => $task->project->name,
-            ],
-            'author' => [
-                'id' => $comment->user->id,
-                'name' => $comment->user->name,
-            ],
-        ]);
 
         return TaskCommentResource::make($comment)
             ->response()

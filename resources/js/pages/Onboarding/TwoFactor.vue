@@ -53,10 +53,6 @@ function confirmTwoFactor(): void {
     });
 }
 
-function proceedToPasskey(): void {
-    router.visit('/onboarding/passkey');
-}
-
 function completeOnboarding(): void {
     router.post('/onboarding/complete');
 }
@@ -241,13 +237,6 @@ function copyRecoveryCodes(): void {
                     @click="copyRecoveryCodes"
                 >
                     Salin Semua Kode
-                </Button>
-                <Button
-                    variant="secondary"
-                    class="flex-1"
-                    @click="proceedToPasskey"
-                >
-                    Atur Passkey (Opsional)
                 </Button>
                 <Button
                     variant="primary"

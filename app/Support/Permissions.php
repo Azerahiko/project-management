@@ -54,8 +54,6 @@ class Permissions
 
     public const ROLES_MANAGE = 'roles.manage';
 
-    public const WEBHOOKS_VIEW_SECRETS = 'webhooks.view_secrets';
-
     public const SETTINGS_VIEW = 'settings.view';
 
     /**
@@ -98,7 +96,6 @@ class Permissions
                 self::USERS_UPDATE => 'Users Update',
                 self::USERS_DELETE => 'Users Delete',
                 self::ROLES_MANAGE => 'Roles Manage',
-                self::WEBHOOKS_VIEW_SECRETS => 'Webhooks View Secrets',
                 self::SETTINGS_VIEW => 'Settings View',
             ],
         ];

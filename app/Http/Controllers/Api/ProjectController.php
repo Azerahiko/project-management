@@ -16,10 +16,8 @@ use App\Models\User;
 use App\Notifications\ProjectMemberAdded;
 use App\Notifications\ProjectOwnershipTransferred;
 use App\Services\NotificationSender;
-use App\Services\WebhookDispatcher;
 use App\Support\Pagination;
 use App\Support\Roles;
-use App\Support\WebhookEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,7 +27,6 @@ class ProjectController extends Controller
 {
     public function __construct(
         protected NotificationSender $notificationSender,
-        protected WebhookDispatcher $webhookDispatcher,
     ) {}
 
     /**
@@ -103,21 +100,6 @@ class ProjectController extends Controller
             return $project->load(['owner', 'projectMembers.user']);
         });
 
-        $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_CREATED, [
-            'project_id' => $project->id,
-            'name' => $project->name,
-            'status' => $project->status->value,
-            'priority' => $project->priority->value,
-            'owner' => [
-                'id' => $project->owner->id,
-                'name' => $project->owner->name,
-            ],
-            'created_by' => [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-            ],
-        ]);
-
         return ProjectResource::make($project)
             ->response()
             ->setStatusCode(201);
@@ -149,7 +131,6 @@ class ProjectController extends Controller
         $previousOwnerId = $project->owner_id;
         $newOwnerId = isset($data['owner_id']) ? (int) $data['owner_id'] : $previousOwnerId;
         $ownerChanged = $newOwnerId !== $previousOwnerId;
-        $previousStatus = $project->status->value;
 
         // Only the current owner or an administrator may transfer ownership.
         if ($ownerChanged
@@ -180,48 +161,13 @@ class ProjectController extends Controller
 
         $project->refresh();
 
-        if ($previousStatus !== $project->status->value && $project->status->value === 'completed') {
-            $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_COMPLETED, [
-                'project_id' => $project->id,
-                'name' => $project->name,
-                'previous_status' => $previousStatus,
-                'new_status' => $project->status->value,
-                'completed_by' => [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                ],
-            ]);
-        }
-
-        // Dispatch ownership transfer webhook and notifications after commit
+        // Dispatch ownership transfer notifications after commit
         if ($ownerChanged) {
             $transferredBy = $request->user();
 
             DB::afterCommit(function () use ($project, $previousOwnerId, $newOwnerId, $transferredBy) {
                 $previousOwner = User::withTrashed()->where('id', $previousOwnerId)->first();
                 $newOwner = User::query()->where('id', $newOwnerId)->first();
-
-                // Webhook
-                $this->webhookDispatcher->dispatch(WebhookEvents::PROJECT_OWNERSHIP_TRANSFERRED, [
-                    'project_id' => $project->id,
-                    'name' => $project->name,
-                    'previous_owner_id' => $previousOwnerId,
-                    'new_owner_id' => $newOwnerId,
-                    'previous_owner' => $previousOwner ? [
-                        'id' => $previousOwner->id,
-                        'name' => $previousOwner->name,
-                        'email' => $previousOwner->email,
-                    ] : null,
-                    'new_owner' => $newOwner ? [
-                        'id' => $newOwner->id,
-                        'name' => $newOwner->name,
-                        'email' => $newOwner->email,
-                    ] : null,
-                    'transferred_by' => [
-                        'id' => $transferredBy->id,
-                        'name' => $transferredBy->name,
-                    ],
-                ]);
 
                 // Notify previous owner (they lost ownership)
                 if ($previousOwner instanceof User) {

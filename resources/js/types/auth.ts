@@ -8,7 +8,6 @@ export type User = {
     initials: string;
     roles: string[];
     permissions: string[];
-    passkeys_count?: number;
     two_factor_enabled?: boolean;
     onboarding_completed_at?: string | null;
     is_onboarded?: boolean;

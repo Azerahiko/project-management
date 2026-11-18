@@ -20,7 +20,6 @@ interface AccountInfo {
     is_active: boolean;
     email_verified: boolean;
     two_factor_enabled: boolean;
-    passkeys_count: number;
     member_since: string | null;
     roles: string[];
 }
@@ -36,7 +35,6 @@ type PanelKey =
     | 'profile'
     | 'appearance'
     | 'notifications'
-    | 'timezone'
     | 'security'
     | 'help';
 
@@ -47,17 +45,10 @@ interface NavItem {
     description: string;
 }
 
-interface TimezoneOption {
-    value: string;
-    label: string;
-}
-
 const props = defineProps<{
     account: AccountInfo;
     notification_preferences: Record<string, boolean>;
     notification_options: Record<string, NotificationOption>;
-    timezone: string;
-    timezones: TimezoneOption[];
 }>();
 
 const page = usePage();
@@ -90,12 +81,6 @@ const navItems: NavItem[] = [
         label: 'Notifikasi',
         icon: 'Bell',
         description: 'Preferensi pemberitahuan',
-    },
-    {
-        key: 'timezone',
-        label: 'Zona Waktu',
-        icon: 'Globe',
-        description: 'Zona waktu untuk tampilan tanggal',
     },
     {
         key: 'security',
@@ -133,13 +118,6 @@ const panelMeta = computed(() => {
                 title: 'Pusat Notifikasi',
                 description:
                     'Atur jenis pemberitahuan yang ingin Anda terima. Pilihan disimpan ke akun Anda, bukan hanya browser.',
-            };
-        case 'timezone':
-            return {
-                eyebrow: 'Preferensi Regional',
-                title: 'Zona Waktu',
-                description:
-                    'Pilih zona waktu Anda untuk menampilkan tanggal dan jam yang akurat di seluruh aplikasi.',
             };
         case 'security':
             return {
@@ -422,34 +400,6 @@ function resetNotificationChanges(): void {
 }
 
 /* ------------------------------------------------------------------ */
-/* Timezone                                                            */
-/* ------------------------------------------------------------------ */
-
-const timezoneForm = useForm({
-    timezone: props.timezone,
-});
-
-const timezoneDirty = computed(() => timezoneForm.timezone !== props.timezone);
-
-function submitTimezone(): void {
-    timezoneForm.put(settingsRoutes.timezone.update.url(), {
-        preserveScroll: true,
-        onSuccess: () => {
-            toast.success(
-                'Zona Waktu Diperbarui',
-                'Pengaturan zona waktu berhasil disimpan.',
-            );
-        },
-        onError: () => {
-            toast.error(
-                'Gagal Menyimpan',
-                'Zona waktu tidak dapat disimpan. Coba lagi.',
-            );
-        },
-    });
-}
-
-/* ------------------------------------------------------------------ */
 /* Security                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -561,22 +511,6 @@ const securityStatus = computed(() => [
             ? ('emerald' as const)
             : ('surface' as const),
     },
-    {
-        icon: 'UserCheck',
-        title: 'Passkey',
-        description:
-            props.account.passkeys_count > 0
-                ? `${props.account.passkeys_count} passkey terdaftar pada akun ini.`
-                : 'Belum ada passkey. Pendaftaran passkey belum tersedia dari antarmuka ini.',
-        status:
-            props.account.passkeys_count > 0
-                ? `${props.account.passkeys_count} terdaftar`
-                : 'Belum ada',
-        tone:
-            props.account.passkeys_count > 0
-                ? ('emerald' as const)
-                : ('surface' as const),
-    },
 ]);
 
 /* ------------------------------------------------------------------ */
@@ -640,8 +574,8 @@ const faqs = [
         answer: 'Bisa. Gunakan formulir Profil Akun di halaman ini, lalu tekan Simpan Perubahan. Perubahan langsung tersimpan pada akun Anda.',
     },
     {
-        question: 'Mengapa tombol pendaftaran 2FA atau passkey tidak ada?',
-        answer: 'Halaman tantangan autentikasi belum tersedia di aplikasi ini. Agar akun tidak terkunci, pendaftaran 2FA dan passkey sengaja tidak disediakan sampai alur tersebut selesai dibangun.',
+        question: 'Mengapa tombol pendaftaran 2FA tidak ada?',
+        answer: 'Halaman tantangan autentikasi belum tersedia di aplikasi ini. Agar akun tidak terkunci, pendaftaran 2FA sengaja tidak disediakan sampai alur tersebut selesai dibangun.',
     },
 ];
 
@@ -1482,144 +1416,6 @@ onMounted(() => {
                                     />
                                     Simpan Preferensi
                                 </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TIMEZONE -->
-                    <div
-                        v-else-if="activePanel === 'timezone'"
-                        class="space-y-6"
-                    >
-                        <form
-                            class="rounded-2xl border border-surface-200/80 p-5 dark:border-surface-800"
-                            @submit.prevent="submitTimezone"
-                        >
-                            <div class="flex items-start gap-3">
-                                <span
-                                    class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300"
-                                >
-                                    <component
-                                        :is="getIcon('Globe')"
-                                        class="h-4.5 w-4.5"
-                                    />
-                                </span>
-                                <div>
-                                    <h3
-                                        class="text-sm font-semibold text-surface-950 dark:text-surface-50"
-                                    >
-                                        Zona Waktu
-                                    </h3>
-                                    <p
-                                        class="mt-0.5 text-xs text-surface-500 dark:text-surface-400"
-                                    >
-                                        Pilih zona waktu Anda untuk menampilkan
-                                        tanggal dan jam yang akurat di seluruh
-                                        aplikasi.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="mt-5">
-                                <label
-                                    for="timezone"
-                                    class="mb-1.5 block text-xs font-semibold text-surface-700 dark:text-surface-200"
-                                >
-                                    Zona Waktu
-                                    <span class="text-rose-500">*</span>
-                                </label>
-                                <select
-                                    id="timezone"
-                                    v-model="timezoneForm.timezone"
-                                    class="input"
-                                    :disabled="timezoneForm.processing"
-                                >
-                                    <option
-                                        v-for="tz in props.timezones"
-                                        :key="tz.value"
-                                        :value="tz.value"
-                                    >
-                                        {{ tz.value }}
-                                    </option>
-                                </select>
-                                <p
-                                    v-if="timezoneForm.errors.timezone"
-                                    class="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400"
-                                >
-                                    {{ timezoneForm.errors.timezone }}
-                                </p>
-                            </div>
-
-                            <div
-                                v-if="timezoneDirty"
-                                class="mt-4 flex items-start gap-3 rounded-2xl border border-primary-200/70 bg-primary-50/60 p-4 text-xs text-primary-900 dark:border-primary-800/40 dark:bg-primary-950/20 dark:text-primary-200"
-                            >
-                                <component
-                                    :is="getIcon('Info')"
-                                    class="mt-0.5 h-4 w-4 shrink-0"
-                                />
-                                <div>
-                                    <p class="font-semibold">
-                                        Zona waktu akan diperbarui
-                                    </p>
-                                    <p
-                                        class="mt-0.5 leading-relaxed opacity-90"
-                                    >
-                                        Perubahan akan memengaruhi tampilan
-                                        tanggal, jam, dan batas waktu di seluruh
-                                        aplikasi.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="mt-5 flex items-center gap-2">
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="sm"
-                                    :loading="timezoneForm.processing"
-                                    :disabled="!timezoneDirty"
-                                >
-                                    <component
-                                        :is="getIcon('Save')"
-                                        class="h-3.5 w-3.5"
-                                    />
-                                    Simpan Zona Waktu
-                                </Button>
-                            </div>
-                        </form>
-
-                        <div
-                            class="rounded-2xl border border-surface-200/80 bg-surface-50/50 p-4 dark:border-surface-800 dark:bg-surface-950/20"
-                        >
-                            <div class="flex items-start gap-3">
-                                <span
-                                    class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-primary-700 shadow-2xs dark:bg-surface-800 dark:text-primary-300"
-                                >
-                                    <component
-                                        :is="getIcon('Info')"
-                                        class="h-4 w-4"
-                                    />
-                                </span>
-                                <div>
-                                    <h4
-                                        class="text-sm font-semibold text-surface-950 dark:text-surface-50"
-                                    >
-                                        Zona waktu saat ini
-                                    </h4>
-                                    <p
-                                        class="mt-1 font-mono text-sm text-surface-700 dark:text-surface-200"
-                                    >
-                                        {{ props.timezone }}
-                                    </p>
-                                    <p
-                                        class="mt-2 text-xs text-surface-500 dark:text-surface-400"
-                                    >
-                                        Semua tanggal dan jam di dashboard,
-                                        kalender, timeline, dan notifikasi akan
-                                        ditampilkan dalam zona waktu ini.
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </div>

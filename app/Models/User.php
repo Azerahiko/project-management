@@ -19,8 +19,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Passkeys\Contracts\PasskeyUser;
-use Laravel\Passkeys\PasskeyAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -45,14 +43,13 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection<int, Project> $ownedProjects
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, ProjectMember> $projectMemberships
- * @property-read Collection<int, Webhook> $webhooks
  */
-#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'timezone', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'avatar', 'notification_preferences', 'onboarding_password_changed_at', 'onboarding_completed_at', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -66,7 +63,6 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'is_active' => 'boolean',
             'notification_preferences' => 'array',
-            'timezone' => 'string',
             'onboarding_password_changed_at' => 'datetime',
             'onboarding_completed_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
@@ -108,7 +104,7 @@ class User extends Authenticatable implements PasskeyUser
      */
     public function getTimezone(): string
     {
-        return $this->timezone ?? config('app.timezone', 'UTC');
+        return config('app.timezone', 'UTC');
     }
 
     /**
@@ -223,16 +219,6 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Get the outbound webhooks registered by this user.
-     *
-     * @return HasMany<Webhook, $this>
-     */
-    public function webhooks(): HasMany
-    {
-        return $this->hasMany(Webhook::class);
-    }
-
-    /**
      * Check if user is a member of a project.
      */
     public function isMemberOf(Project $project): bool
@@ -293,7 +279,7 @@ class User extends Authenticatable implements PasskeyUser
             return 'two_factor';
         }
 
-        return 'passkey';
+        return 'complete';
     }
 
     /**

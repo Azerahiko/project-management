@@ -142,8 +142,8 @@ const faqList: FaqItem[] = [
         category: 'security',
         categoryLabel: 'Keamanan & Akses',
         question:
-            'Bagaimana cara mengaktifkan Otentikasi Dua Faktor (2FA) atau Passkeys?',
-        answer: 'Kunjungi Pengaturan > Tab Keamanan. Anda dapat mengaktifkan 2FA berbasis aplikasi authenticator (Google Authenticator, 1Password) atau mendaftarkan Passkeys (biometrik Face ID / Fingerprint) untuk proses masuk yang lebih cepat, aman, dan tanpa kata sandi.',
+            'Bagaimana cara mengaktifkan Otentikasi Dua Faktor (2FA)?',
+        answer: 'Kunjungi Pengaturan > Tab Keamanan untuk meninjau status otentikasi dua faktor pada akun Anda.',
         icon: 'ShieldCheck',
         readTime: '2 mnt baca',
     },
@@ -269,7 +269,7 @@ const keyboardShortcuts: ShortcutAction[] = [
         id: 'settings',
         label: 'Ke Pengaturan Akun',
         keys: ['G', 'S'],
-        description: 'Kelola profil, keamanan, 2FA, dan Passkeys',
+        description: 'Kelola profil, keamanan, dan 2FA',
         action: () => {
             triggerVisualNotice(
                 'settings',
@@ -1553,8 +1553,8 @@ function submitSupportTicket(): void {
                     <p
                         class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
                     >
-                        Atur profil pengguna, aktifkan Passkeys biometrik,
-                        otentikasi dua faktor, dan preferensi tema.
+                        Atur profil pengguna, otentikasi dua faktor,
+                        dan preferensi tema.
                     </p>
                     <Link
                         :href="'/settings'"
