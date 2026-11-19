@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { activate } from '@/routes/api/invitations';
-import web from '@/lib/web';
+import api from '@/lib/api';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
 import { useToast } from '@/composables/useToast';
@@ -37,9 +37,9 @@ async function handleVerify(): Promise<void> {
     errors.value = {};
 
     try {
-        const response = await web.post(activate.url({ token }), form);
+        const response = await api.post(activate.url({ token }), form);
         submitted.value = true;
-        success('Verifikasi Berhasil', response.data.message);
+        success('Verifikasi Berhasil', (response.data as { message: string }).message);
         setTimeout(() => {
             router.visit('/login');
         }, 2000);
