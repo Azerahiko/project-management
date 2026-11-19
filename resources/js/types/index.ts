@@ -68,6 +68,8 @@ export type Task = {
     };
     can_update?: boolean;
     can_delete?: boolean;
+    can_restore?: boolean;
+    can_force_delete?: boolean;
     is_overdue?: boolean;
     created_at: string;
     updated_at: string;

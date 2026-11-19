@@ -614,7 +614,7 @@ function formatDateShort(dateString: string | null): string {
                 </dt>
                 <dd
                     v-if="project.deleted_at"
-                    class="font-medium text-accent-700 text-surface-900 dark:text-surface-100"
+                    class="text-accent-700 font-medium text-surface-900 dark:text-surface-100"
                 >
                     {{ formatDate(project.deleted_at) }}
                 </dd>
@@ -1035,7 +1035,7 @@ function formatDateShort(dateString: string | null): string {
 
             <p
                 v-if="uploadError"
-                class="text-sm text-accent-700 dark:text-accent-300"
+                class="text-accent-700 dark:text-accent-300 text-sm"
             >
                 {{ uploadError }}
             </p>

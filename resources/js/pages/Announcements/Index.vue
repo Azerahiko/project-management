@@ -572,7 +572,7 @@ function relativeTime(value: string): string {
                 class="group relative flex cursor-pointer flex-col rounded-2xl border p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary-600/40 focus-visible:outline-hidden sm:p-6"
                 :class="
                     announcement.is_pinned
-                        ? 'border-accent-300/80 bg-gradient-to-br from-accent-50/80 via-white to-white hover:border-accent-400 dark:border-accent-700/50 dark:from-accent-900/20 dark:via-surface-900 dark:to-surface-900 dark:hover:border-accent-600/60'
+                        ? 'border-accent-300/80 from-accent-50/80 hover:border-accent-400 dark:border-accent-700/50 dark:from-accent-900/20 dark:hover:border-accent-600/60 bg-gradient-to-br via-white to-white dark:via-surface-900 dark:to-surface-900'
                         : 'border-surface-200/80 bg-white hover:border-surface-300 dark:border-surface-800 dark:bg-surface-900 dark:hover:border-surface-700'
                 "
                 role="button"
@@ -586,7 +586,7 @@ function relativeTime(value: string): string {
                     <div class="flex min-w-0 flex-wrap items-center gap-2">
                         <span
                             v-if="announcement.is_pinned"
-                            class="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-[10px] font-bold text-accent-800 dark:bg-accent-900/40 dark:text-accent-200"
+                            class="bg-accent-100 text-accent-800 dark:bg-accent-900/40 dark:text-accent-200 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
                         >
                             <Pin class="h-3 w-3" />
                             Disematkan
@@ -800,7 +800,7 @@ function relativeTime(value: string): string {
                 <div class="flex flex-wrap items-center gap-2">
                     <span
                         v-if="detailAnnouncement.is_pinned"
-                        class="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-[10px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                        class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
                     >
                         <Pin class="h-3 w-3" />
                         Disematkan

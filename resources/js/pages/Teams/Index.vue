@@ -3,7 +3,13 @@ import { computed } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Avatar from '@/components/ui/Avatar.vue';
-import { Users, FolderKanban, ArrowUpRight, ShieldCheck, UserCheck } from '@lucide/vue';
+import {
+    Users,
+    FolderKanban,
+    ArrowUpRight,
+    ShieldCheck,
+    UserCheck,
+} from '@lucide/vue';
 import projectsRoute from '@/routes/projects';
 
 defineOptions({
@@ -59,26 +65,35 @@ const totalMembersAllocated = computed(() => {
 <template>
     <div class="mx-auto max-w-7xl space-y-6">
         <!-- Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                    <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                    <span class="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <span
+                        class="inline-flex h-2 w-2 rounded-full bg-emerald-500"
+                    />
+                    <span
+                        class="text-xs font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                    >
                         Ruang Kolaborasi Tim
                     </span>
                 </div>
-                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
+                <h1
+                    class="text-xl font-bold tracking-tight text-surface-900 sm:text-2xl dark:text-surface-50"
+                >
                     Tim & Alokasi Proyek
                 </h1>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
-                    Distribusi anggota tim, struktur kepemilikan, dan peran kolaborator di setiap proyek.
+                    Distribusi anggota tim, struktur kepemilikan, dan peran
+                    kolaborator di setiap proyek.
                 </p>
             </div>
 
             <div class="flex items-center gap-2">
                 <Link
                     :href="projectsRoute.index.url()"
-                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 transition"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
                 >
                     <FolderKanban class="h-3.5 w-3.5 text-surface-400" />
                     <span>Daftar Proyek</span>
@@ -87,38 +102,80 @@ const totalMembersAllocated = computed(() => {
         </div>
 
         <!-- Telemetry Strip -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 rounded-xl border border-surface-200/90 bg-white divide-y divide-surface-200/80 sm:divide-y-0 sm:divide-x dark:border-surface-800 dark:bg-surface-900/90 dark:divide-surface-800/80 shadow-card overflow-hidden">
+        <div
+            class="grid grid-cols-1 divide-y divide-surface-200/80 overflow-hidden rounded-xl border border-surface-200/90 bg-white shadow-card sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-surface-800/80 dark:border-surface-800 dark:bg-surface-900/90"
+        >
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Total Proyek Tim</span>
-                    <FolderKanban class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400" />
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Total Proyek Tim</span
+                    >
+                    <FolderKanban
+                        class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400"
+                    />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50"
+                >
                     {{ projects.length }}
                 </div>
-                <p class="mt-1 text-[11px] text-surface-400">Proyek terdaftar dalam workspace</p>
+                <p class="mt-1 text-[11px] text-surface-400">
+                    Proyek terdaftar dalam workspace
+                </p>
             </div>
 
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Kolaborator Unik</span>
-                    <Users class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Kolaborator Unik</span
+                    >
+                    <Users
+                        class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+                    />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400"
+                >
                     {{ totalMembersAllocated }}
                 </div>
-                <p class="mt-1 text-[11px] text-surface-400">Anggota aktif teralokasi</p>
+                <p class="mt-1 text-[11px] text-surface-400">
+                    Anggota aktif teralokasi
+                </p>
             </div>
 
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Rata-rata Tim</span>
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Rata-rata Tim</span
+                    >
                     <UserCheck class="h-3.5 w-3.5 text-blue-500" />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
-                    {{ projects.length ? (projects.reduce((acc, p) => acc + p.members.length, 0) / projects.length).toFixed(1) : 0 }}
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50"
+                >
+                    {{
+                        projects.length
+                            ? (
+                                  projects.reduce(
+                                      (acc, p) => acc + p.members.length,
+                                      0,
+                                  ) / projects.length
+                              ).toFixed(1)
+                            : 0
+                    }}
                 </div>
-                <p class="mt-1 text-[11px] text-surface-400">Anggota per proyek</p>
+                <p class="mt-1 text-[11px] text-surface-400">
+                    Anggota per proyek
+                </p>
             </div>
         </div>
 
@@ -128,11 +185,14 @@ const totalMembersAllocated = computed(() => {
             class="rounded-2xl border border-dashed border-surface-300 bg-white px-6 py-16 text-center dark:border-surface-700 dark:bg-surface-900/40"
         >
             <Users class="mx-auto h-10 w-10 text-surface-400" />
-            <h2 class="mt-3 text-base font-bold text-surface-900 dark:text-surface-100">
+            <h2
+                class="mt-3 text-base font-bold text-surface-900 dark:text-surface-100"
+            >
                 Belum ada proyek aktif
             </h2>
-            <p class="mt-1 text-xs text-surface-500 max-w-sm mx-auto">
-                Buat proyek terlebih dahulu di halaman Proyek untuk mulai menyusun tim kerja.
+            <p class="mx-auto mt-1 max-w-sm text-xs text-surface-500">
+                Buat proyek terlebih dahulu di halaman Proyek untuk mulai
+                menyusun tim kerja.
             </p>
         </div>
 
@@ -141,14 +201,16 @@ const totalMembersAllocated = computed(() => {
             <div
                 v-for="project in projects"
                 :key="project.id"
-                class="group flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-5 shadow-card hover:border-surface-300 hover:shadow-panel hover:-translate-y-0.5 dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700 transition-all duration-180"
+                class="group flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-5 shadow-card transition-all duration-180 hover:-translate-y-0.5 hover:border-surface-300 hover:shadow-panel dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700"
             >
                 <div>
                     <!-- Card Top -->
-                    <div class="flex items-start justify-between gap-2 mb-3">
+                    <div class="mb-3 flex items-start justify-between gap-2">
                         <Link
-                            :href="projectsRoute.show.url({ project: project.id })"
-                            class="text-sm font-bold text-surface-900 hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400 line-clamp-1 transition-colors"
+                            :href="
+                                projectsRoute.show.url({ project: project.id })
+                            "
+                            class="line-clamp-1 text-sm font-bold text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
                         >
                             {{ project.name }}
                         </Link>
@@ -160,27 +222,34 @@ const totalMembersAllocated = computed(() => {
                     </div>
 
                     <!-- Members List -->
-                    <div v-if="project.members.length > 0" class="divide-y divide-surface-100 dark:divide-surface-800/60">
+                    <div
+                        v-if="project.members.length > 0"
+                        class="divide-y divide-surface-100 dark:divide-surface-800/60"
+                    >
                         <div
                             v-for="member in project.members"
                             :key="member.id"
                             class="flex items-center justify-between py-2 first:pt-0 last:pb-0"
                         >
-                            <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="flex min-w-0 items-center gap-2.5">
                                 <Avatar
                                     :initials="initials(member.name)"
                                     :src="member.avatar"
                                     :alt="member.name"
                                     size="sm"
                                 />
-                                <span class="truncate text-xs font-medium text-surface-800 dark:text-surface-200">
+                                <span
+                                    class="truncate text-xs font-medium text-surface-800 dark:text-surface-200"
+                                >
                                     {{ member.name }}
                                 </span>
                             </div>
 
                             <span
-                                class="rounded px-1.5 py-0.2 text-[9.5px] font-semibold shrink-0"
-                                :class="roleColors[member.role] || roleColors.member"
+                                class="py-0.2 shrink-0 rounded px-1.5 text-[9.5px] font-semibold"
+                                :class="
+                                    roleColors[member.role] || roleColors.member
+                                "
                             >
                                 {{ roleLabels[member.role] ?? member.role }}
                             </span>
@@ -196,10 +265,12 @@ const totalMembersAllocated = computed(() => {
                 </div>
 
                 <!-- Card Footer Link -->
-                <div class="mt-4 pt-3 border-t border-surface-100 dark:border-surface-800/60 flex justify-end">
+                <div
+                    class="mt-4 flex justify-end border-t border-surface-100 pt-3 dark:border-surface-800/60"
+                >
                     <Link
                         :href="projectsRoute.show.url({ project: project.id })"
-                        class="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 transition"
+                        class="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 transition hover:text-primary-700 dark:text-primary-400"
                     >
                         <span>Kelola Anggota</span>
                         <ArrowUpRight class="h-3 w-3" />

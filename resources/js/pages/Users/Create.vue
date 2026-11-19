@@ -244,7 +244,7 @@ onMounted(async () => {
 
                 <p
                     v-if="!form.temporary_password && !passwordGenerating"
-                    class="text-sm text-accent-700 dark:text-accent-300"
+                    class="text-accent-700 dark:text-accent-300 text-sm"
                 >
                     Password gagal dibuat.
                     <button
@@ -272,7 +272,7 @@ onMounted(async () => {
 
             <div
                 v-if="errors.form"
-                class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 rounded-lg p-4"
             >
                 {{ errors.form[0] }}
             </div>

@@ -138,8 +138,14 @@ function formatDate(value: string | null): string {
     });
 }
 
-function getDeadlineMeta(project: Project): { label: string; isOverdue: boolean } | null {
-    if (!project.end_date || project.status === 'completed' || project.status === 'archived') {
+function getDeadlineMeta(
+    project: Project,
+): { label: string; isOverdue: boolean } | null {
+    if (
+        !project.end_date ||
+        project.status === 'completed' ||
+        project.status === 'archived'
+    ) {
         return null;
     }
 
@@ -161,17 +167,24 @@ function getDeadlineMeta(project: Project): { label: string; isOverdue: boolean 
 }
 
 function getPriorityBadgeClass(priority: string | null): string {
-    if (priority === 'critical') return 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300';
-    if (priority === 'high') return 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300';
-    if (priority === 'medium') return 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300';
+    if (priority === 'critical')
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300';
+    if (priority === 'high')
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300';
+    if (priority === 'medium')
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300';
     return 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400';
 }
 
 function getStatusBadgeClass(status: string | null): string {
-    if (status === 'active') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
-    if (status === 'completed') return 'bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300';
-    if (status === 'on_hold') return 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300';
-    if (status === 'archived') return 'bg-surface-200 text-surface-700 dark:bg-surface-800 dark:text-surface-300';
+    if (status === 'active')
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
+    if (status === 'completed')
+        return 'bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300';
+    if (status === 'on_hold')
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300';
+    if (status === 'archived')
+        return 'bg-surface-200 text-surface-700 dark:bg-surface-800 dark:text-surface-300';
     return 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400';
 }
 
@@ -279,19 +292,28 @@ watch(
 <template>
     <div class="mx-auto max-w-7xl space-y-6">
         <!-- Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                    <span class="inline-flex h-2 w-2 rounded-full bg-primary-600" />
-                    <span class="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <span
+                        class="inline-flex h-2 w-2 rounded-full bg-primary-600"
+                    />
+                    <span
+                        class="text-xs font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                    >
                         Portofolio Kerja
                     </span>
                 </div>
-                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
+                <h1
+                    class="text-xl font-bold tracking-tight text-surface-900 sm:text-2xl dark:text-surface-50"
+                >
                     Proyek Tim
                 </h1>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
-                    Kelola inisiatif strategis, pantau progres pencapaian, dan alokasikan anggota tim.
+                    Kelola inisiatif strategis, pantau progres pencapaian, dan
+                    alokasikan anggota tim.
                 </p>
             </div>
 
@@ -299,7 +321,7 @@ watch(
                 <Link
                     v-if="canViewTrashed"
                     href="/projects/trashed"
-                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 transition"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
                 >
                     <Trash2 class="h-3.5 w-3.5 text-surface-400" />
                     <span>Sampah</span>
@@ -308,7 +330,7 @@ watch(
                 <Link
                     v-if="canCreate"
                     :href="projectsRoute.create.url()"
-                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400 transition"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs transition hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
                 >
                     <Plus class="h-3.5 w-3.5 stroke-[2.5]" />
                     <span>Tambah Proyek</span>
@@ -317,11 +339,17 @@ watch(
         </div>
 
         <!-- Filter & View Toolbar -->
-        <div class="space-y-3 rounded-xl border border-surface-200 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div
+            class="space-y-3 rounded-xl border border-surface-200 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+        >
+            <div
+                class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+            >
                 <!-- Search input -->
-                <div class="relative flex-1 max-w-md">
-                    <Search class="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-surface-400" />
+                <div class="relative max-w-md flex-1">
+                    <Search
+                        class="pointer-events-none absolute top-2.5 left-3 h-3.5 w-3.5 text-surface-400"
+                    />
                     <input
                         v-model="search"
                         type="search"
@@ -349,11 +377,17 @@ watch(
                     </div>
 
                     <!-- View Switcher (Grid vs List) -->
-                    <div class="flex items-center rounded-lg border border-surface-200 bg-surface-50/80 p-0.5 dark:border-surface-800 dark:bg-surface-900/60">
+                    <div
+                        class="flex items-center rounded-lg border border-surface-200 bg-surface-50/80 p-0.5 dark:border-surface-800 dark:bg-surface-900/60"
+                    >
                         <button
                             type="button"
                             class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
-                            :class="viewMode === 'grid' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white' : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'"
+                            :class="
+                                viewMode === 'grid'
+                                    ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white'
+                                    : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+                            "
                             title="Tampilan Grid"
                             @click="viewMode = 'grid'"
                         >
@@ -362,7 +396,11 @@ watch(
                         <button
                             type="button"
                             class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
-                            :class="viewMode === 'list' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white' : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'"
+                            :class="
+                                viewMode === 'list'
+                                    ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white'
+                                    : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+                            "
                             title="Tampilan Tabel List"
                             @click="viewMode = 'list'"
                         >
@@ -373,7 +411,7 @@ watch(
                     <button
                         v-if="hasActiveFilters"
                         type="button"
-                        class="rounded-lg px-2.5 py-1 text-xs font-medium text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100 transition"
+                        class="rounded-lg px-2.5 py-1 text-xs font-medium text-surface-500 transition hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
                         @click="resetFilters"
                     >
                         Reset
@@ -382,7 +420,9 @@ watch(
             </div>
 
             <!-- Status Tabs Ribbon -->
-            <div class="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-t border-surface-100 pt-3 dark:border-surface-800/60">
+            <div
+                class="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-t border-surface-100 pt-3 dark:border-surface-800/60"
+            >
                 <button
                     v-for="tab in statusTabs"
                     :key="tab.value"
@@ -390,7 +430,7 @@ watch(
                     class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition"
                     :class="
                         filters.status === tab.value
-                            ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-500 dark:text-surface-950 font-semibold'
+                            ? 'bg-primary-600 font-semibold text-white shadow-2xs dark:bg-primary-500 dark:text-surface-950'
                             : 'bg-surface-100/70 text-surface-600 hover:bg-surface-200/70 dark:bg-surface-800/50 dark:text-surface-300 dark:hover:bg-surface-800'
                     "
                     @click="setStatus(tab.value)"
@@ -398,7 +438,11 @@ watch(
                     <span
                         v-if="tab.dot"
                         class="h-1.5 w-1.5 rounded-full"
-                        :class="filters.status === tab.value ? 'bg-white dark:bg-surface-950' : tab.dot"
+                        :class="
+                            filters.status === tab.value
+                                ? 'bg-white dark:bg-surface-950'
+                                : tab.dot
+                        "
                     />
                     {{ tab.label }}
                 </button>
@@ -406,11 +450,25 @@ watch(
         </div>
 
         <!-- Result count & loading indicator -->
-        <div v-if="!error && (projectList.length > 0 || loading)" class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400">
+        <div
+            v-if="!error && (projectList.length > 0 || loading)"
+            class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400"
+        >
             <span>
-                Menampilkan <strong class="text-surface-900 dark:text-surface-100">{{ projectList.length }}</strong> dari <strong class="text-surface-900 dark:text-surface-100">{{ meta.total }}</strong> proyek
+                Menampilkan
+                <strong class="text-surface-900 dark:text-surface-100">{{
+                    projectList.length
+                }}</strong>
+                dari
+                <strong class="text-surface-900 dark:text-surface-100">{{
+                    meta.total
+                }}</strong>
+                proyek
             </span>
-            <span v-if="loading" class="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
+            <span
+                v-if="loading"
+                class="flex items-center gap-1.5 text-primary-600 dark:text-primary-400"
+            >
                 <RefreshCw class="h-3 w-3 animate-spin" />
                 <span>Memperbarui...</span>
             </span>
@@ -437,17 +495,17 @@ watch(
         <!-- GRID VIEW (Redesigned Project Cards) -->
         <div
             v-if="viewMode === 'grid' && projectList.length > 0"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
         >
             <article
                 v-for="project in projectList"
                 :key="project.id"
-                class="group flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-5 shadow-card transition-all duration-180 hover:border-surface-300 hover:shadow-panel hover:-translate-y-0.5 dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700"
+                class="group flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-5 shadow-card transition-all duration-180 hover:-translate-y-0.5 hover:border-surface-300 hover:shadow-panel dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700"
             >
                 <!-- Top Card Bar: Tags, Status, Action Dropdown -->
                 <div class="space-y-3">
                     <div class="flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-1.5 flex-wrap">
+                        <div class="flex flex-wrap items-center gap-1.5">
                             <span
                                 class="rounded px-2 py-0.5 text-[10px] font-semibold"
                                 :class="getStatusBadgeClass(project.status)"
@@ -467,7 +525,7 @@ watch(
                             <template #trigger="{ open }">
                                 <button
                                     type="button"
-                                    class="rounded-lg p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200 transition"
+                                    class="rounded-lg p-1 text-surface-400 transition hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
                                     :aria-expanded="open"
                                     title="Menu Proyek"
                                 >
@@ -476,10 +534,16 @@ watch(
                             </template>
                             <div class="w-48 py-1">
                                 <Link
-                                    :href="projectsRoute.show.url({ project: project.id })"
+                                    :href="
+                                        projectsRoute.show.url({
+                                            project: project.id,
+                                        })
+                                    "
                                     class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
                                 >
-                                    <FolderOpen class="h-3.5 w-3.5 text-primary-600" />
+                                    <FolderOpen
+                                        class="h-3.5 w-3.5 text-primary-600"
+                                    />
                                     <span>Buka Proyek</span>
                                 </Link>
                                 <Link
@@ -487,18 +551,28 @@ watch(
                                     :href="`/tasks/create?project_id=${project.id}`"
                                     class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
                                 >
-                                    <PlusCircle class="h-3.5 w-3.5 text-emerald-600" />
+                                    <PlusCircle
+                                        class="h-3.5 w-3.5 text-emerald-600"
+                                    />
                                     <span>Tambah Tugas</span>
                                 </Link>
                                 <Link
                                     v-if="canUpdateProject(project)"
-                                    :href="projectsRoute.edit.url({ project: project.id })"
+                                    :href="
+                                        projectsRoute.edit.url({
+                                            project: project.id,
+                                        })
+                                    "
                                     class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
                                 >
-                                    <Pencil class="h-3.5 w-3.5 text-surface-500" />
+                                    <Pencil
+                                        class="h-3.5 w-3.5 text-surface-500"
+                                    />
                                     <span>Edit</span>
                                 </Link>
-                                <div class="my-1 border-t border-surface-100 dark:border-surface-800" />
+                                <div
+                                    class="my-1 border-t border-surface-100 dark:border-surface-800"
+                                />
                                 <button
                                     v-if="canDeleteProject(project)"
                                     type="button"
@@ -515,38 +589,67 @@ watch(
                     <!-- Project Title & Excerpt -->
                     <div class="space-y-1">
                         <Link
-                            :href="projectsRoute.show.url({ project: project.id })"
-                            class="block text-base font-bold text-surface-900 hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400 line-clamp-1 transition-colors"
+                            :href="
+                                projectsRoute.show.url({ project: project.id })
+                            "
+                            class="line-clamp-1 block text-base font-bold text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
                         >
                             {{ project.name }}
                         </Link>
-                        <p class="text-xs text-surface-500 dark:text-surface-400 line-clamp-2 leading-relaxed">
-                            {{ project.description || 'Tidak ada ringkasan deskripsi untuk proyek ini.' }}
+                        <p
+                            class="line-clamp-2 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
+                        >
+                            {{
+                                project.description ||
+                                'Tidak ada ringkasan deskripsi untuk proyek ini.'
+                            }}
                         </p>
                     </div>
 
                     <!-- Progress Bar -->
                     <div class="space-y-1.5 pt-2">
-                        <div class="flex items-center justify-between text-[11px] text-surface-500 dark:text-surface-400">
+                        <div
+                            class="flex items-center justify-between text-[11px] text-surface-500 dark:text-surface-400"
+                        >
                             <span>Progres Tugas</span>
-                            <span class="font-bold text-surface-900 dark:text-surface-100">
-                                {{ (project as any).progress_percent ?? (project.tasks_count ? Math.round(((project as any).completed_tasks_count || 0) / project.tasks_count * 100) : 0) }}%
+                            <span
+                                class="font-bold text-surface-900 dark:text-surface-100"
+                            >
+                                {{
+                                    (project as any).progress_percent ??
+                                    (project.tasks_count
+                                        ? Math.round(
+                                              (((project as any)
+                                                  .completed_tasks_count || 0) /
+                                                  project.tasks_count) *
+                                                  100,
+                                          )
+                                        : 0)
+                                }}%
                             </span>
                         </div>
-                        <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800">
+                        <div
+                            class="h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+                        >
                             <div
-                                class="h-full bg-primary-600 dark:bg-primary-400 transition-all duration-300"
-                                :style="{ width: `${(project as any).progress_percent ?? (project.tasks_count ? Math.round(((project as any).completed_tasks_count || 0) / project.tasks_count * 100) : 0)}%` }"
+                                class="h-full bg-primary-600 transition-all duration-300 dark:bg-primary-400"
+                                :style="{
+                                    width: `${(project as any).progress_percent ?? (project.tasks_count ? Math.round((((project as any).completed_tasks_count || 0) / project.tasks_count) * 100) : 0)}%`,
+                                }"
                             />
                         </div>
                     </div>
                 </div>
 
                 <!-- Bottom Row: Team Avatars & Deadline -->
-                <div class="mt-5 flex items-center justify-between border-t border-surface-100 pt-3 dark:border-surface-800/80">
+                <div
+                    class="mt-5 flex items-center justify-between border-t border-surface-100 pt-3 dark:border-surface-800/80"
+                >
                     <!-- Overlapping Avatar Stack -->
                     <div class="flex items-center -space-x-1.5">
-                        <template v-if="project.members && project.members.length > 0">
+                        <template
+                            v-if="project.members && project.members.length > 0"
+                        >
                             <div
                                 v-for="member in project.members.slice(0, 3)"
                                 :key="member.id"
@@ -582,10 +685,17 @@ watch(
                     </div>
 
                     <!-- Deadline Badge -->
-                    <div v-if="getDeadlineMeta(project)" class="flex items-center gap-1 text-[11px]">
+                    <div
+                        v-if="getDeadlineMeta(project)"
+                        class="flex items-center gap-1 text-[11px]"
+                    >
                         <Calendar class="h-3 w-3 text-surface-400" />
                         <span
-                            :class="getDeadlineMeta(project)!.isOverdue ? 'font-bold text-rose-600 dark:text-rose-400' : 'text-surface-500 dark:text-surface-400'"
+                            :class="
+                                getDeadlineMeta(project)!.isOverdue
+                                    ? 'font-bold text-rose-600 dark:text-rose-400'
+                                    : 'text-surface-500 dark:text-surface-400'
+                            "
                         >
                             {{ getDeadlineMeta(project)!.label }}
                         </span>
@@ -600,36 +710,53 @@ watch(
         <!-- LIST / TABLE VIEW (Linear High-Density Mode) -->
         <div
             v-else-if="viewMode === 'list' && projectList.length > 0"
-            class="overflow-hidden rounded-xl border border-surface-200/90 bg-white dark:border-surface-800 dark:bg-surface-900/90 shadow-card"
+            class="overflow-hidden rounded-xl border border-surface-200/90 bg-white shadow-card dark:border-surface-800 dark:bg-surface-900/90"
         >
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
-                    <thead class="border-b border-surface-100 bg-surface-50/70 text-surface-500 uppercase tracking-wider dark:border-surface-800 dark:bg-surface-900/80 dark:text-surface-400 text-[10px]">
+                    <thead
+                        class="border-b border-surface-100 bg-surface-50/70 text-[10px] tracking-wider text-surface-500 uppercase dark:border-surface-800 dark:bg-surface-900/80 dark:text-surface-400"
+                    >
                         <tr>
-                            <th class="py-3 pl-4 pr-3 font-semibold">Nama Proyek</th>
+                            <th class="py-3 pr-3 pl-4 font-semibold">
+                                Nama Proyek
+                            </th>
                             <th class="px-3 py-3 font-semibold">Status</th>
                             <th class="px-3 py-3 font-semibold">Prioritas</th>
                             <th class="px-3 py-3 font-semibold">Progres</th>
                             <th class="px-3 py-3 font-semibold">Tim</th>
                             <th class="px-3 py-3 font-semibold">Tenggat</th>
-                            <th class="py-3 pr-4 pl-3 text-right font-semibold">Aksi</th>
+                            <th class="py-3 pr-4 pl-3 text-right font-semibold">
+                                Aksi
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-surface-100 dark:divide-surface-800/60">
+                    <tbody
+                        class="divide-y divide-surface-100 dark:divide-surface-800/60"
+                    >
                         <tr
                             v-for="project in projectList"
                             :key="project.id"
-                            class="group hover:bg-surface-50/80 dark:hover:bg-surface-800/40 transition-colors"
+                            class="group transition-colors hover:bg-surface-50/80 dark:hover:bg-surface-800/40"
                         >
-                            <td class="py-3 pl-4 pr-3">
+                            <td class="py-3 pr-3 pl-4">
                                 <Link
-                                    :href="projectsRoute.show.url({ project: project.id })"
-                                    class="font-semibold text-surface-900 hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400 transition-colors block"
+                                    :href="
+                                        projectsRoute.show.url({
+                                            project: project.id,
+                                        })
+                                    "
+                                    class="block font-semibold text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
                                 >
                                     {{ project.name }}
                                 </Link>
-                                <span class="text-[11px] text-surface-400 line-clamp-1">
-                                    {{ project.description || 'Tidak ada deskripsi' }}
+                                <span
+                                    class="line-clamp-1 text-[11px] text-surface-400"
+                                >
+                                    {{
+                                        project.description ||
+                                        'Tidak ada deskripsi'
+                                    }}
                                 </span>
                             </td>
                             <td class="px-3 py-3 whitespace-nowrap">
@@ -643,35 +770,64 @@ watch(
                             <td class="px-3 py-3 whitespace-nowrap">
                                 <span
                                     class="rounded px-2 py-0.5 text-[10px] font-semibold"
-                                    :class="getPriorityBadgeClass(project.priority)"
+                                    :class="
+                                        getPriorityBadgeClass(project.priority)
+                                    "
                                 >
                                     {{ project.priority_label }}
                                 </span>
                             </td>
                             <td class="px-3 py-3 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
-                                    <div class="h-1.5 w-16 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800">
+                                    <div
+                                        class="h-1.5 w-16 overflow-hidden rounded-full bg-surface-100 dark:bg-surface-800"
+                                    >
                                         <div
                                             class="h-full bg-primary-600 dark:bg-primary-400"
-                                            :style="{ width: `${(project as any).progress_percent ?? (project.tasks_count ? Math.round(((project as any).completed_tasks_count || 0) / project.tasks_count * 100) : 0)}%` }"
+                                            :style="{
+                                                width: `${(project as any).progress_percent ?? (project.tasks_count ? Math.round((((project as any).completed_tasks_count || 0) / project.tasks_count) * 100) : 0)}%`,
+                                            }"
                                         />
                                     </div>
-                                    <span class="text-[11px] text-surface-500 font-medium">
-                                        {{ (project as any).progress_percent ?? (project.tasks_count ? Math.round(((project as any).completed_tasks_count || 0) / project.tasks_count * 100) : 0) }}%
+                                    <span
+                                        class="text-[11px] font-medium text-surface-500"
+                                    >
+                                        {{
+                                            (project as any).progress_percent ??
+                                            (project.tasks_count
+                                                ? Math.round(
+                                                      (((project as any)
+                                                          .completed_tasks_count ||
+                                                          0) /
+                                                          project.tasks_count) *
+                                                          100,
+                                                  )
+                                                : 0)
+                                        }}%
                                     </span>
                                 </div>
                             </td>
                             <td class="px-3 py-3 whitespace-nowrap">
                                 <div class="flex items-center -space-x-1.5">
-                                    <template v-if="project.members && project.members.length > 0">
+                                    <template
+                                        v-if="
+                                            project.members &&
+                                            project.members.length > 0
+                                        "
+                                    >
                                         <div
-                                            v-for="member in project.members.slice(0, 3)"
+                                            v-for="member in project.members.slice(
+                                                0,
+                                                3,
+                                            )"
                                             :key="member.id"
                                             class="relative inline-block rounded-full ring-1 ring-white dark:ring-surface-900"
                                             :title="member.user?.name"
                                         >
                                             <Avatar
-                                                :initials="member.user?.initials"
+                                                :initials="
+                                                    member.user?.initials
+                                                "
                                                 :src="member.user?.avatar"
                                                 :alt="member.user?.name"
                                                 size="sm"
@@ -680,12 +836,20 @@ watch(
                                     </template>
                                 </div>
                             </td>
-                            <td class="px-3 py-3 whitespace-nowrap text-surface-500">
+                            <td
+                                class="px-3 py-3 whitespace-nowrap text-surface-500"
+                            >
                                 {{ formatDate(project.end_date) }}
                             </td>
-                            <td class="py-3 pr-4 pl-3 text-right whitespace-nowrap">
+                            <td
+                                class="py-3 pr-4 pl-3 text-right whitespace-nowrap"
+                            >
                                 <Link
-                                    :href="projectsRoute.show.url({ project: project.id })"
+                                    :href="
+                                        projectsRoute.show.url({
+                                            project: project.id,
+                                        })
+                                    "
                                     class="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
                                 >
                                     <span>Buka</span>
@@ -703,11 +867,21 @@ watch(
             class="rounded-2xl border border-dashed border-surface-300 bg-white px-6 py-16 text-center dark:border-surface-700 dark:bg-surface-900/40"
         >
             <FolderKanban class="mx-auto h-10 w-10 text-surface-400" />
-            <h2 class="mt-3 text-base font-bold text-surface-900 dark:text-surface-100">
-                {{ hasActiveFilters ? 'Proyek tidak ditemukan' : 'Belum ada proyek dibuat' }}
+            <h2
+                class="mt-3 text-base font-bold text-surface-900 dark:text-surface-100"
+            >
+                {{
+                    hasActiveFilters
+                        ? 'Proyek tidak ditemukan'
+                        : 'Belum ada proyek dibuat'
+                }}
             </h2>
-            <p class="mt-1 text-xs text-surface-500 max-w-sm mx-auto">
-                {{ hasActiveFilters ? 'Coba ubah filter pencarian untuk menemukan proyek yang dicari.' : 'Buat proyek pertama Anda untuk mulai mengelola alur kerja tim.' }}
+            <p class="mx-auto mt-1 max-w-sm text-xs text-surface-500">
+                {{
+                    hasActiveFilters
+                        ? 'Coba ubah filter pencarian untuk menemukan proyek yang dicari.'
+                        : 'Buat proyek pertama Anda untuk mulai mengelola alur kerja tim.'
+                }}
             </p>
             <button
                 v-if="hasActiveFilters"
@@ -741,9 +915,8 @@ watch(
                 <p class="text-xs text-surface-600 dark:text-surface-300">
                     Apakah Anda yakin ingin menghapus proyek
                     <strong class="font-bold text-surface-900 dark:text-white">
-                        "{{ projectToDelete?.name }}"
-                    </strong>?
-                    Data proyek ini akan dipindahkan ke tempat sampah.
+                        "{{ projectToDelete?.name }}" </strong
+                    >? Data proyek ini akan dipindahkan ke tempat sampah.
                 </p>
                 <div class="flex justify-end gap-2 pt-3">
                     <Button

@@ -51,6 +51,7 @@ const form = reactive({
     start_date: '',
     end_date: '',
     owner_id: '' as string,
+    client_id: '' as string,
 });
 
 const originalData = reactive<Record<string, any>>({});
@@ -124,7 +125,8 @@ function isDirty(): boolean {
         form.priority !== originalData.priority ||
         form.start_date !== originalData.start_date ||
         form.end_date !== originalData.end_date ||
-        String(form.owner_id) !== String(originalData.owner_id)
+        String(form.owner_id) !== String(originalData.owner_id) ||
+        form.client_id !== originalData.client_id
     );
 }
 
@@ -146,6 +148,7 @@ async function handleSubmit(): Promise<void> {
             start_date: form.start_date || null,
             end_date: form.end_date || null,
             owner_id: form.owner_id || undefined,
+            client_ids: form.client_id ? [form.client_id] : [],
         };
 
         await api.put(`/projects/${initialProject.id}`, payload);
@@ -272,11 +275,28 @@ function goBack(): void {
                         <option value="" disabled>Memuat manager...</option>
                     </template>
                 </Select>
+
+                <Select
+                    v-model="form.client_id"
+                    :options="
+                        clients.map((c) => ({
+                            value: String(c.id),
+                            label: `${c.name} ${c.email || ''}`.trim(),
+                        }))
+                    "
+                    label="Klien (Client)"
+                    :error="errors.client_id?.[0]"
+                    @change="clearError('client_id')"
+                >
+                    <template #loading>
+                        <option value="" disabled>Memuat klien...</option>
+                    </template>
+                </Select>
             </div>
 
             <div
                 v-if="errors.form"
-                class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 rounded-lg p-4"
             >
                 {{ errors.form[0] }}
             </div>

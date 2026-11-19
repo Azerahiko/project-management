@@ -141,8 +141,7 @@ const faqList: FaqItem[] = [
         id: 6,
         category: 'security',
         categoryLabel: 'Keamanan & Akses',
-        question:
-            'Bagaimana cara mengaktifkan Otentikasi Dua Faktor (2FA)?',
+        question: 'Bagaimana cara mengaktifkan Otentikasi Dua Faktor (2FA)?',
         answer: 'Kunjungi Pengaturan > Tab Keamanan untuk meninjau status otentikasi dua faktor pada akun Anda.',
         icon: 'ShieldCheck',
         readTime: '2 mnt baca',
@@ -1553,8 +1552,8 @@ function submitSupportTicket(): void {
                     <p
                         class="mt-1 text-xs leading-relaxed text-surface-500 dark:text-surface-400"
                     >
-                        Atur profil pengguna, otentikasi dua faktor,
-                        dan preferensi tema.
+                        Atur profil pengguna, otentikasi dua faktor, dan
+                        preferensi tema.
                     </p>
                     <Link
                         :href="'/settings'"

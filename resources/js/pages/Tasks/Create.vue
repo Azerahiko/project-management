@@ -472,7 +472,7 @@ watch(() => form.project_id, loadAssignees);
                         <div class="flex items-center gap-2">
                             <span
                                 v-if="fileErrors[index]"
-                                class="text-xs text-accent-700 dark:text-accent-300"
+                                class="text-accent-700 dark:text-accent-300 text-xs"
                             >
                                 {{ fileErrors[index] }}
                             </span>
@@ -494,7 +494,7 @@ watch(() => form.project_id, loadAssignees);
 
             <div
                 v-if="errors.form"
-                class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 rounded-lg p-4"
             >
                 {{ errors.form[0] }}
             </div>

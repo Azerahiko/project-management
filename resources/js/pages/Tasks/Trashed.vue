@@ -338,23 +338,23 @@ watch(
         <!-- Error -->
         <div
             v-if="error"
-            class="flex flex-col items-start gap-3 rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-accent-700/40 dark:bg-accent-900/20"
+            class="border-accent-200 bg-accent-50 dark:border-accent-700/40 dark:bg-accent-900/20 flex flex-col items-start gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
             role="alert"
         >
             <div class="flex items-start gap-3">
                 <span
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-accent-700 dark:bg-surface-900/40 dark:text-accent-300"
+                    class="text-accent-700 dark:text-accent-300 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 dark:bg-surface-900/40"
                 >
                     <component :is="getIcon('AlertTriangle')" class="h-4 w-4" />
                 </span>
                 <div>
                     <p
-                        class="text-sm font-bold text-accent-800 dark:text-accent-200"
+                        class="text-accent-800 dark:text-accent-200 text-sm font-bold"
                     >
                         Gagal memuat daftar tugas
                     </p>
                     <p
-                        class="mt-0.5 text-xs text-accent-700 dark:text-accent-300"
+                        class="text-accent-700 dark:text-accent-300 mt-0.5 text-xs"
                     >
                         {{ error }}
                     </p>

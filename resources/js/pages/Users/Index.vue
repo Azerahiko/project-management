@@ -230,20 +230,23 @@ watch(
         >
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                    <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                    <span class="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <span
+                        class="inline-flex h-2 w-2 rounded-full bg-emerald-500"
+                    />
+                    <span
+                        class="text-xs font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                    >
                         Direktori Pengguna
                     </span>
                 </div>
                 <h1
-                    class="text-xl sm:text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-50"
+                    class="text-xl font-bold tracking-tight text-surface-900 sm:text-2xl dark:text-surface-50"
                 >
                     Anggota & Peran
                 </h1>
-                <p
-                    class="text-xs text-surface-500 dark:text-surface-400"
-                >
-                    Kelola seluruh akses pengguna, otorisasi peran, dan kolaborator proyek tim dalam ruang kerja yang terorganisir.
+                <p class="text-xs text-surface-500 dark:text-surface-400">
+                    Kelola seluruh akses pengguna, otorisasi peran, dan
+                    kolaborator proyek tim dalam ruang kerja yang terorganisir.
                 </p>
             </div>
 
@@ -255,7 +258,7 @@ watch(
             >
                 <Link
                     :href="users.invite.url()"
-                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 transition"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
                 >
                     <component :is="getIcon('Mail')" class="h-3.5 w-3.5" />
                     <span>Undang Pengguna</span>
@@ -263,26 +266,38 @@ watch(
 
                 <Link
                     :href="users.create.url()"
-                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400 transition"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs transition hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
                 >
-                    <component :is="getIcon('UserPlus')" class="h-3.5 w-3.5 stroke-[2.5]" />
+                    <component
+                        :is="getIcon('UserPlus')"
+                        class="h-3.5 w-3.5 stroke-[2.5]"
+                    />
                     <span>Tambah Pengguna</span>
                 </Link>
             </div>
         </div>
 
         <!-- 2. KPI Summary Telemetry Strip -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-xl border border-surface-200/90 bg-white divide-y divide-surface-200/80 sm:divide-y-0 sm:divide-x dark:border-surface-800 dark:bg-surface-900/90 dark:divide-surface-800/80 shadow-card overflow-hidden">
+        <div
+            class="grid grid-cols-1 divide-y divide-surface-200/80 overflow-hidden rounded-xl border border-surface-200/90 bg-white shadow-card sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 dark:divide-surface-800/80 dark:border-surface-800 dark:bg-surface-900/90"
+        >
             <!-- Stat 1: Total Pengguna -->
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Total Pengguna</span>
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Total Pengguna</span
+                    >
                     <component
                         :is="getIcon('Users')"
                         class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400"
                     />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50"
+                >
                     {{ meta?.total ?? userList.length }}
                 </div>
                 <p class="mt-1 text-[11px] text-surface-400">
@@ -292,14 +307,21 @@ watch(
 
             <!-- Stat 2: Pengguna Aktif -->
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Pengguna Aktif</span>
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Pengguna Aktif</span
+                    >
                     <component
                         :is="getIcon('CheckCircle')"
                         class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
                     />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400"
+                >
                     {{ activeUsersCount }}
                 </div>
                 <p class="mt-1 text-[11px] text-surface-400">
@@ -309,14 +331,21 @@ watch(
 
             <!-- Stat 3: Administrator & PM -->
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Manajemen & Admin</span>
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Manajemen & Admin</span
+                    >
                     <component
                         :is="getIcon('Shield')"
                         class="h-3.5 w-3.5 text-primary-600 dark:text-primary-400"
                     />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50"
+                >
                     {{ adminAndPmCount }}
                 </div>
                 <p class="mt-1 text-[11px] text-surface-400">
@@ -326,14 +355,21 @@ watch(
 
             <!-- Stat 4: Anggota Reguler -->
             <div class="p-4">
-                <div class="flex items-center justify-between text-surface-500 dark:text-surface-400">
-                    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">Anggota Tim</span>
+                <div
+                    class="flex items-center justify-between text-surface-500 dark:text-surface-400"
+                >
+                    <span
+                        class="font-mono text-[11px] font-semibold tracking-wider uppercase"
+                        >Anggota Tim</span
+                    >
                     <component
                         :is="getIcon('Briefcase')"
                         class="h-3.5 w-3.5 text-surface-400"
                     />
                 </div>
-                <div class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50">
+                <div
+                    class="mt-2 font-mono text-2xl font-bold text-surface-900 dark:text-surface-50"
+                >
                     {{ memberCount }}
                 </div>
                 <p class="mt-1 text-[11px] text-surface-400">
@@ -347,13 +383,18 @@ watch(
             class="flex flex-col gap-3 rounded-xl border border-surface-200 bg-white p-4 shadow-xs lg:flex-row lg:items-center lg:justify-between dark:border-surface-800 dark:bg-surface-900"
         >
             <!-- Search & Filters -->
-            <div class="flex flex-1 flex-col gap-2.5 sm:flex-row sm:items-center">
+            <div
+                class="flex flex-1 flex-col gap-2.5 sm:flex-row sm:items-center"
+            >
                 <!-- Search Field -->
                 <div class="relative flex-1">
                     <div
                         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-surface-400"
                     >
-                        <component :is="getIcon('Search')" class="h-3.5 w-3.5" />
+                        <component
+                            :is="getIcon('Search')"
+                            class="h-3.5 w-3.5"
+                        />
                     </div>
                     <input
                         v-model="search"
@@ -504,7 +545,7 @@ watch(
             <article
                 v-for="userItem in userList"
                 :key="userItem.id"
-                class="group relative flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-4.5 shadow-card hover:border-surface-300 hover:shadow-panel hover:-translate-y-0.5 dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700 transition-all duration-180"
+                class="group relative flex flex-col justify-between rounded-xl border border-surface-200/90 bg-white p-4.5 shadow-card transition-all duration-180 hover:-translate-y-0.5 hover:border-surface-300 hover:shadow-panel dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700"
             >
                 <!-- Top Card: Avatar & Quick Action -->
                 <div>
@@ -629,7 +670,7 @@ watch(
                         <span
                             v-for="role in userItem.roles"
                             :key="role"
-                            class="inline-flex items-center rounded border border-surface-200/80 bg-surface-50 px-1.5 py-0.2 text-[10.5px] font-medium text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
+                            class="py-0.2 inline-flex items-center rounded border border-surface-200/80 bg-surface-50 px-1.5 text-[10.5px] font-medium text-surface-700 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300"
                         >
                             {{ role }}
                         </span>

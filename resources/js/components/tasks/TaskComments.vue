@@ -191,7 +191,7 @@ async function loadMoreComments(): Promise<void> {
             <!-- Error -->
             <div
                 v-if="commentsError"
-                class="mb-4 rounded-lg bg-accent-50 p-3 text-sm text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 mb-4 rounded-lg p-3 text-sm"
             >
                 {{ commentsError }}
             </div>

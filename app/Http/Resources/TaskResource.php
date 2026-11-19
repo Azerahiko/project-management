@@ -49,6 +49,8 @@ class TaskResource extends JsonResource
             ] : null,
             'can_update' => $task->can_update,
             'can_delete' => $task->can_delete,
+            'can_restore' => $this->when(isset($task->can_restore), (bool) $task->can_restore),
+            'can_force_delete' => $this->when(isset($task->can_force_delete), (bool) $task->can_force_delete),
             'is_overdue' => $task->isOverdue(),
             'created_at' => $task->created_at?->toISOString(),
             'updated_at' => $task->updated_at?->toISOString(),

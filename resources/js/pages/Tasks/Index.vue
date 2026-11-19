@@ -28,9 +28,7 @@ import {
     MoreHorizontal,
     Pencil,
     Trash2,
-    Calendar,
-    AlertTriangle,
-    RefreshCw,
+    RotateCcw,
     Circle,
     Clock,
     Eye,
@@ -49,6 +47,10 @@ const { success } = useToast();
 
 const canCreate = computed(
     () => page.props.auth.user?.permissions.includes('tasks.view') ?? false,
+);
+
+const canViewTrashed = computed(() =>
+    Boolean(page.props.auth.user?.permissions.includes('tasks.view')),
 );
 
 const search = ref('');
@@ -142,11 +144,29 @@ const boardColumns = computed(() => [
     },
 ]);
 
-function getPriorityBadge(priority: string | null): { label: string; class: string } {
-    if (priority === 'urgent') return { label: 'Mendesak', class: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' };
-    if (priority === 'high') return { label: 'Tinggi', class: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' };
-    if (priority === 'medium') return { label: 'Sedang', class: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' };
-    return { label: 'Rendah', class: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400' };
+function getPriorityBadge(priority: string | null): {
+    label: string;
+    class: string;
+} {
+    if (priority === 'urgent')
+        return {
+            label: 'Mendesak',
+            class: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
+        };
+    if (priority === 'high')
+        return {
+            label: 'Tinggi',
+            class: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
+        };
+    if (priority === 'medium')
+        return {
+            label: 'Sedang',
+            class: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
+        };
+    return {
+        label: 'Rendah',
+        class: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400',
+    };
 }
 
 function formatDate(value: string | null): string {
@@ -248,27 +268,45 @@ watch(
 <template>
     <div class="mx-auto max-w-7xl space-y-6">
         <!-- Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                    <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                    <span class="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <span
+                        class="inline-flex h-2 w-2 rounded-full bg-emerald-500"
+                    />
+                    <span
+                        class="text-xs font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
+                    >
                         Manajemen Tugas
                     </span>
                 </div>
-                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-50">
+                <h1
+                    class="text-xl font-bold tracking-tight text-surface-900 sm:text-2xl dark:text-surface-50"
+                >
                     Tugas Tim
                 </h1>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
-                    Pantau status sprint, alokasi penanggung jawab, dan tenggat waktu tugas.
+                    Pantau status sprint, alokasi penanggung jawab, dan tenggat
+                    waktu tugas.
                 </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2.5">
                 <Link
+                    v-if="canViewTrashed"
+                    href="/tasks/trashed"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
+                >
+                    <Trash2 class="h-3.5 w-3.5 text-surface-400" />
+                    <span>Sampah</span>
+                </Link>
+
+                <Link
                     v-if="canCreate"
                     :href="tasksRoute.create.url()"
-                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400 transition"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs transition hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
                 >
                     <Plus class="h-3.5 w-3.5 stroke-[2.5]" />
                     <span>Tambah Tugas</span>
@@ -277,11 +315,17 @@ watch(
         </div>
 
         <!-- Filter & View Toolbar -->
-        <div class="space-y-3 rounded-xl border border-surface-200 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div
+            class="space-y-3 rounded-xl border border-surface-200 bg-white p-4 shadow-xs dark:border-surface-800 dark:bg-surface-900"
+        >
+            <div
+                class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+            >
                 <!-- Search input -->
-                <div class="relative flex-1 max-w-md">
-                    <Search class="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-surface-400" />
+                <div class="relative max-w-md flex-1">
+                    <Search
+                        class="pointer-events-none absolute top-2.5 left-3 h-3.5 w-3.5 text-surface-400"
+                    />
                     <input
                         v-model="search"
                         type="search"
@@ -292,6 +336,15 @@ watch(
 
                 <!-- Right controls: Priority, Sort, View Toggle -->
                 <div class="flex flex-wrap items-center gap-2">
+                    <Link
+                        v-if="canViewTrashed"
+                        href="/tasks/trashed"
+                        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
+                    >
+                        <Trash2 class="h-3.5 w-3.5 text-surface-400" />
+                        <span>Sampah</span>
+                    </Link>
+
                     <div class="w-36">
                         <Select
                             v-model="filters.priority"
@@ -309,11 +362,17 @@ watch(
                     </div>
 
                     <!-- View Switcher (List vs Board) -->
-                    <div class="flex items-center rounded-lg border border-surface-200 bg-surface-50/80 p-0.5 dark:border-surface-800 dark:bg-surface-900/60">
+                    <div
+                        class="flex items-center rounded-lg border border-surface-200 bg-surface-50/80 p-0.5 dark:border-surface-800 dark:bg-surface-900/60"
+                    >
                         <button
                             type="button"
                             class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
-                            :class="viewMode === 'list' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white' : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'"
+                            :class="
+                                viewMode === 'list'
+                                    ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white'
+                                    : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+                            "
                             title="Tampilan Tabel Linear"
                             @click="viewMode = 'list'"
                         >
@@ -322,7 +381,11 @@ watch(
                         <button
                             type="button"
                             class="flex h-7 w-7 items-center justify-center rounded-md transition-colors"
-                            :class="viewMode === 'board' ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white' : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'"
+                            :class="
+                                viewMode === 'board'
+                                    ? 'bg-white text-surface-900 shadow-2xs dark:bg-surface-800 dark:text-white'
+                                    : 'text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+                            "
                             title="Tampilan Papan Kanban"
                             @click="viewMode = 'board'"
                         >
@@ -333,7 +396,7 @@ watch(
                     <button
                         v-if="hasActiveFilters"
                         type="button"
-                        class="rounded-lg px-2.5 py-1 text-xs font-medium text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100 transition"
+                        class="rounded-lg px-2.5 py-1 text-xs font-medium text-surface-500 transition hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
                         @click="resetFilters"
                     >
                         Reset
@@ -342,7 +405,9 @@ watch(
             </div>
 
             <!-- Status Tabs Ribbon -->
-            <div class="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-t border-surface-100 pt-3 dark:border-surface-800/60">
+            <div
+                class="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-t border-surface-100 pt-3 dark:border-surface-800/60"
+            >
                 <button
                     v-for="tab in statusTabs"
                     :key="tab.value"
@@ -350,7 +415,7 @@ watch(
                     class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition"
                     :class="
                         filters.status === tab.value
-                            ? 'bg-primary-600 text-white shadow-2xs dark:bg-primary-500 dark:text-surface-950 font-semibold'
+                            ? 'bg-primary-600 font-semibold text-white shadow-2xs dark:bg-primary-500 dark:text-surface-950'
                             : 'bg-surface-100/70 text-surface-600 hover:bg-surface-200/70 dark:bg-surface-800/50 dark:text-surface-300 dark:hover:bg-surface-800'
                     "
                     @click="setStatus(tab.value)"
@@ -358,7 +423,11 @@ watch(
                     <span
                         v-if="tab.dot"
                         class="h-1.5 w-1.5 rounded-full"
-                        :class="filters.status === tab.value ? 'bg-white dark:bg-surface-950' : tab.dot"
+                        :class="
+                            filters.status === tab.value
+                                ? 'bg-white dark:bg-surface-950'
+                                : tab.dot
+                        "
                     />
                     {{ tab.label }}
                 </button>
@@ -366,11 +435,25 @@ watch(
         </div>
 
         <!-- Result count & loading indicator -->
-        <div v-if="!error && (taskList.length > 0 || loading)" class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400">
+        <div
+            v-if="!error && (taskList.length > 0 || loading)"
+            class="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400"
+        >
             <span>
-                Menampilkan <strong class="text-surface-900 dark:text-surface-100">{{ taskList.length }}</strong> dari <strong class="text-surface-900 dark:text-surface-100">{{ meta.total }}</strong> tugas
+                Menampilkan
+                <strong class="text-surface-900 dark:text-surface-100">{{
+                    taskList.length
+                }}</strong>
+                dari
+                <strong class="text-surface-900 dark:text-surface-100">{{
+                    meta.total
+                }}</strong>
+                tugas
             </span>
-            <span v-if="loading" class="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
+            <span
+                v-if="loading"
+                class="flex items-center gap-1.5 text-primary-600 dark:text-primary-400"
+            >
                 <RefreshCw class="h-3 w-3 animate-spin" />
                 <span>Memperbarui...</span>
             </span>
@@ -397,18 +480,20 @@ watch(
         <!-- 1. LINEAR-STYLE LIST VIEW (Clean, High-Density Rows) -->
         <div
             v-if="viewMode === 'list' && taskList.length > 0"
-            class="overflow-hidden rounded-xl border border-surface-200/90 bg-white dark:border-surface-800 dark:bg-surface-900/90 shadow-card"
+            class="overflow-hidden rounded-xl border border-surface-200/90 bg-white shadow-card dark:border-surface-800 dark:bg-surface-900/90"
         >
             <div class="divide-y divide-surface-100 dark:divide-surface-800/60">
                 <div
                     v-for="task in taskList"
                     :key="task.id"
-                    class="group flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 gap-2.5 hover:bg-surface-50/80 dark:hover:bg-surface-800/30 transition-colors"
+                    class="group flex flex-col gap-2.5 p-3.5 transition-colors hover:bg-surface-50/80 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-surface-800/30"
                 >
                     <!-- Left: Status Icon, Task Key, Title & Project -->
-                    <div class="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                    <div
+                        class="flex min-w-0 flex-1 items-start gap-3 sm:items-center"
+                    >
                         <!-- Status Icon -->
-                        <div class="mt-0.5 sm:mt-0 shrink-0">
+                        <div class="mt-0.5 shrink-0 sm:mt-0">
                             <CheckCircle2
                                 v-if="task.status === 'done'"
                                 class="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400"
@@ -428,14 +513,18 @@ watch(
                         </div>
 
                         <!-- Monospace Key & Title -->
-                        <div class="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                            <span class="font-mono text-[11px] text-surface-400 shrink-0">
+                        <div
+                            class="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2.5"
+                        >
+                            <span
+                                class="shrink-0 font-mono text-[11px] text-surface-400"
+                            >
                                 #{{ task.id }}
                             </span>
 
                             <Link
                                 :href="tasksRoute.show.url({ task: task.id })"
-                                class="text-xs sm:text-sm font-semibold text-surface-900 hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400 truncate transition-colors"
+                                class="truncate text-xs font-semibold text-surface-900 transition-colors hover:text-primary-600 sm:text-sm dark:text-surface-100 dark:hover:text-primary-400"
                             >
                                 {{ task.title }}
                             </Link>
@@ -443,17 +532,25 @@ watch(
                             <!-- Project Tag Pill -->
                             <Link
                                 v-if="task.project"
-                                :href="projectsRoute.show.url({ project: task.project.id })"
-                                class="inline-flex items-center gap-1 rounded bg-surface-100 px-1.5 py-0.2 text-[10px] font-medium text-surface-600 hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700 transition shrink-0"
+                                :href="
+                                    projectsRoute.show.url({
+                                        project: task.project.id,
+                                    })
+                                "
+                                class="py-0.2 inline-flex shrink-0 items-center gap-1 rounded bg-surface-100 px-1.5 text-[10px] font-medium text-surface-600 transition hover:bg-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700"
                             >
-                                <span class="h-1.5 w-1.5 rounded-full bg-primary-500" />
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full bg-primary-500"
+                                />
                                 <span>{{ task.project.name }}</span>
                             </Link>
                         </div>
                     </div>
 
                     <!-- Right: Priority, Assignee, Deadline & Actions -->
-                    <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t sm:border-0 border-surface-100 dark:border-surface-800">
+                    <div
+                        class="flex shrink-0 items-center justify-between gap-3 border-t border-surface-100 pt-1 sm:justify-end sm:border-0 sm:pt-0 dark:border-surface-800"
+                    >
                         <!-- Priority Badge -->
                         <span
                             class="rounded px-2 py-0.5 text-[10px] font-semibold"
@@ -463,7 +560,11 @@ watch(
                         </span>
 
                         <!-- Assignee Avatar -->
-                        <div v-if="task.assignee" class="flex items-center gap-1.5" :title="task.assignee.name">
+                        <div
+                            v-if="task.assignee"
+                            class="flex items-center gap-1.5"
+                            :title="task.assignee.name"
+                        >
                             <Avatar
                                 :initials="task.assignee.initials"
                                 :src="task.assignee.avatar"
@@ -484,10 +585,21 @@ watch(
                             />
                         </div>
 
+                        <!-- Delete Action Button -->
+                        <button
+                            v-if="task.can_delete"
+                            type="button"
+                            class="rounded-lg p-1 text-surface-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400"
+                            title="Hapus Tugas"
+                            @click.stop="confirmDelete(task)"
+                        >
+                            <Trash2 class="h-4 w-4" />
+                        </button>
+
                         <!-- Quick Action Link -->
                         <Link
                             :href="tasksRoute.show.url({ task: task.id })"
-                            class="rounded-lg p-1 text-surface-400 hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200 transition"
+                            class="rounded-lg p-1 text-surface-400 transition hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
                         >
                             <ChevronRight class="h-4 w-4" />
                         </Link>
@@ -499,22 +611,26 @@ watch(
         <!-- 2. KANBAN BOARD VIEW (4 Dynamic Columns) -->
         <div
             v-else-if="viewMode === 'board' && taskList.length > 0"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start"
+            class="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-4"
         >
             <div
                 v-for="col in boardColumns"
                 :key="col.status"
-                class="rounded-2xl border border-surface-200/80 bg-surface-50/50 p-3.5 dark:border-surface-800/60 dark:bg-surface-900/30 space-y-3"
+                class="space-y-3 rounded-2xl border border-surface-200/80 bg-surface-50/50 p-3.5 dark:border-surface-800/60 dark:bg-surface-900/30"
             >
                 <!-- Column Header -->
                 <div class="flex items-center justify-between px-1">
                     <div class="flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full" :class="col.color" />
-                        <h3 class="text-xs font-bold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+                        <h3
+                            class="text-xs font-bold tracking-wider text-surface-900 uppercase dark:text-surface-100"
+                        >
                             {{ col.label }}
                         </h3>
                     </div>
-                    <span class="rounded bg-surface-200/70 px-1.5 py-0.2 text-[10px] font-bold text-surface-600 dark:bg-surface-800 dark:text-surface-400">
+                    <span
+                        class="py-0.2 rounded bg-surface-200/70 px-1.5 text-[10px] font-bold text-surface-600 dark:bg-surface-800 dark:text-surface-400"
+                    >
                         {{ col.tasks.length }}
                     </span>
                 </div>
@@ -524,33 +640,60 @@ watch(
                     <div
                         v-for="task in col.tasks"
                         :key="task.id"
-                        class="group rounded-xl border border-surface-200/90 bg-white p-3.5 shadow-card hover:border-surface-300 hover:shadow-panel hover:-translate-y-0.5 dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700 transition-all duration-150"
+                        class="group rounded-xl border border-surface-200/90 bg-white p-3.5 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:border-surface-300 hover:shadow-panel dark:border-surface-800 dark:bg-surface-900/90 dark:hover:border-surface-700"
                     >
-                        <div class="flex items-center justify-between gap-1 mb-2">
-                            <span class="font-mono text-[10px] text-surface-400">
+                        <div
+                            class="mb-2 flex items-center justify-between gap-1"
+                        >
+                            <span
+                                class="font-mono text-[10px] text-surface-400"
+                            >
                                 #{{ task.id }}
                             </span>
-                            <span
-                                class="rounded px-1.5 py-0.2 text-[9.5px] font-semibold"
-                                :class="getPriorityBadge(task.priority).class"
-                            >
-                                {{ getPriorityBadge(task.priority).label }}
-                            </span>
+
+                            <div class="flex items-center gap-1">
+                                <span
+                                    class="py-0.2 rounded px-1.5 text-[9.5px] font-semibold"
+                                    :class="
+                                        getPriorityBadge(task.priority).class
+                                    "
+                                >
+                                    {{ getPriorityBadge(task.priority).label }}
+                                </span>
+
+                                <button
+                                    v-if="task.can_delete"
+                                    type="button"
+                                    class="rounded p-0.5 text-surface-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400"
+                                    title="Hapus Tugas"
+                                    @click.stop="confirmDelete(task)"
+                                >
+                                    <Trash2 class="h-3 w-3" />
+                                </button>
+                            </div>
                         </div>
 
                         <Link
                             :href="tasksRoute.show.url({ task: task.id })"
-                            class="block text-xs font-semibold text-surface-900 hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400 line-clamp-2 transition-colors mb-2"
+                            class="mb-2 line-clamp-2 block text-xs font-semibold text-surface-900 transition-colors hover:text-primary-600 dark:text-surface-100 dark:hover:text-primary-400"
                         >
                             {{ task.title }}
                         </Link>
 
-                        <div v-if="task.project" class="text-[10px] text-surface-500 dark:text-surface-400 truncate mb-3">
+                        <div
+                            v-if="task.project"
+                            class="mb-3 truncate text-[10px] text-surface-500 dark:text-surface-400"
+                        >
                             {{ task.project.name }}
                         </div>
 
-                        <div class="flex items-center justify-between pt-2 border-t border-surface-100 dark:border-surface-800">
-                            <div v-if="task.assignee" :title="task.assignee.name">
+                        <div
+                            class="flex items-center justify-between border-t border-surface-100 pt-2 dark:border-surface-800"
+                        >
+                            <div
+                                v-if="task.assignee"
+                                :title="task.assignee.name"
+                            >
                                 <Avatar
                                     :initials="task.assignee.initials"
                                     :src="task.assignee.avatar"
@@ -558,7 +701,10 @@ watch(
                                     size="sm"
                                 />
                             </div>
-                            <div v-else class="text-[9.5px] text-surface-400 italic">
+                            <div
+                                v-else
+                                class="text-[9.5px] text-surface-400 italic"
+                            >
                                 Belum ditugaskan
                             </div>
 
@@ -584,11 +730,21 @@ watch(
             class="rounded-2xl border border-dashed border-surface-300 bg-white px-6 py-16 text-center dark:border-surface-700 dark:bg-surface-900/40"
         >
             <CheckSquare class="mx-auto h-10 w-10 text-surface-400" />
-            <h2 class="mt-3 text-base font-bold text-surface-900 dark:text-surface-100">
-                {{ hasActiveFilters ? 'Tugas tidak ditemukan' : 'Belum ada tugas dibuat' }}
+            <h2
+                class="mt-3 text-base font-bold text-surface-900 dark:text-surface-100"
+            >
+                {{
+                    hasActiveFilters
+                        ? 'Tugas tidak ditemukan'
+                        : 'Belum ada tugas dibuat'
+                }}
             </h2>
-            <p class="mt-1 text-xs text-surface-500 max-w-sm mx-auto">
-                {{ hasActiveFilters ? 'Coba ubah filter pencarian untuk menemukan tugas yang dicari.' : 'Buat tugas baru untuk mulai mengorganisir alur pengerjaan tim.' }}
+            <p class="mx-auto mt-1 max-w-sm text-xs text-surface-500">
+                {{
+                    hasActiveFilters
+                        ? 'Coba ubah filter pencarian untuk menemukan tugas yang dicari.'
+                        : 'Buat tugas baru untuk mulai mengorganisir alur pengerjaan tim.'
+                }}
             </p>
             <button
                 v-if="hasActiveFilters"
@@ -622,9 +778,8 @@ watch(
                 <p class="text-xs text-surface-600 dark:text-surface-300">
                     Apakah Anda yakin ingin menghapus tugas
                     <strong class="font-bold text-surface-900 dark:text-white">
-                        "{{ taskToDelete?.title }}"
-                    </strong>?
-                    Tindakan ini tidak dapat dibatalkan.
+                        "{{ taskToDelete?.title }}" </strong
+                    >? Tindakan ini tidak dapat dibatalkan.
                 </p>
                 <div class="flex justify-end gap-2 pt-3">
                     <Button

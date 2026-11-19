@@ -1301,7 +1301,7 @@ function projectInitials(name: string): string {
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
                             <span
-                                class="grid h-7 w-7 place-items-center rounded-lg bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                                class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 grid h-7 w-7 place-items-center rounded-lg"
                             >
                                 <Users class="h-3.5 w-3.5" />
                             </span>
@@ -1379,12 +1379,12 @@ function projectInitials(name: string): string {
                         class="pointer-events-none absolute -top-8 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl lg:-top-16 lg:-right-12 lg:h-40 lg:w-40"
                     />
                     <div
-                        class="pointer-events-none absolute -bottom-8 -left-6 h-28 w-28 rounded-full bg-accent-400/20 blur-2xl lg:-bottom-16 lg:-left-10 lg:h-36 lg:w-36"
+                        class="bg-accent-400/20 pointer-events-none absolute -bottom-8 -left-6 h-28 w-28 rounded-full blur-2xl lg:-bottom-16 lg:-left-10 lg:h-36 lg:w-36"
                     />
 
                     <div class="relative">
                         <span
-                            class="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-accent-200 ring-1 ring-white/15"
+                            class="text-accent-200 grid h-9 w-9 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15"
                         >
                             <Sparkles class="h-4 w-4" />
                         </span>
@@ -1398,7 +1398,7 @@ function projectInitials(name: string): string {
                                 class="flex items-start gap-2 text-[11px] leading-5 text-primary-100/90"
                             >
                                 <Check
-                                    class="mt-0.5 h-3 w-3 shrink-0 text-accent-300"
+                                    class="text-accent-300 mt-0.5 h-3 w-3 shrink-0"
                                 />
                                 Tulis konteks, bukan hanya status.
                             </li>
@@ -1406,7 +1406,7 @@ function projectInitials(name: string): string {
                                 class="flex items-start gap-2 text-[11px] leading-5 text-primary-100/90"
                             >
                                 <Check
-                                    class="mt-0.5 h-3 w-3 shrink-0 text-accent-300"
+                                    class="text-accent-300 mt-0.5 h-3 w-3 shrink-0"
                                 />
                                 Tutup diskusi dengan keputusan yang jelas.
                             </li>
@@ -1414,7 +1414,7 @@ function projectInitials(name: string): string {
                                 class="flex items-start gap-2 text-[11px] leading-5 text-primary-100/90"
                             >
                                 <Check
-                                    class="mt-0.5 h-3 w-3 shrink-0 text-accent-300"
+                                    class="text-accent-300 mt-0.5 h-3 w-3 shrink-0"
                                 />
                                 Kembalikan percakapan ke tugas terkait.
                             </li>

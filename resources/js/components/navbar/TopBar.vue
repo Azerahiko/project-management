@@ -96,24 +96,30 @@ onUnmounted(() => {
             <nav class="flex min-w-0 items-center gap-2 text-xs">
                 <Link
                     href="/dashboard"
-                    class="hidden items-center gap-1.5 font-medium text-surface-500 hover:text-surface-900 lg:flex dark:text-surface-400 dark:hover:text-surface-100 transition-colors"
+                    class="hidden items-center gap-1.5 font-medium text-surface-500 transition-colors hover:text-surface-900 lg:flex dark:text-surface-400 dark:hover:text-surface-100"
                 >
-                    <span>{{ page.props.app.shortName || page.props.app.name }}</span>
+                    <span>{{
+                        page.props.app.shortName || page.props.app.name
+                    }}</span>
                 </Link>
-                <span class="hidden text-surface-300 lg:inline dark:text-surface-700">/</span>
-                <span class="truncate font-semibold text-surface-900 dark:text-surface-100">
+                <span
+                    class="hidden text-surface-300 lg:inline dark:text-surface-700"
+                    >/</span
+                >
+                <span
+                    class="truncate font-semibold text-surface-900 dark:text-surface-100"
+                >
                     {{ pageTitle }}
                 </span>
             </nav>
         </div>
 
         <!-- Center: Command Search Bar -->
-        <div class="flex flex-1 justify-center max-w-md px-4 hidden md:flex">
-            <form
-                @submit.prevent="handleSearchSubmit"
-                class="relative w-full"
-            >
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-surface-400">
+        <div class="flex hidden max-w-md flex-1 justify-center px-4 md:flex">
+            <form @submit.prevent="handleSearchSubmit" class="relative w-full">
+                <div
+                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-surface-400"
+                >
                     <Search class="h-3.5 w-3.5" />
                 </div>
                 <input
@@ -123,8 +129,12 @@ onUnmounted(() => {
                     placeholder="Cari tugas, proyek, aktivitas..."
                     class="h-8 w-full rounded-lg border border-surface-200/90 bg-surface-50/80 pr-9 pl-8 text-xs text-surface-900 placeholder-surface-400 shadow-2xs transition-all focus:border-primary-500 focus:bg-white focus:ring-1 focus:ring-primary-500 focus:outline-hidden dark:border-surface-800 dark:bg-surface-900/60 dark:text-surface-100 dark:placeholder-surface-400 dark:focus:border-primary-400"
                 />
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <kbd class="rounded border border-surface-200 bg-surface-100 px-1 py-0.2 text-[9px] font-semibold text-surface-400 dark:border-surface-700 dark:bg-surface-800">
+                <div
+                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
+                >
+                    <kbd
+                        class="py-0.2 rounded border border-surface-200 bg-surface-100 px-1 text-[9px] font-semibold text-surface-400 dark:border-surface-700 dark:bg-surface-800"
+                    >
                         ⌘K
                     </kbd>
                 </div>
@@ -142,12 +152,12 @@ onUnmounted(() => {
                 <span class="hidden sm:inline">Tugas Baru</span>
             </Link>
 
-            <div class="h-4 w-px bg-surface-200 dark:bg-surface-800 mx-0.5" />
+            <div class="mx-0.5 h-4 w-px bg-surface-200 dark:bg-surface-800" />
 
             <!-- Theme Toggle -->
             <button
                 type="button"
-                class="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 hover:bg-surface-100 hover:text-surface-900 transition-colors dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-white"
+                class="flex h-8 w-8 items-center justify-center rounded-lg text-surface-500 transition-colors hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-white"
                 :title="nextTheme === 'dark' ? 'Mode Gelap' : 'Mode Terang'"
                 @click="toggleTheme"
             >

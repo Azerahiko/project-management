@@ -67,6 +67,8 @@ class TaskController extends Controller
         $tasks->getCollection()->transform(function ($task) use ($request) {
             $task->can_update = $request->user()?->can('update', $task) ?? false;
             $task->can_delete = $request->user()?->can('delete', $task) ?? false;
+            $task->can_restore = $request->user()?->can('restore', $task) ?? false;
+            $task->can_force_delete = $request->user()?->can('forceDelete', $task) ?? false;
 
             return $task;
         });
@@ -136,6 +138,8 @@ class TaskController extends Controller
         $task->load(['project', 'assignee', 'creator']);
         $task->can_update = $request->user()?->can('update', $task) ?? false;
         $task->can_delete = $request->user()?->can('delete', $task) ?? false;
+        $task->can_restore = $request->user()?->can('restore', $task) ?? false;
+        $task->can_force_delete = $request->user()?->can('forceDelete', $task) ?? false;
 
         return TaskResource::make($task);
     }
@@ -312,33 +316,54 @@ class TaskController extends Controller
     }
 
     /**
-     * List soft-deleted tasks for a project.
+     * List soft-deleted tasks.
+     *
+     * Supports workspace scope (/tasks/trashed) and project scope (/projects/{project}/tasks/trashed).
+     * Ensures user only sees trashed tasks from projects/workspaces they belong to.
      */
-    public function trashed(Request $request, Project $project): AnonymousResourceCollection
+    public function trashed(Request $request, ?Project $project = null): AnonymousResourceCollection
     {
-        $this->authorize('view', $project);
-
         $perPage = Pagination::perPage($request, 15, 100);
+
         $tasks = Task::onlyTrashed()
-            ->where('project_id', $project->id)
-            ->with(['assignee', 'creator'])
-            ->when($request->string('search')->isNotEmpty(), function ($query) use ($request) {
+            ->with(['project', 'assignee', 'creator'])
+            ->when($request->filled('search'), function ($query) use ($request) {
                 $query->search($request->string('search')->toString());
             })
-            ->when($request->string('status')->isNotEmpty(), function ($query) use ($request) {
+            ->when($request->filled('status'), function ($query) use ($request) {
                 $query->status($request->string('status')->toString());
             })
-            ->when($request->string('priority')->isNotEmpty(), function ($query) use ($request) {
+            ->when($request->filled('priority'), function ($query) use ($request) {
                 $query->priority($request->string('priority')->toString());
             })
-            ->when($request->string('sort_by')->isNotEmpty(), function ($query) use ($request) {
+            ->when($request->filled('assignee_id'), function ($query) use ($request) {
+                $query->assignee($request->integer('assignee_id'));
+            })
+            ->when($request->filled('project_id'), function ($query) use ($request) {
+                $query->project($request->integer('project_id'));
+            })
+            ->when($request->filled('sort_by'), function ($query) use ($request) {
                 $query->sort(
                     $request->string('sort_by')->toString(),
                     $request->string('sort_direction')->toString() === 'desc' ? 'desc' : 'asc'
                 );
             }, fn ($query) => $query->latest('deleted_at'))
+            ->when($project !== null && $project->exists, function ($query) use ($project) {
+                $query->where('project_id', $project->id);
+            }, function ($query) use ($request) {
+                $query->accessibleBy($request->user());
+            })
             ->paginate($perPage)
             ->withQueryString();
+
+        $tasks->getCollection()->transform(function ($task) use ($request) {
+            $task->can_update = $request->user()?->can('update', $task) ?? false;
+            $task->can_delete = $request->user()?->can('delete', $task) ?? false;
+            $task->can_restore = $request->user()?->can('restore', $task) ?? false;
+            $task->can_force_delete = $request->user()?->can('forceDelete', $task) ?? false;
+
+            return $task;
+        });
 
         return TaskResource::collection($tasks);
     }
@@ -350,8 +375,30 @@ class TaskController extends Controller
     {
         $this->authorize('restore', $task);
 
+        // Prevent restoring tasks into trashed projects
+        $parentProject = $task->project()->withTrashed()->first();
+        if ($parentProject?->trashed()) {
+            return response()->json([
+                'message' => 'Tidak dapat memulihkan tugas karena proyek induknya masih berada di sampah.',
+            ], 422);
+        }
+
         $task->restore();
 
         return response()->json(['message' => 'Tugas berhasil dipulihkan.']);
+    }
+
+    /**
+     * Permanently force-delete a soft-deleted task.
+     */
+    public function forceDelete(Request $request, Task $task): JsonResponse
+    {
+        $this->authorize('forceDelete', $task);
+
+        DB::transaction(function () use ($task): void {
+            $task->forceDelete();
+        });
+
+        return response()->json(status: 204);
     }
 }

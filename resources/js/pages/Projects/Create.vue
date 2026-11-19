@@ -18,7 +18,7 @@ defineOptions({
 });
 
 const { success, error: toastError, warning } = useToast();
-const { fetchManagers } = useProjects({} as ProjectFilters);
+const { fetchManagers, clients } = useProjects({} as ProjectFilters);
 
 const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -43,6 +43,7 @@ const form = reactive({
     start_date: '',
     end_date: '',
     owner_id: '' as string,
+    client_id: '' as string,
 });
 
 const errors = ref<Record<string, string[]>>({});
@@ -197,6 +198,7 @@ async function handleSubmit(): Promise<void> {
             start_date: form.start_date || null,
             end_date: form.end_date || null,
             owner_id: form.owner_id || undefined,
+            client_ids: form.client_id ? [form.client_id] : [],
         };
 
         const { data } = await api.post('/projects', payload);
@@ -347,6 +349,24 @@ function goBack(): void {
                         <option value="" disabled>Memuat manager...</option>
                     </template>
                 </Select>
+
+                <Select
+                    v-model="form.client_id"
+                    :options="
+                        clients.map((c) => ({
+                            value: String(c.id),
+                            label: `${c.name} ${c.email || ''}`.trim(),
+                        }))
+                    "
+                    label="Klien (Client) *"
+                    required
+                    :error="errors.client_id?.[0]"
+                    @change="clearError('client_id')"
+                >
+                    <template #loading>
+                        <option value="" disabled>Memuat klien...</option>
+                    </template>
+                </Select>
             </div>
 
             <!-- Client Assets Section -->
@@ -416,7 +436,7 @@ function goBack(): void {
                         <div class="flex items-center gap-2">
                             <span
                                 v-if="fileErrors[index]"
-                                class="text-xs text-accent-700 dark:text-accent-300"
+                                class="text-accent-700 dark:text-accent-300 text-xs"
                             >
                                 {{ fileErrors[index] }}
                             </span>
@@ -438,7 +458,7 @@ function goBack(): void {
 
             <div
                 v-if="errors.form"
-                class="rounded-lg bg-accent-50 p-4 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300"
+                class="bg-accent-50 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300 rounded-lg p-4"
             >
                 {{ errors.form[0] }}
             </div>
@@ -447,7 +467,12 @@ function goBack(): void {
                 <Link :href="projects.index.url()">
                     <Button type="button" variant="secondary">Batal</Button>
                 </Link>
-                <Button type="submit" variant="primary" :loading="processing">
+                <Button
+                    type="submit"
+                    variant="primary"
+                    :loading="processing"
+                    :disabled="!form.client_id"
+                >
                     Simpan Proyek
                 </Button>
             </div>

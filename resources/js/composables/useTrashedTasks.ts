@@ -2,7 +2,10 @@ import { ref } from 'vue';
 import api from '@/lib/api';
 import type { PaginatedResponse, Task, TaskFilters } from '@/types';
 
-export function useTrashedTasks(projectId: number, filters: TaskFilters) {
+export function useTrashedTasks(
+    projectId: number | null = null,
+    filters: TaskFilters,
+) {
     const tasks = ref<Task[]>([]);
     const meta = ref({
         current_page: 1,
@@ -20,13 +23,15 @@ export function useTrashedTasks(projectId: number, filters: TaskFilters) {
 
         try {
             const { data: response } = await api.get<PaginatedResponse<Task>>(
-                `/projects/${projectId}/tasks/trashed`,
+                '/tasks/trashed',
                 {
                     params: {
                         search: filters.search || undefined,
                         status: filters.status || undefined,
                         priority: filters.priority || undefined,
                         assignee_id: filters.assignee_id || undefined,
+                        project_id:
+                            projectId ?? (filters.project_id || undefined),
                         sort_by: filters.sort_by || undefined,
                         sort_direction: filters.sort_direction,
                         page: filters.page,
@@ -43,9 +48,16 @@ export function useTrashedTasks(projectId: number, filters: TaskFilters) {
                 to: response.meta.to,
                 total: response.meta.total,
             };
-        } catch (e: any) {
+        } catch (e: unknown) {
+            const err = e as {
+                response?: {
+                    data?: {
+                        message?: string;
+                    };
+                };
+            };
             error.value =
-                e?.response?.data?.message ??
+                err?.response?.data?.message ??
                 'Gagal memuat daftar tugas yang dihapus. Silakan coba lagi.';
         } finally {
             loading.value = false;
@@ -53,7 +65,11 @@ export function useTrashedTasks(projectId: number, filters: TaskFilters) {
     }
 
     async function restoreTask(id: number): Promise<void> {
-        await api.post(`/tasks/${id}/restore`);
+        await api.post<{ data: Task }>(`/tasks/${id}/restore`);
+    }
+
+    async function forceDeleteTask(id: number): Promise<void> {
+        await api.delete<{ data: Task }>(`/tasks/${id}/force`);
     }
 
     return {
@@ -63,5 +79,6 @@ export function useTrashedTasks(projectId: number, filters: TaskFilters) {
         error,
         fetchTasks,
         restoreTask,
+        forceDeleteTask,
     };
 }

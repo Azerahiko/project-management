@@ -276,7 +276,7 @@ watch(
 <template>
     <aside
         data-sidebar
-        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between overflow-y-auto border-r border-surface-200/90 bg-white/95 backdrop-blur-md px-3 py-4 transition-transform duration-200 select-none lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-surface-800/80 dark:bg-surface-950/90"
+        class="fixed inset-y-0 left-0 z-50 flex h-full w-[250px] shrink-0 flex-col justify-between overflow-y-auto border-r border-surface-200/90 bg-white/95 px-3 py-4 backdrop-blur-md transition-transform duration-200 select-none lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 dark:border-surface-800/80 dark:bg-surface-950/90"
         aria-label="Navigasi Utama"
     >
         <!-- Top: Workspace Header & Navigation Menus -->
@@ -287,22 +287,32 @@ watch(
                     href="/dashboard"
                     class="group flex w-full items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-surface-200/60 dark:hover:bg-surface-900"
                 >
-                    <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="flex min-w-0 items-center gap-2.5">
                         <div
-                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-white shadow-xs font-semibold text-xs tracking-tight dark:bg-primary-500 dark:text-surface-950"
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-xs font-semibold tracking-tight text-white shadow-xs dark:bg-primary-500 dark:text-surface-950"
                         >
-                            {{ (page.props.app.shortName || 'PX').slice(0, 2).toUpperCase() }}
+                            {{
+                                (page.props.app.shortName || 'PX')
+                                    .slice(0, 2)
+                                    .toUpperCase()
+                            }}
                         </div>
-                        <div class="flex flex-col min-w-0 text-left">
-                            <span class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100">
+                        <div class="flex min-w-0 flex-col text-left">
+                            <span
+                                class="truncate text-xs font-semibold text-surface-900 dark:text-surface-100"
+                            >
                                 {{ page.props.app.name }}
                             </span>
-                            <span class="text-[10px] text-surface-400 font-medium tracking-wide">
+                            <span
+                                class="text-[10px] font-medium tracking-wide text-surface-400"
+                            >
                                 Workspace Tim
                             </span>
                         </div>
                     </div>
-                    <ChevronDown class="h-3.5 w-3.5 text-surface-400 transition-transform group-hover:text-surface-600 dark:group-hover:text-surface-300" />
+                    <ChevronDown
+                        class="h-3.5 w-3.5 text-surface-400 transition-transform group-hover:text-surface-600 dark:group-hover:text-surface-300"
+                    />
                 </Link>
 
                 <!-- Mobile Close Button -->
@@ -326,7 +336,9 @@ watch(
                         <Search class="h-3.5 w-3.5 text-surface-400" />
                         <span>Cari cepat...</span>
                     </div>
-                    <kbd class="rounded border border-surface-200 bg-surface-100 px-1 py-0.2 text-[9px] font-semibold text-surface-400 dark:border-surface-700 dark:bg-surface-800">
+                    <kbd
+                        class="py-0.2 rounded border border-surface-200 bg-surface-100 px-1 text-[9px] font-semibold text-surface-400 dark:border-surface-700 dark:bg-surface-800"
+                    >
                         ⌘K
                     </kbd>
                 </Link>
@@ -362,10 +374,10 @@ watch(
                             <!-- Active Accent Indicator -->
                             <span
                                 v-if="isActive(item.href)"
-                                class="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-sm bg-primary-600 dark:bg-primary-400"
+                                class="absolute top-1.5 bottom-1.5 left-0 w-1 rounded-r-sm bg-primary-600 dark:bg-primary-400"
                             />
 
-                            <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="flex min-w-0 items-center gap-2.5">
                                 <component
                                     :is="getIcon(item.icon)"
                                     class="h-4 w-4 shrink-0 transition-colors"
@@ -380,11 +392,15 @@ watch(
 
                             <!-- Count Badge -->
                             <div
-                                v-if="item.badge !== undefined && item.badge !== null && item.badge > 0"
+                                v-if="
+                                    item.badge !== undefined &&
+                                    item.badge !== null &&
+                                    item.badge > 0
+                                "
                                 class="flex items-center"
                             >
                                 <span
-                                    class="rounded px-1.5 py-0.2 text-[10px] font-bold tabular-nums transition-colors"
+                                    class="py-0.2 rounded px-1.5 text-[10px] font-bold tabular-nums transition-colors"
                                     :class="
                                         isActive(item.href)
                                             ? 'bg-primary-600 text-white dark:bg-primary-400 dark:text-surface-950'
@@ -401,14 +417,16 @@ watch(
         </div>
 
         <!-- Bottom: User Card Footer -->
-        <div class="mt-4 border-t border-surface-200/80 pt-2.5 dark:border-surface-800/80">
+        <div
+            class="mt-4 border-t border-surface-200/80 pt-2.5 dark:border-surface-800/80"
+        >
             <div
                 v-if="user"
                 class="flex items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-surface-200/50 dark:hover:bg-surface-900/60"
             >
                 <Link
                     href="/settings"
-                    class="flex min-w-0 items-center gap-2 flex-1"
+                    class="flex min-w-0 flex-1 items-center gap-2"
                 >
                     <div class="relative shrink-0">
                         <img
@@ -421,7 +439,10 @@ watch(
                             v-else
                             class="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-[10px] font-bold text-white shadow-2xs dark:bg-primary-600"
                         >
-                            {{ user.initials || user.name.slice(0, 2).toUpperCase() }}
+                            {{
+                                user.initials ||
+                                user.name.slice(0, 2).toUpperCase()
+                            }}
                         </div>
                         <span
                             class="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-surface-950"
@@ -429,7 +450,9 @@ watch(
                         />
                     </div>
                     <div class="flex min-w-0 flex-col leading-tight">
-                        <span class="truncate text-xs font-medium text-surface-900 dark:text-surface-100">
+                        <span
+                            class="truncate text-xs font-medium text-surface-900 dark:text-surface-100"
+                        >
                             {{ user.name }}
                         </span>
                         <span class="truncate text-[10px] text-surface-400">
@@ -440,7 +463,7 @@ watch(
 
                 <button
                     type="button"
-                    class="rounded-lg p-1.5 text-surface-400 hover:bg-surface-200 hover:text-rose-600 dark:hover:bg-surface-800 dark:hover:text-rose-400 transition"
+                    class="rounded-lg p-1.5 text-surface-400 transition hover:bg-surface-200 hover:text-rose-600 dark:hover:bg-surface-800 dark:hover:text-rose-400"
                     title="Keluar"
                     @click="handleLogout"
                 >
@@ -460,10 +483,14 @@ watch(
             >
                 <div class="flex items-center justify-between pb-3">
                     <div class="flex items-center gap-2">
-                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400">
+                        <span
+                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400"
+                        >
                             <Sparkles class="h-4 w-4" />
                         </span>
-                        <h3 class="text-sm font-bold">{{ comingSoonModal.title }}</h3>
+                        <h3 class="text-sm font-bold">
+                            {{ comingSoonModal.title }}
+                        </h3>
                     </div>
                     <button
                         type="button"
@@ -473,7 +500,9 @@ watch(
                         <X class="h-4 w-4" />
                     </button>
                 </div>
-                <p class="text-xs text-surface-600 dark:text-surface-300 leading-relaxed">
+                <p
+                    class="text-xs leading-relaxed text-surface-600 dark:text-surface-300"
+                >
                     {{ comingSoonModal.desc }}
                 </p>
             </div>
