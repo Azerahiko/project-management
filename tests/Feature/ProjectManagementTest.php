@@ -86,7 +86,7 @@ describe('Project Management', function () {
 
     describe('API CRUD', function () {
         it('allows admin to create project via API', function () {
-            [$admin] = createTestUsers();
+            [$admin, $client] = createTestUsers('client');
             $this->actingAs($admin)
                 ->postJson('/api/projects', [
                     'name' => 'New Project',
@@ -95,6 +95,7 @@ describe('Project Management', function () {
                     'priority' => 'high',
                     'start_date' => now()->toDateString(),
                     'end_date' => now()->addMonth()->toDateString(),
+                    'client_ids' => [$client->id],
                 ])
                 ->assertCreated()
                 ->assertJsonStructure(['data' => ['id', 'name', 'status', 'priority']]);
@@ -103,12 +104,13 @@ describe('Project Management', function () {
         });
 
         it('allows project manager to create project via API', function () {
-            [, $pm] = createTestUsers();
+            [, $pm, $client] = createTestUsers(['client', 'pm']);
             $this->actingAs($pm)
                 ->postJson('/api/projects', [
                     'name' => 'PM Project',
                     'status' => 'draft',
                     'priority' => 'medium',
+                    'client_ids' => [$client->id],
                 ])
                 ->assertCreated();
 
@@ -729,48 +731,53 @@ describe('Project Management', function () {
 
     describe('Validation', function () {
         it('requires name for project creation', function () {
-            [$admin] = createTestUsers();
+            [$admin, $client] = createTestUsers('client');
             $this->actingAs($admin)
                 ->postJson('/api/projects', [
+                    'name' => '',  // empty name to trigger validation error
                     'description' => 'No name',
                     'status' => 'draft',
                     'priority' => 'medium',
+                    'client_ids' => [$client->id],
                 ])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors('name');
         });
 
         it('validates status enum', function () {
-            [$admin] = createTestUsers();
+            [$admin, $client] = createTestUsers('client');
             $this->actingAs($admin)
                 ->postJson('/api/projects', [
                     'name' => 'Test',
                     'status' => 'invalid_status',
                     'priority' => 'medium',
+                    'client_ids' => [$client->id],
                 ])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors('status');
         });
 
         it('validates priority enum', function () {
-            [$admin] = createTestUsers();
+            [$admin, $client] = createTestUsers('client');
             $this->actingAs($admin)
                 ->postJson('/api/projects', [
                     'name' => 'Test',
                     'status' => 'draft',
                     'priority' => 'invalid_priority',
+                    'client_ids' => [$client->id],
                 ])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors('priority');
         });
 
         it('validates end_date after start_date', function () {
-            [$admin] = createTestUsers();
+            [$admin, $client] = createTestUsers('client');
             $this->actingAs($admin)
                 ->postJson('/api/projects', [
                     'name' => 'Test',
                     'start_date' => now()->addDays(10)->toDateString(),
                     'end_date' => now()->toDateString(),
+                    'client_ids' => [$client->id],
                 ])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors('end_date');

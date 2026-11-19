@@ -106,6 +106,20 @@ class Project extends Model
     }
 
     /**
+     * Get clients attached to the project.
+     *
+     * @return BelongsToMany<User, $this, ProjectMember>
+     */
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'project_members')
+            ->whereHas('roles', function ($roleQuery) {
+                $roleQuery->where('name', 'client');
+            })
+            ->withPivot('role');
+    }
+
+    /**
      * Get all tasks for the project.
      *
      * @return HasMany<Task, $this>

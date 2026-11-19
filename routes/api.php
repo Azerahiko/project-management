@@ -65,6 +65,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Project routes (read-only)
     Route::get('projects', [ProjectController::class, 'index'])->middleware('can:projects.view', 'token.ability:projects:read');
+    Route::get('projects/clients', [ProjectController::class, 'clients'])->middleware('can:projects.view', 'token.ability:projects:read');
     Route::get('projects/managers', [ProjectController::class, 'managers'])->middleware('can:projects.create', 'token.ability:projects:read');
     Route::get('projects/trashed', [ProjectController::class, 'trashed'])->middleware('can:projects.view', 'token.ability:projects:read');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->middleware('can:projects.view', 'token.ability:projects:read');
@@ -100,14 +101,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Project trash
         Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->withTrashed()->middleware('can:projects.update', 'token.ability:projects:write');
         // Task trash
-        Route::get('projects/{project}/tasks/trashed', [TaskController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
-        Route::post('tasks/{task}/restore', [TaskController::class, 'restore'])->withTrashed()->middleware('can:tasks.update', 'token.ability:tasks:write');
-        // Task comment trash
-        Route::get('tasks/{task}/comments/trashed', [TaskCommentController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
-        Route::post('comments/{comment}/restore', [TaskCommentController::class, 'restore'])->withTrashed()->middleware('can:task-comments.update', 'token.ability:tasks:write');
-        // Project file trash
-        Route::post('projects/{project}/files/{file}/restore', [ProjectFileController::class, 'restore'])
-            ->withTrashed()
+        Route::get('tasks/trashed', [TaskController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read')->name('api.tasks.trashed');
+        Route::get('task/trashed', [TaskController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
+        // Alias BEFORE the wildcard task route below
+        Route::get('tasks/{task}', [TaskController::class, 'show'])
+            ->whereNumber('task')
+            ->middleware('can:tasks.view', 'token.ability:tasks:read');
+
+        // Task detail routes (after /tasks/trashed to avoid collision)
+        Route::get('tasks/{task}', [TaskController::class, 'show'])
+            ->whereNumber('task')
+            ->middleware('can:tasks.view', 'token.ability:tasks:read');
+
+        Route::post('tasks/{task}/restore', [TaskController::class, 'restore'])->withTrashed()->middleware('can:tasks.delete', 'token.ability:tasks:write');
+        Route::delete('tasks/{task}/force', [TaskController::class, 'forceDelete'])->withTrashed()->middleware('can:tasks.delete', 'token.ability:tasks:write');
+        // Task comments
+        Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->middleware('can:task-comments.create', 'token.ability:tasks:write');
+        Route::put('comments/{comment}', [TaskCommentController::class, 'update'])->middleware('can:task-comments.update', 'token.ability:tasks:write');
+        Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->middleware('can:task-comments.delete', 'token.ability:tasks:write');
+        // Project files
+        Route::post('projects/{project}/files', [ProjectFileController::class, 'store'])
+            ->middleware(['can:projects.update', 'token.ability:projects:write']);
+        Route::delete('projects/{project}/files/{file}', [ProjectFileController::class, 'destroy'])
             ->scopeBindings()
             ->middleware(['can:projects.update', 'token.ability:projects:write']);
     });

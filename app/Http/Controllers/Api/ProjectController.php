@@ -97,6 +97,21 @@ class ProjectController extends Controller
                 'joined_at' => now(),
             ]);
 
+            // Add clients as project members with VIEWER role
+            if (isset($data['client_ids']) && is_array($data['client_ids'])) {
+                foreach ($data['client_ids'] as $clientId) {
+                    $client = User::find($clientId);
+                    if ($client && $client->hasRole('client')) {
+                        ProjectMember::create([
+                            'project_id' => $project->id,
+                            'user_id' => $clientId,
+                            'role' => ProjectRole::VIEWER,
+                            'joined_at' => now(),
+                        ]);
+                    }
+                }
+            }
+
             return $project->load(['owner', 'projectMembers.user']);
         });
 
@@ -156,6 +171,28 @@ class ProjectController extends Controller
 
             if ($ownerChanged) {
                 $this->syncProjectOwner($project, $newOwnerId, $previousOwnerId, $request->user());
+            }
+
+            // Sync client_ids: remove clients not in new list, add new clients
+            if (isset($data['client_ids']) && is_array($data['client_ids'])) {
+                $project->projectMembers()->whereNotIn('user_id', $data['client_ids'])
+                    ->whereHas('user', fn ($q) => $q->whereHas('roles', function ($r) {
+                        $r->where('name', 'client');
+                    }))
+                    ->delete();
+
+                foreach ($data['client_ids'] as $clientId) {
+                    $client = User::find($clientId);
+                    if ($client && $client->hasRole('client') && ! $project->projectMembers()
+                        ->where('user_id', $clientId)
+                        ->exists()) {
+                        ProjectMember::create([
+                            'project_id' => $project->id,
+                            'user_id' => $clientId,
+                            'role' => ProjectRole::VIEWER,
+                        ]);
+                    }
+                }
             }
         });
 
@@ -308,6 +345,17 @@ class ProjectController extends Controller
             abort(422, 'Tidak dapat menghapus pemilik proyek.');
         }
 
+        // Cannot remove the last remaining client (exclude owner from count)
+        $isClient = $user->hasRole('client');
+        $clientCount = $project->projectMembers()
+            ->where('user_id', '!=', $project->owner_id)
+            ->whereHas('user', fn ($q) => $q->whereHas('roles', fn ($r) => $r->where('name', 'client')))
+            ->count();
+
+        if ($isClient && $clientCount <= 1) {
+            abort(422, 'Proyek harus mempertahankan minimal satu klien.');
+        }
+
         $member = $project->projectMembers()->where('user_id', $user->id)->firstOrFail();
 
         DB::transaction(function () use ($member) {
@@ -397,6 +445,28 @@ class ProjectController extends Controller
 
         return response()->json([
             'data' => $managers->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $user->avatar,
+                'initials' => $user->initials,
+            ]),
+        ]);
+    }
+
+    /**
+     * List active users with the client role.
+     */
+    public function clients(Request $request): JsonResponse
+    {
+        $clients = User::query()
+            ->where('is_active', true)
+            ->role(Roles::CLIENT)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'avatar']);
+
+        return response()->json([
+            'data' => $clients->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,

@@ -70,7 +70,14 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware('can:projects.create')->group(function () {
-        Route::inertia('/projects/create', 'Projects/Create')->name('projects.create');
+        Route::inertia('/projects/create', 'Projects/Create', [
+            'clients' => User::whereHas('roles', function ($query) {
+                $query->where('name', 'client');
+            })
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'avatar']),
+        ])->name('projects.create');
     });
 
     Route::middleware('can:projects.view')->group(function () {
@@ -99,6 +106,12 @@ Route::middleware(['auth'])->group(function () {
 
             return Inertia::render('Projects/Edit', [
                 'project' => ProjectResource::make($project)->toArray($request),
+                'clients' => User::whereHas('roles', function ($query) {
+                    $query->where('name', 'client');
+                })
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'email', 'avatar']),
             ]);
         })->name('projects.edit');
     });
@@ -106,6 +119,8 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('can:tasks.view')->group(function () {
         Route::inertia('/tasks', 'Tasks/Index')->name('tasks.index');
         Route::inertia('/tasks/create', 'Tasks/Create')->name('tasks.create');
+        Route::inertia('/tasks/trashed', 'Tasks/WorkspaceTrashed')->name('tasks.trashed.workspace');
+        Route::redirect('/task/trashed', '/tasks/trashed');
         Route::get('/projects/{project}/tasks/trashed', function (Project $project, Request $request) {
             abort_unless($request->user()->can('view', $project), 403);
 

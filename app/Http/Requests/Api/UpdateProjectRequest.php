@@ -6,9 +6,11 @@ use App\Enums\ProjectPriority;
 use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\Roles;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateProjectRequest extends FormRequest
 {
@@ -60,6 +62,51 @@ class UpdateProjectRequest extends FormRequest
                     $fail('Pemilik proyek harus pengguna yang aktif.');
                 },
             ],
+            'client_ids' => ['sometimes', 'required', 'array', 'min:1'],
+            'client_ids.*' => ['required', 'integer', 'distinct', Rule::exists('users', 'id')->where('is_active', true)],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'client_ids.required' => 'Proyek wajib memiliki minimal satu klien.',
+            'client_ids.min' => 'Proyek wajib memiliki minimal satu klien.',
+            'client_ids.*.exists' => 'Klien yang dipilih tidak valid atau tidak aktif.',
+        ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v) {
+            if (! $this->has('client_ids')) {
+                return;
+            }
+
+            $clientIds = (array) $this->input('client_ids', []);
+            if (empty($clientIds)) {
+                $v->errors()->add('client_ids', 'Proyek wajib memiliki minimal satu klien.');
+
+                return;
+            }
+
+            $validClientCount = User::role(Roles::CLIENT)
+                ->whereIn('id', $clientIds)
+                ->count();
+
+            if ($validClientCount !== count(array_unique($clientIds))) {
+                $v->errors()->add('client_ids', 'Semua pengguna yang dipilih sebagai klien harus memiliki role client.');
+            }
+        });
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('client_id') && ! $this->has('client_ids')) {
+            $clientId = $this->input('client_id');
+            $this->merge([
+                'client_ids' => filled($clientId) ? [(int) $clientId] : [],
+            ]);
+        }
     }
 }
