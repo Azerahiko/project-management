@@ -193,7 +193,7 @@ function toggleExpand(activity: TaskActivity): void {
                                 </span>
                                 <span
                                     v-if="activity.old_value"
-                                    class="text-accent-700 line-through dark:text-accent-300"
+                                    class="text-accent-700 dark:text-accent-300 line-through"
                                 >
                                     {{ activity.old_value }}
                                 </span>

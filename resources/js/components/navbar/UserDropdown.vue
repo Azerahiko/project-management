@@ -158,7 +158,7 @@ onUnmounted(() => {
             <button
                 type="button"
                 role="menuitem"
-                class="dropdown-item w-full justify-start text-accent-700 dark:text-accent-300"
+                class="dropdown-item text-accent-700 dark:text-accent-300 w-full justify-start"
                 @click="handleLogout"
             >
                 <component :is="getIcon('LogOut')" class="h-4 w-4" />

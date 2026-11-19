@@ -175,7 +175,7 @@ onUnmounted(() => {
             <component :is="getIcon('Bell')" class="h-5 w-5" />
             <span
                 v-if="unreadCount > 0"
-                class="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-md bg-accent-500 text-[10px] font-bold text-surface-950 shadow-2xs"
+                class="bg-accent-500 absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-md text-[10px] font-bold text-surface-950 shadow-2xs"
             >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
