@@ -39,7 +39,7 @@ class DummyDataSeeder extends Seeder
             ?? $admin;
 
         $siti = User::where('email', 'team.leader@example.com')->first() ?? $admin;
-        $andi = User::where('email', 'member@example.com')->first() ?? $admin;
+        $andi = User::where('email', 'developer@example.com')->first() ?? $admin;
         $dewi = User::where('email', 'reviewer@example.com')->first() ?? $admin;
 
         $allUsers = [$admin, $budi, $siti, $andi, $dewi];

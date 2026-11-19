@@ -33,7 +33,7 @@ foreach ([
     Roles::ADMINISTRATOR,
     Roles::PROJECT_MANAGER,
     Roles::TEAM_LEADER,
-    Roles::MEMBER,
+    Roles::DEVELOPER,
     Roles::REVIEWER,
     Roles::CLIENT,
 ] as $role) {

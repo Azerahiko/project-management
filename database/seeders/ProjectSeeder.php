@@ -23,7 +23,7 @@ class ProjectSeeder extends Seeder
     {
         $admin = User::where('email', 'admin@example.com')->first();
         $pm = User::where('email', 'pm@example.com')->first();
-        $member = User::where('email', 'member@example.com')->first();
+        $developer = User::where('email', 'developer@example.com')->first();
 
         // Create PM user if not exists
         if (! $pm) {
@@ -37,16 +37,16 @@ class ProjectSeeder extends Seeder
             $pm->assignRole('project_manager');
         }
 
-        // Create member user if not exists
-        if (! $member) {
-            $member = User::create([
-                'name' => 'Team Member',
-                'email' => 'member@example.com',
+        // Create developer user if not exists
+        if (! $developer) {
+            $developer = User::create([
+                'name' => 'Developer',
+                'email' => 'developer@example.com',
                 'password' => bcrypt('password'),
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
-            $member->assignRole('developer');
+            $developer->assignRole('developer');
         }
 
         // Project 1: Active project owned by admin
@@ -73,7 +73,7 @@ class ProjectSeeder extends Seeder
         );
 
         ProjectMember::updateOrCreate(
-            ['project_id' => $project1->id, 'user_id' => $member->id],
+            ['project_id' => $project1->id, 'user_id' => $developer->id],
             ['role' => ProjectRole::MEMBER, 'joined_at' => $project1->created_at]
         );
 
@@ -96,7 +96,7 @@ class ProjectSeeder extends Seeder
         );
 
         ProjectMember::updateOrCreate(
-            ['project_id' => $project2->id, 'user_id' => $member->id],
+            ['project_id' => $project2->id, 'user_id' => $developer->id],
             ['role' => ProjectRole::MEMBER, 'joined_at' => $project2->created_at]
         );
 

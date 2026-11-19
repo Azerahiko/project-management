@@ -40,7 +40,7 @@ if (! function_exists('createTestUsers')) {
         $pm->assignRole('project_manager');
 
         $member = User::factory()->create([
-            'email' => 'member@example.com',
+            'email' => 'developer@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
             'email_verified_at' => now(),
