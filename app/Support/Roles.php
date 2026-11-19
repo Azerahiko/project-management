@@ -12,7 +12,7 @@ class Roles
 
     public const TEAM_LEADER = 'team_leader';
 
-    public const MEMBER = 'member';
+    public const DEVELOPER = 'developer';
 
     public const REVIEWER = 'reviewer';
 
@@ -29,7 +29,7 @@ class Roles
             self::ADMINISTRATOR => 'Administrator',
             self::PROJECT_MANAGER => 'Project Manager',
             self::TEAM_LEADER => 'Team Leader',
-            self::MEMBER => 'Member',
+            self::DEVELOPER => 'Developer',
             self::REVIEWER => 'Reviewer',
             self::CLIENT => 'Client',
         ];

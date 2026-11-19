@@ -22,7 +22,7 @@ class InvitationFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => hash('sha256', Str::random(64)),
             'expires_at' => now()->addHours(72),
             'accepted_at' => null,

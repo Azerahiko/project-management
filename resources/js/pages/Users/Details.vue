@@ -24,7 +24,7 @@ const roleOptions = [
     { value: 'administrator', label: 'Administrator' },
     { value: 'project_manager', label: 'Project Manager' },
     { value: 'team_leader', label: 'Team Leader' },
-    { value: 'member', label: 'Member' },
+    { value: 'developer', label: 'Developer' },
     { value: 'reviewer', label: 'Reviewer' },
     { value: 'client', label: 'Client' },
 ];
@@ -32,7 +32,7 @@ const roleOptions = [
 const form = reactive({
     name: '',
     email: '',
-    role: 'member' as string,
+    role: 'developer' as string,
     is_active: true,
 });
 
@@ -46,12 +46,12 @@ const isEditing = ref(false);
 function loadUser(): void {
     form.name = initialUser.name;
     form.email = initialUser.email;
-    form.role = initialUser.roles[0] || 'member';
+    form.role = initialUser.roles[0] || 'developer';
     form.is_active = initialUser.is_active;
 
     originalData.name = initialUser.name;
     originalData.email = initialUser.email;
-    originalData.role = initialUser.roles[0] || 'member';
+    originalData.role = initialUser.roles[0] || 'developer';
     originalData.is_active = initialUser.is_active;
 }
 

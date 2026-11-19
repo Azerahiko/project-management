@@ -26,7 +26,7 @@ describe('Inactive user stateless API (H-6)', function () {
             'is_active' => false,
             'email_verified_at' => now(),
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $token = $user->createToken('test-token', ['*'])->plainTextToken;
 
@@ -44,7 +44,7 @@ describe('Inactive user stateless API (H-6)', function () {
             'is_active' => false,
             'email_verified_at' => now(),
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $this->actingAs($user)
             ->get('/users')

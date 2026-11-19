@@ -17,7 +17,7 @@ describe('Task Collaboration', function () {
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
-        $this->outsider->assignRole('member');
+        $this->outsider->assignRole('developer');
 
         [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
         [$this->task] = createTestTasks($this->admin, $this->pm, $this->member, $this->project, $this->project, $this->project);

@@ -26,7 +26,7 @@ describe('Role & Permission Management', function () {
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
-        $this->user->assignRole('member');
+        $this->user->assignRole('developer');
     });
 
     describe('Web UI access', function () {

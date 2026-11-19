@@ -15,7 +15,7 @@ beforeEach(function () {
 function settingsUser(): User
 {
     $user = User::factory()->create(['is_active' => true]);
-    $user->assignRole('member');
+    $user->assignRole('developer');
 
     return $user;
 }

@@ -849,7 +849,7 @@ class DummyDataSeeder extends Seeder
                 $targetUser->notify(new ProjectMemberAdded(
                     $targetProject->id,
                     $targetProject->name,
-                    'member',
+                    'developer',
                     $admin->name
                 ));
             }

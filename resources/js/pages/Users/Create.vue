@@ -19,7 +19,7 @@ const { success, error: toastError } = useToast();
 const roleOptions = [
     { value: 'project_manager', label: 'Project Manager' },
     { value: 'team_leader', label: 'Team Leader' },
-    { value: 'member', label: 'Member' },
+    { value: 'developer', label: 'Developer' },
     { value: 'reviewer', label: 'Reviewer' },
     { value: 'client', label: 'Client' },
 ];
@@ -27,7 +27,7 @@ const roleOptions = [
 const form = reactive({
     name: '',
     email: '',
-    role: 'member' as string,
+    role: 'developer' as string,
     is_active: true,
     temporary_password: '',
 });

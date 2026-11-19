@@ -20,7 +20,7 @@ const roleOptions = [
     { value: 'administrator', label: 'Administrator' },
     { value: 'project_manager', label: 'Project Manager' },
     { value: 'team_leader', label: 'Team Leader' },
-    { value: 'member', label: 'Member' },
+    { value: 'developer', label: 'Developer' },
     { value: 'reviewer', label: 'Reviewer' },
     { value: 'client', label: 'Client' },
 ];
@@ -28,7 +28,7 @@ const roleOptions = [
 const form = reactive({
     name: '',
     email: '',
-    role: 'member' as string,
+    role: 'developer' as string,
 });
 
 const errors = ref<Record<string, string[]>>({});
@@ -85,7 +85,7 @@ async function handleSubmit(): Promise<void> {
 function resetForm(): void {
     form.name = '';
     form.email = '';
-    form.role = 'member';
+    form.role = 'developer';
     showResult.value = false;
     inviteResult.value = null;
 }

@@ -17,7 +17,7 @@ class DummyUserSeeder extends Seeder
         $users = [
             ['name' => 'Budi Santoso', 'email' => 'project.manager@example.com', 'role' => Roles::PROJECT_MANAGER],
             ['name' => 'Siti Rahayu', 'email' => 'team.leader@example.com', 'role' => Roles::TEAM_LEADER],
-            ['name' => 'Andi Wijaya', 'email' => 'member@example.com', 'role' => Roles::MEMBER],
+            ['name' => 'Andi Wijaya', 'email' => 'developer@example.com', 'role' => Roles::DEVELOPER],
             ['name' => 'Dewi Lestari', 'email' => 'reviewer@example.com', 'role' => Roles::REVIEWER],
             ['name' => 'Rudi Hartono', 'email' => 'client@example.com', 'role' => Roles::CLIENT],
         ];

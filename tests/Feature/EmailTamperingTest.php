@@ -27,7 +27,7 @@ describe('Invitation Verification Boundary', function () {
             'is_active' => true,
             'email_verified_at' => null,
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $expiresAt = now()->addHours(72);
         $token = 'secure-token-12345678901234567890123456789012';
@@ -62,7 +62,7 @@ describe('Invitation Verification Boundary', function () {
             'is_active' => true,
             'email_verified_at' => null,
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $expiresAt = now()->subHour();
         $token = 'expired-token-12345678901234567890123456789012';
@@ -95,7 +95,7 @@ describe('Invitation Verification Boundary', function () {
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $expiresAt = now()->addHours(72);
         $token = 'accepted-token-12345678901234567890123456789012';

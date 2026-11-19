@@ -73,7 +73,7 @@ const roleOptions = [
     { value: 'administrator', label: 'Administrator' },
     { value: 'project_manager', label: 'Project Manager' },
     { value: 'team_leader', label: 'Team Leader' },
-    { value: 'member', label: 'Member' },
+    { value: 'developer', label: 'Developer' },
     { value: 'reviewer', label: 'Reviewer' },
     { value: 'client', label: 'Client' },
 ];
@@ -118,7 +118,7 @@ const memberCount = computed(() => {
     return userList.value.filter((u) =>
         u.roles?.some(
             (r) =>
-                r.toLowerCase().includes('member') ||
+                r.toLowerCase().includes('developer') ||
                 r.toLowerCase().includes('leader'),
         ),
     ).length;

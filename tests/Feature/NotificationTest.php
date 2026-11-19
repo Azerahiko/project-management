@@ -40,14 +40,14 @@ beforeEach(function () {
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
-    $this->member1->assignRole('member');
+    $this->member1->assignRole('developer');
 
     $this->member2 = User::factory()->create([
         'email' => 'member2@example.com',
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
-    $this->member2->assignRole('member');
+    $this->member2->assignRole('developer');
 
     $this->client = User::factory()->create([
         'email' => 'client@example.com',
@@ -378,7 +378,7 @@ test('project member added creates notification for new member', function () {
         'password' => bcrypt('password'),
         'is_active' => true,
     ]);
-    $newUser->assignRole('member');
+    $newUser->assignRole('developer');
 
     $response = $this->postJson("/api/projects/{$this->project->id}/members", [
         'user_id' => $newUser->id,

@@ -384,7 +384,7 @@ describe('Project Management', function () {
             [$project] = createTestProjects($admin, $pm, $member);
 
             $projectManager = User::factory()->create(['is_active' => true]);
-            $projectManager->assignRole('member');
+            $projectManager->assignRole('developer');
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $projectManager->id,
@@ -413,7 +413,7 @@ describe('Project Management', function () {
             ]);
 
             $otherManager = User::factory()->create(['is_active' => true]);
-            $otherManager->assignRole('member');
+            $otherManager->assignRole('developer');
             ProjectMember::create([
                 'project_id' => $otherProject->id,
                 'user_id' => $otherManager->id,
@@ -469,12 +469,12 @@ describe('Project Management', function () {
                 'email' => 'candidate@example.com',
                 'is_active' => true,
             ]);
-            $candidate->assignRole('member');
+            $candidate->assignRole('developer');
             $inactive = User::factory()->create([
                 'email' => 'inactive@example.com',
                 'is_active' => false,
             ]);
-            $inactive->assignRole('member');
+            $inactive->assignRole('developer');
 
             $response = $this->actingAs($pm)
                 ->getJson("/api/projects/{$project->id}/available-users")
@@ -505,7 +505,7 @@ describe('Project Management', function () {
                 'email' => 'newmember@example.com',
                 'password' => bcrypt('password'),
             ]);
-            $newUser->assignRole('member');
+            $newUser->assignRole('developer');
 
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
@@ -529,7 +529,7 @@ describe('Project Management', function () {
                 'email' => 'newmember2@example.com',
                 'password' => bcrypt('password'),
             ]);
-            $newUser->assignRole('member');
+            $newUser->assignRole('developer');
 
             $this->actingAs($pm)
                 ->postJson("/api/projects/{$project->id}/members", [
@@ -546,7 +546,7 @@ describe('Project Management', function () {
                 'email' => 'newmember3@example.com',
                 'password' => bcrypt('password'),
             ]);
-            $newUser->assignRole('member');
+            $newUser->assignRole('developer');
 
             $this->actingAs($member)
                 ->postJson("/api/projects/{$project->id}/members", [

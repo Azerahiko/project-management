@@ -47,7 +47,7 @@ if (! function_exists('createTestUsers')) {
             'onboarding_password_changed_at' => now(),
             'onboarding_completed_at' => now(),
         ]);
-        $member->assignRole('member');
+        $member->assignRole('developer');
 
         return [$admin, $pm, $member];
     }

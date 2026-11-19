@@ -14,7 +14,7 @@ beforeEach(function () {
 
 it('guards placeholder pages with their related permissions', function () {
     $member = User::factory()->create(['is_active' => true]);
-    $member->assignRole('member');
+    $member->assignRole('developer');
 
     $this->actingAs($member)->get('/collaboration')->assertOk();
     $this->actingAs($member)->get('/calendar')->assertOk();

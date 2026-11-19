@@ -46,7 +46,7 @@ class ProjectSeeder extends Seeder
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
-            $member->assignRole('member');
+            $member->assignRole('developer');
         }
 
         // Project 1: Active project owned by admin

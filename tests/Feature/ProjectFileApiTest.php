@@ -91,7 +91,7 @@ describe('Project files authorization', function () {
         File::factory()->for($this->project)->create();
 
         $outsider = User::factory()->create(['is_active' => true]);
-        $outsider->assignRole('member');
+        $outsider->assignRole('developer');
 
         $this->actingAs($outsider)
             ->getJson("/api/projects/{$this->project->id}/files")

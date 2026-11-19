@@ -372,7 +372,7 @@ describe('Onboarding Findings Verification', function () {
             'two_factor_confirmed_at' => now(),
             'onboarding_completed_at' => now(),
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $response = $this->actingAs($admin)->getJson("/api/users/{$user->id}")->assertOk();
 
@@ -390,7 +390,7 @@ describe('Onboarding Findings Verification', function () {
             'two_factor_confirmed_at' => null,
             'onboarding_completed_at' => null,
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         // Step 1: Update password
         $this->actingAs($user)

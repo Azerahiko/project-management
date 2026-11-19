@@ -27,7 +27,7 @@ describe('Concurrent Activation Protection', function () {
             'is_active' => true,
             'email_verified_at' => null,
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $expiresAt = now()->addHours(72);
         $token = 'concurrent-token-12345678901234567890123456789012';
@@ -86,7 +86,7 @@ describe('Concurrent Activation Protection', function () {
             'is_active' => true,
             'email_verified_at' => null,
         ]);
-        $user->assignRole('member');
+        $user->assignRole('developer');
 
         $expiresAt = now()->addHours(72);
         $token = 'sequential-token-87654321098765432109876543210987';

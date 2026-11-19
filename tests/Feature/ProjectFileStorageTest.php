@@ -247,7 +247,7 @@ describe('Project file download', function () {
         Storage::disk('local')->put($file->storage_path, 'isi');
 
         $outsider = User::factory()->create(['is_active' => true]);
-        $outsider->assignRole('member');
+        $outsider->assignRole('developer');
 
         $this->actingAs($outsider)
             ->get("/api/projects/{$this->project->id}/files/{$file->id}/download")

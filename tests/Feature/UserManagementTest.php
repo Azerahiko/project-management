@@ -29,7 +29,7 @@ describe('User Management RBAC', function () {
             'password' => bcrypt('password'),
             'is_active' => true,
         ]);
-        $this->user->assignRole('member');
+        $this->user->assignRole('developer');
     });
 
     describe('Web UI access', function () {
@@ -97,7 +97,7 @@ describe('User Management RBAC', function () {
                 'email' => 'target-delete@example.com',
                 'is_active' => true,
             ]);
-            $target->assignRole('member');
+            $target->assignRole('developer');
 
             Invitation::create([
                 'name' => $target->name,
@@ -166,7 +166,7 @@ describe('User Management RBAC', function () {
                 'email' => 'target@example.com',
                 'is_active' => true,
             ]);
-            $target->assignRole('member');
+            $target->assignRole('developer');
 
             $this->actingAs($this->admin)
                 ->putJson("/api/users/{$target->id}", [
@@ -188,7 +188,7 @@ describe('User Management RBAC', function () {
                 'email' => 'target@example.com',
                 'is_active' => true,
             ]);
-            $target->assignRole('member');
+            $target->assignRole('developer');
 
             $this->actingAs($this->user)
                 ->putJson("/api/users/{$target->id}", [
@@ -202,7 +202,7 @@ describe('User Management RBAC', function () {
                 'email' => 'target@example.com',
                 'is_active' => true,
             ]);
-            $target->assignRole('member');
+            $target->assignRole('developer');
 
             $this->actingAs($this->admin)
                 ->deleteJson("/api/users/{$target->id}")
@@ -216,7 +216,7 @@ describe('User Management RBAC', function () {
                 'email' => 'target@example.com',
                 'is_active' => true,
             ]);
-            $target->assignRole('member');
+            $target->assignRole('developer');
 
             $this->actingAs($this->user)
                 ->deleteJson("/api/users/{$target->id}")
