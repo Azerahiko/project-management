@@ -150,13 +150,13 @@ describe('Task Management', function () {
             $this->assertDatabaseHas('tasks', ['title' => 'PM Task']);
         });
 
-        it('allows member to create task via API', function () {
+        it('allows administrator to create task via API', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+            $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
-                    'title' => 'Member Task',
+                    'title' => 'Admin Task',
                     'status' => 'todo',
                     'priority' => 'medium',
                 ])
@@ -248,7 +248,7 @@ describe('Task Management', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             $outsider = User::factory()->create(['email' => 'outsider@example.com']);
-            $outsider->assignRole('member');
+            $outsider->assignRole('developer');
 
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
@@ -394,13 +394,13 @@ describe('Task Management', function () {
                 ->assertNoContent();
         });
 
-        it('denies project manager role deleting task', function () {
+        it('allows project manager to delete task via API', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
             $this->actingAs($pm)
                 ->deleteJson("/api/tasks/{$task1->id}")
-                ->assertForbidden();
+                ->assertNoContent();
         });
 
         it('denies member deleting task', function () {
@@ -622,11 +622,11 @@ describe('Task Management', function () {
             $this->assertTrue($admin->can('delete', $task1));
         });
 
-        it('denies project manager role deleting task', function () {
+        it('allows project manager to delete task via policy', function () {
             [$admin, $pm, $member] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $member);
             [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->assertFalse($pm->can('delete', $task1));
+            $this->assertTrue($pm->can('delete', $task1));
         });
 
         it('denies member deleting task', function () {

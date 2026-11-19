@@ -4,7 +4,6 @@ namespace App\Http\Requests\Api;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
-use App\Models\Task;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
@@ -20,6 +19,7 @@ class UpdateTaskRequest extends FormRequest
     {
         $task = $this->route('task');
 
+        // Use the gate to check update permission - policy handles role-based checks
         return $this->user()?->can('update', $task) ?? false;
     }
 
@@ -53,16 +53,65 @@ class UpdateTaskRequest extends FormRequest
         $validator = parent::getValidatorInstance();
 
         $validator->after(function ($validator) {
-            if ($this->has('assignee_id') && $this->filled('assignee_id')) {
-                $task = $this->route('task');
-                $assigneeId = $this->integer('assignee_id');
+            $task = $this->route('task');
+            $user = $this->user();
 
-                if ($task instanceof Task && $assigneeId) {
-                    $assignee = User::find($assigneeId);
+            if (! $task || ! $user) {
+                return;
+            }
 
-                    if ($assignee && ! $task->project->hasMember($assignee)) {
-                        $validator->errors()->add('assignee_id', 'Assignee must be a member of the project.');
+            // Developer role restrictions
+            if ($user->hasRole('developer')) {
+                // Developer can only update tasks assigned to them
+                if ($task->assignee_id !== $user->id) {
+                    $validator->errors()->add('general', 'Role developer can only update tasks assigned to them.');
+                }
+
+                // Check for forbidden field updates
+                $forbiddenDeveloperFields = ['title', 'description', 'priority', 'start_date', 'due_date', 'assignee_id', 'project_id'];
+
+                foreach (array_keys($this->all()) as $field) {
+                    if (in_array($field, $forbiddenDeveloperFields)) {
+                        $validator->errors()->add($field, "Role developer cannot update '{$field}'.");
                     }
+                }
+
+                // Developer is forbidden from setting status to DONE
+                if ($this->has('status') && $this->input('status') === TaskStatus::DONE->value) {
+                    $validator->errors()->add('status', 'Role developer cannot set task status to "Done".');
+                }
+            }
+
+            // Reviewer role restrictions
+            if ($user->hasRole('reviewer')) {
+                // Reviewer can only update the status field
+                $submittedFields = array_keys($this->all());
+
+                // Check if non-status fields were submitted
+                $nonStatusFields = array_diff($submittedFields, ['status']);
+                foreach ($nonStatusFields as $field) {
+                    $validator->errors()->add($field, 'Role reviewer can only update the status field.');
+                }
+
+                // Reviewer can only perform valid review status transitions
+                if ($this->has('status')) {
+                    $currentStatus = $task->status?->value ?? '';
+                    $newStatus = $this->input('status');
+
+                    // Valid review transitions
+                    $validTransitions = [
+                        'review' => ['done', 'in_progress'],
+                        'in_progress' => ['review'],
+                        'todo' => ['in_progress'],
+                    ];
+
+                    $allowedTransitions = $validTransitions[$currentStatus] ?? [];
+
+                    if (! in_array($newStatus, $allowedTransitions)) {
+                        $validator->errors()->add('status', "Role reviewer cannot transition from '{$currentStatus}' to '{$newStatus}'.");
+                    }
+                } else {
+                    $validator->errors()->add('status', 'Role reviewer must update the status field.');
                 }
             }
         });
