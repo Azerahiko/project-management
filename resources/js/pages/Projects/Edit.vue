@@ -11,6 +11,7 @@ import Select from '@/components/ui/Select.vue';
 import { useToast } from '@/composables/useToast';
 import { useProjects } from '@/composables/useProjects';
 import type { Project, ProjectFilters } from '@/types';
+const { clients } = useProjects({} as ProjectFilters);
 
 defineOptions({
     layout: AppLayout,

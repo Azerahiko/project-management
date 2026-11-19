@@ -5,6 +5,7 @@ import type {
     Project,
     ProjectFilters,
     ProjectMember,
+    User,
 } from '@/types';
 
 export function useProjects(filters: ProjectFilters, trashed = false) {
@@ -18,6 +19,7 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
     });
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const clients = ref<User[]>([]);
 
     async function fetchProjects(): Promise<void> {
         loading.value = true;
@@ -173,6 +175,15 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
         return response.data;
     }
 
+    async function fetchClients(): Promise<void> {
+        const { data: users } = await api.get<{ data: User[] }>('/users', {
+            params: {
+                role: 'client',
+            },
+        });
+        ;(clients as any).value = users;
+    }
+
     const queryString = computed(() => ({
         search: filters.search || undefined,
         status: filters.status || undefined,
@@ -197,6 +208,7 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
         removeMember,
         fetchManagers,
         fetchAvailableUsers,
+        clients,
         queryString,
     };
 }
