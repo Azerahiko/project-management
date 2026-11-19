@@ -45,12 +45,19 @@ defineOptions({
 const page = usePage();
 const { success } = useToast();
 
+const user = computed(() => page.props.auth.user);
+const userRoles = computed(() => user.value?.roles ?? []);
+
+const isManagerial = computed(() =>
+    userRoles.value.some((r) => ['administrator', 'project_manager', 'team_leader'].includes(r)),
+);
+
 const canCreate = computed(
-    () => page.props.auth.user?.permissions.includes('tasks.view') ?? false,
+    () => isManagerial.value || Boolean(user.value?.permissions.includes('tasks.create')),
 );
 
 const canViewTrashed = computed(() =>
-    Boolean(page.props.auth.user?.permissions.includes('tasks.view')),
+    isManagerial.value || Boolean(user.value?.permissions.includes('tasks.delete')),
 );
 
 const search = ref('');

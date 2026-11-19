@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import tasks from '@/routes/tasks';
 import api from '@/lib/api';
@@ -19,6 +19,21 @@ defineOptions({
 
 const { success, error: toastError, warning } = useToast();
 const { fetchAssignees } = useTasks({} as TaskFilters);
+
+const user = usePage().props.auth?.user;
+
+// Route-level guard: only show create form for managerial roles or users with tasks.create permission
+onMounted(() => {
+    const userRoles = (user?.roles ?? []) as string[];
+    const isManagerial = userRoles.some((r: string) =>
+        ['administrator', 'project_manager', 'team_leader'].includes(r),
+    );
+    const hasCreatePerm = user?.permissions?.includes('tasks.create') ?? false;
+
+    if (!isManagerial && !hasCreatePerm) {
+        router.visit(tasks.index.url());
+    }
+});
 
 const statusOptions = [
     { value: 'todo', label: 'To Do' },

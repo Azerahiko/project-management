@@ -39,6 +39,16 @@ const canViewTrashedTasks = computed(() => {
     const userPerms = (page.props.auth?.user as any)?.permissions || [];
     return userPerms.includes('tasks.view');
 });
+
+const canManageTrashedTasks = computed(() => {
+    const userRoles = page.props.auth?.user?.roles ?? [];
+    const userPerms = page.props.auth?.user?.permissions ?? [];
+    return (
+        userRoles.some((r: string) =>
+            ['administrator', 'project_manager', 'team_leader'].includes(r),
+        ) || userPerms.includes('tasks.delete')
+    );
+});
 const projectId = project.id;
 
 const projectStatusForBadge = computed(() => {
@@ -468,7 +478,7 @@ function formatDateShort(dateString: string | null): string {
                     </Link>
 
                     <Link
-                        v-if="canViewTrashedTasks"
+                        v-if="canManageTrashedTasks"
                         :href="tasks.trashed.url({ project: projectId })"
                         class="dropdown-item"
                     >

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
-import { Link, usePage } from '@inertiajs/vue3';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import tasks from '@/routes/tasks';
 import api from '@/lib/api';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -10,7 +10,7 @@ import { useToast } from '@/composables/useToast';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
-import type { Task, TaskFilters } from '@/types';
+import type { Task, TaskFilters, User } from '@/types';
 
 defineOptions({
     layout: AppLayout,
@@ -22,13 +22,56 @@ const { fetchAssignees } = useTasks({} as TaskFilters);
 
 const task = page.props.task as Task;
 const taskId = task.id;
+const user = page.props.auth?.user as User | null;
 
-const statusOptions = [
-    { value: 'todo', label: 'To Do' },
-    { value: 'in_progress', label: 'Sedang Dikerjakan' },
-    { value: 'review', label: 'Review' },
-    { value: 'done', label: 'Selesai' },
-];
+// Role-based capability flags
+const userRoles = computed(() => user?.roles ?? []);
+const isManagerial = computed(
+    () => userRoles.value.some((r: string) => ['administrator', 'project_manager', 'team_leader'].includes(r)),
+);
+const isDeveloper = computed(
+    () => userRoles.value.includes('developer'),
+);
+const isReviewer = computed(
+    () => userRoles.value.includes('reviewer'),
+);
+const isClient = computed(
+    () => userRoles.value.includes('client'),
+);
+
+const isAssignee = computed(() => task.assignee_id === user?.id);
+
+// Status options filtering based on role
+const statusOptions = computed(() => {
+    // Managerial: all 4 statuses
+    if (isManagerial.value) {
+        return [
+            { value: 'todo', label: 'To Do' },
+            { value: 'in_progress', label: 'Sedang Dikerjakan' },
+            { value: 'review', label: 'Review' },
+            { value: 'done', label: 'Selesai' },
+        ];
+    }
+
+    // Developer (assigned): exclude 'done', only execution fields
+    if (isDeveloper.value && isAssignee.value) {
+        return [
+            { value: 'todo', label: 'To Do' },
+            { value: 'in_progress', label: 'Sedang Dikerjakan' },
+            { value: 'review', label: 'Review' },
+        ];
+    }
+
+    // Developer not assigned or reviewer/client: no options (form is read-only)
+    return [];
+});
+
+// Route-level guard: redirect if client, !can_update, or reviewer
+onMounted(() => {
+    if (isClient.value || !task.can_update || isReviewer.value) {
+        router.visit(tasks.show.url({ task: taskId }));
+    }
+});
 
 const priorityOptions = [
     { value: 'low', label: 'Rendah' },
@@ -38,14 +81,14 @@ const priorityOptions = [
 ];
 
 const form = reactive({
-    project_id: String(task.project_id),
-    title: task.title,
-    description: task.description || '',
+    project_id: isDeveloper.value && isAssignee.value ? String(task.project_id) : String(task.project_id),
+    title: isDeveloper.value && isAssignee.value ? task.title : task.title,
+    description: isDeveloper.value && isAssignee.value ? (task.description || '') : (task.description || ''),
     status: task.status,
-    priority: task.priority,
-    assignee_id: task.assignee_id ? String(task.assignee_id) : '',
-    start_date: task.start_date ? task.start_date.split('T')[0] : '',
-    due_date: task.due_date ? task.due_date.split('T')[0] : '',
+    priority: isDeveloper.value && isAssignee.value ? task.priority : task.priority,
+    assignee_id: isDeveloper.value && isAssignee.value ? String(task.assignee_id) : (task.assignee_id ? String(task.assignee_id) : ''),
+    start_date: isDeveloper.value && isAssignee.value ? (task.start_date ? task.start_date.split('T')[0] : '') : (task.start_date ? task.start_date.split('T')[0] : ''),
+    due_date: isDeveloper.value && isAssignee.value ? (task.due_date ? task.due_date.split('T')[0] : '') : (task.due_date ? task.due_date.split('T')[0] : ''),
 });
 
 const errors = ref<Record<string, string[]>>({});
@@ -121,26 +164,44 @@ async function handleSubmit(): Promise<void> {
     processing.value = true;
     errors.value = {};
 
-    try {
-        const payload = {
-            title: form.title,
-            description: form.description || null,
+    // For developer role, only send execution fields (status)
+    if (isDeveloper.value && isAssignee.value) {
+        const payload: Record<string, unknown> = {
             status: form.status,
-            priority: form.priority,
-            assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
-            start_date: form.start_date || null,
-            due_date: form.due_date || null,
         };
 
-        await api.put(`/tasks/${taskId}`, payload);
-        success('Tugas diperbarui', 'Tugas telah berhasil diperbarui.');
-        router.visit(tasks.show.url({ task: taskId }));
-    } catch (err: any) {
-        if (err.response?.data?.errors) {
-            setErrors(err.response.data.errors);
+        // Include progress/actual_hours if form has those fields (not in current form)
+        // For now, only send status
+
+        try {
+            await api.put(`/tasks/${taskId}`, payload);
+            success('Tugas diperbarui', 'Tugas telah berhasil diperbarui.');
+            router.visit(tasks.show.url({ task: taskId }));
+        } catch (err: any) {
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
+            }
         }
-    } finally {
-        processing.value = false;
+    } else {
+        try {
+            const payload = {
+                title: form.title,
+                description: form.description || null,
+                status: form.status,
+                priority: form.priority,
+                assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
+                start_date: form.start_date || null,
+                due_date: form.due_date || null,
+            };
+
+            await api.put(`/tasks/${taskId}`, payload);
+            success('Tugas diperbarui', 'Tugas telah berhasil diperbarui.');
+            router.visit(tasks.show.url({ task: taskId }));
+        } catch (err: any) {
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
+            }
+        }
     }
 }
 
@@ -202,6 +263,7 @@ watch(
                     required
                     :error="errors.project_id?.[0]"
                     :loading="loadingProjects"
+                    :disabled="isDeveloper && isAssignee"
                     @change="clearError('project_id')"
                 >
                     <template #loading>
@@ -216,6 +278,7 @@ watch(
                     required
                     :error="errors.title?.[0]"
                     autocomplete="off"
+                    :disabled="isDeveloper && isAssignee"
                     @input="clearError('title')"
                 />
 
@@ -226,6 +289,7 @@ watch(
                     type="textarea"
                     rows="4"
                     :error="errors.description?.[0]"
+                    :disabled="isDeveloper && isAssignee"
                     @input="clearError('description')"
                 />
 
@@ -245,6 +309,7 @@ watch(
                         label="Prioritas *"
                         required
                         :error="errors.priority?.[0]"
+                        :disabled="isDeveloper && isAssignee"
                         @change="clearError('priority')"
                     />
                 </div>
@@ -261,6 +326,7 @@ watch(
                     label="Penugasan"
                     :loading="loadingAssignees"
                     :error="errors.assignee_id?.[0]"
+                    :disabled="isDeveloper && isAssignee"
                     @change="clearError('assignee_id')"
                 >
                     <template #loading>
@@ -275,6 +341,7 @@ watch(
                         label="Tanggal Mulai"
                         placeholder="Pilih tanggal mulai"
                         :error="errors.start_date?.[0]"
+                        :disabled="isDeveloper && isAssignee"
                         @input="clearError('start_date')"
                     />
 
@@ -284,6 +351,7 @@ watch(
                         label="Deadline"
                         placeholder="Pilih deadline"
                         :error="errors.due_date?.[0]"
+                        :disabled="isDeveloper && isAssignee"
                         @input="clearError('due_date')"
                     />
                 </div>

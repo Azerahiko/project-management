@@ -60,9 +60,6 @@ const restoreModalOpen = ref(false);
 const taskToRestore = ref<Task | null>(null);
 const restoring = ref(false);
 
-const canRestore = computed(() =>
-    Boolean(page.props.auth.user?.permissions.includes('tasks.update')),
-);
 
 const sortValue = ref('deleted_at:desc');
 
@@ -576,7 +573,7 @@ watch(
                     <!-- Restore action -->
                     <div class="flex-shrink-0">
                         <button
-                            v-if="canRestore"
+                            v-if="task.can_restore"
                             type="button"
                             class="grid h-9 w-9 place-items-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-2xs transition hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-700 active:scale-95 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300"
                             @click="confirmRestore(task)"

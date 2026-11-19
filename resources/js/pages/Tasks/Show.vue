@@ -21,6 +21,7 @@ import type {
     Task,
     TaskFilters,
     TaskActivity as TaskActivityItem,
+    User,
 } from '@/types';
 
 defineOptions({
@@ -33,9 +34,10 @@ const { fetchAssignees } = useTasks({} as TaskFilters);
 
 const task = page.props.task as Task;
 const taskId = task.id;
+const user = page.props.auth?.user as User | null;
 
 const canViewTrashedComments = computed(() => {
-    const userPerms = (page.props.auth?.user as any)?.permissions || [];
+    const userPerms = user?.permissions || [];
     return userPerms.includes('tasks.view');
 });
 
@@ -44,12 +46,76 @@ const activitiesLoading = ref(false);
 const activitiesError = ref<string | null>(null);
 
 const editStatus = ref(false);
-const statusOptions = [
-    { value: 'todo', label: 'To Do' },
-    { value: 'in_progress', label: 'Sedang Dikerjakan' },
-    { value: 'review', label: 'Review' },
-    { value: 'done', label: 'Selesai' },
-];
+
+// Role-based capability flags
+const userRoles = computed(() => user?.roles ?? []);
+const isManagerial = computed(
+    () => userRoles.value.some((r: string) => ['administrator', 'project_manager', 'team_leader'].includes(r)),
+);
+const isDeveloper = computed(
+    () => userRoles.value.includes('developer'),
+);
+const isReviewer = computed(
+    () => userRoles.value.includes('reviewer'),
+);
+const isClient = computed(
+    () => userRoles.value.includes('client'),
+);
+const isAssignee = computed(() => task.assignee_id === user?.id);
+
+// Status options filtering based on role & current status
+const statusOptions = computed(() => {
+    // Managerial: all 4 statuses
+    if (isManagerial.value) {
+        return [
+            { value: 'todo', label: 'To Do' },
+            { value: 'in_progress', label: 'Sedang Dikerjakan' },
+            { value: 'review', label: 'Review' },
+            { value: 'done', label: 'Selesai' },
+        ];
+    }
+
+    // Reviewer: can ONLY transition when status is 'review'
+    if (isReviewer.value) {
+        const current = task.status;
+        // When status is 'review', allowed targets are 'done' and 'in_progress'
+        if (current === 'review') {
+            return [
+                { value: 'done', label: 'Selesai' },
+                { value: 'in_progress', label: 'Sedang Dikerjakan' },
+            ];
+        }
+        // For any other status, return [] (no status transitions allowed)
+        return [];
+    }
+
+    // Developer: assigned developer can edit execution fields, exclude 'done'
+    if (isDeveloper.value && isAssignee.value) {
+        return [
+            { value: 'todo', label: 'To Do' },
+            { value: 'in_progress', label: 'Sedang Dikerjakan' },
+            { value: 'review', label: 'Review' },
+        ];
+    }
+
+    // Developer not assigned or client: no status options
+    return [];
+});
+
+// Quick action status bar visibility
+const canChangeStatus = computed(() => {
+    // Managerial can always change status
+    if (isManagerial.value) return true;
+    // Reviewer can only change when status is 'review'
+    if (isReviewer.value) {
+        return task.status === 'review';
+    }
+    // Assigned developer can change status (excluding 'done')
+    if (isDeveloper.value && isAssignee.value) {
+        return task.status !== 'done';
+    }
+    return false;
+});
 
 const deleteModalOpen = ref(false);
 const deleteLoading = ref(false);
@@ -246,7 +312,7 @@ function formatDateShort(dateString: string | null): string {
                 </template>
 
                 <template #content>
-                    <div v-if="task.can_update" class="dropdown-item">
+                    <div v-if="!isReviewer" class="dropdown-item">
                         <component
                             :is="getIcon('Pencil')"
                             class="mr-2 h-4 w-4"
@@ -467,7 +533,7 @@ function formatDateShort(dateString: string | null): string {
         </div>
 
         <!-- Quick Actions -->
-        <div v-if="task.can_update" class="card">
+        <div v-if="canChangeStatus && statusOptions.length > 0" class="card">
             <h3
                 class="mb-4 text-lg font-semibold text-surface-900 dark:text-surface-100"
             >

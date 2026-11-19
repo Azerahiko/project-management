@@ -8,6 +8,7 @@ import { useTheme } from '@/composables/useTheme';
 import { useToast } from '@/composables/useToast';
 import { Plus, Search, Moon, Sun, Menu } from '@lucide/vue';
 import tasks from '@/routes/tasks';
+import type { User } from '@/types';
 
 interface Props {
     sidebarOpen: boolean;
@@ -21,7 +22,7 @@ defineProps<Props>();
 defineEmits<Emits>();
 
 const page = usePage();
-const user = computed(() => page.props.auth?.user);
+const user = computed(() => page.props.auth?.user as User | null);
 const { nextTheme, toggleTheme } = useTheme();
 
 const searchQuery = ref('');
@@ -52,6 +53,16 @@ const pageTitle = computed(() => {
 });
 
 const toast = useToast();
+
+const canCreateTask = computed(() => {
+    const roles = user.value?.roles ?? [];
+    const perms = user.value?.permissions ?? [];
+    return (
+        roles.some((r: string) =>
+            ['administrator', 'project_manager', 'team_leader'].includes(r),
+        ) || perms.includes('tasks.create')
+    );
+});
 
 function handleSearchSubmit(): void {
     if (!searchQuery.value.trim()) return;
@@ -146,6 +157,7 @@ onUnmounted(() => {
             <!-- + New Task Primary Action (Linear Style) -->
             <Link
                 :href="tasks.index.url()"
+                v-if="canCreateTask"
                 class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary-600 px-2.5 text-xs font-medium text-white shadow-xs transition-all hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
             >
                 <Plus class="h-3.5 w-3.5 stroke-[2.5]" />
