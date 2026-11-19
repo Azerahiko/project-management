@@ -140,7 +140,8 @@ async function uploadFiles(projectId: number): Promise<void> {
         formData.append('file', file);
 
         try {
-            const { data } = await api.post(
+            const { data } = await api.post<
+                { data: { original_name: string; success: boolean } }>(
                 `/projects/${projectId}/files`,
                 formData,
             );
@@ -152,8 +153,8 @@ async function uploadFiles(projectId: number): Promise<void> {
             uploadResults.value[file.lastModified] = {
                 success: false,
                 message:
-                    err.response?.data?.errors?.file?.[0] ??
-                    err.response?.data?.message ??
+                    (err.response?.data as { errors?: { file?: { [x: string]: string }; message?: string } }).errors?.file?.[0] ??
+                    (err.response?.data as { message?: string }).message ??
                     'Berkas gagal diunggah.',
             };
         }
@@ -201,8 +202,11 @@ async function handleSubmit(): Promise<void> {
             client_ids: form.client_id ? [form.client_id] : [],
         };
 
-        const { data } = await api.post('/projects', payload);
-        const projectId = data.data.id;
+        const { data: { data: projectData } } = await api.post<{ data: { id: number; name: string } }>(
+                '/projects',
+                payload,
+            );
+            const projectId = projectData.id;
 
         success('Proyek dibuat', 'Proyek baru telah ditambahkan.');
 

@@ -145,13 +145,14 @@ async function uploadFiles(projectId: number): Promise<void> {
         formData.append('file', file);
 
         try {
-            const { data } = await api.post(
+            const { data: { data: uploadData } } = await api.post<
+                { data: { original_name: string } }>(
                 `/projects/${projectId}/files`,
                 formData,
             );
             uploadResults.value[file.lastModified] = {
                 success: true,
-                message: `${data.data.original_name} berhasil diunggah.`,
+                message: `${uploadData.original_name} berhasil diunggah.`,
             };
         } catch (err: any) {
             uploadResults.value[file.lastModified] = {

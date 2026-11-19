@@ -114,10 +114,12 @@ async function loadFiles(): Promise<void> {
     filesError.value = false;
 
     try {
-        const { data } = await api.get(`/projects/${projectId}/files`, {
+        const { data: { data: filesData } } = await api.get<
+                { data: ProjectFile[] }>(
+            `/projects/${projectId}/files`, {
             params: { per_page: 100 },
         });
-        files.value = data.data;
+        files.value = filesData;
     } catch {
         filesError.value = true;
     } finally {
@@ -152,15 +154,15 @@ async function submitUpload(): Promise<void> {
     formData.append('file', selectedFile.value);
 
     try {
-        const { data } = await api.post(
+        const { data } = await api.post<ProjectFile>(
             `/projects/${projectId}/files`,
             formData,
         );
-        files.value.unshift(data.data);
+        files.value.unshift(data as ProjectFile);
         uploadModalOpen.value = false;
         success(
             'Berkas diunggah',
-            `${data.data.original_name} berhasil diunggah.`,
+            `${data.original_name} berhasil diunggah.`,
         );
     } catch (err: any) {
         uploadError.value =
@@ -195,16 +197,13 @@ async function downloadFile(file: ProjectFile): Promise<void> {
     try {
         const response = await api.get(
             `/projects/${projectId}/files/${file.id}/download`,
-            { responseType: 'blob' },
+            { responseType: 'blob' }
         );
-
-        const url = URL.createObjectURL(response.data);
+        const blobData = response.data as Blob;
+        const url = URL.createObjectURL(blobData);
         const link = document.createElement('a');
         link.href = url;
-        link.download =
-            filenameFromDisposition(
-                response.headers['content-disposition'] as string | undefined,
-            ) ?? file.original_name;
+        link.download = file.original_name ?? 'download.bin';
         document.body.appendChild(link);
         link.click();
         link.remove();
