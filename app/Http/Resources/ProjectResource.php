@@ -41,7 +41,7 @@ class ProjectResource extends JsonResource
             'tasks' => $project->relationLoaded('tasks') ? TaskResource::collection($project->tasks)->resolve() : null,
             'can_update' => $project->can_update,
             'can_delete' => $project->can_delete,
-            'can_manage_members' => $project->can_manage_members,
+            'can_manage_members' => $request->user()?->can('manageMembers', $this->resource) ?? false,
             'created_at' => $project->created_at?->toISOString(),
             'updated_at' => $project->updated_at?->toISOString(),
             'deleted_at' => $project->deleted_at?->toISOString(),

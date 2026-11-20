@@ -65,7 +65,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Project routes (read-only)
     Route::get('projects', [ProjectController::class, 'index'])->middleware('can:projects.view', 'token.ability:projects:read');
-    Route::get('projects/clients', [ProjectController::class, 'clients'])->middleware('can:projects.view', 'token.ability:projects:read');
+    Route::get('projects/clients', [ProjectController::class, 'clients'])->middleware('can:projects.create', 'token.ability:projects:read');
     Route::get('projects/managers', [ProjectController::class, 'managers'])->middleware('can:projects.create', 'token.ability:projects:read');
     Route::get('projects/trashed', [ProjectController::class, 'trashed'])->middleware('can:projects.view', 'token.ability:projects:read');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->middleware('can:projects.view', 'token.ability:projects:read');

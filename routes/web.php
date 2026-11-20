@@ -81,6 +81,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware('can:projects.view')->group(function () {
+        Route::inertia('/projects', 'Projects/Index')->name('projects.index');
+        Route::inertia('/projects/trashed', 'Projects/Trashed')->name('projects.trashed');
+
         Route::get('/projects/{project}', function (Project $project, Request $request) {
             abort_unless($request->user()->can('view', $project), 403);
 
@@ -196,10 +199,15 @@ Route::middleware(['auth'])->group(function () {
         ->name('activity-log')
         ->middleware('can:activity-log.view');
 
-    // Admin-only routes
+    // Admin-only routes (create/invite require users.create permission)
+    Route::middleware('can:users.create')->group(function () {
+        Route::inertia('/users/create', 'Users/Create')->name('users.create');
+        Route::inertia('/users/invite', 'Users/Invite')->name('users.invite');
+    });
+
+    // User listing and details require users.view permission
     Route::middleware('can:users.view')->group(function () {
         Route::inertia('/users', 'Users/Index')->name('users.index');
-        Route::inertia('/users/create', 'Users/Create')->name('users.create');
         Route::get('/users/{user}/details', function (User $user, Request $request) {
             abort_unless($request->user()->can('view', $user), 403);
 
@@ -207,9 +215,6 @@ Route::middleware(['auth'])->group(function () {
                 'user' => UserResource::make($user->load('roles'))->toArray($request),
             ]);
         })->name('users.details')->middleware('can:users.view');
-
-        // Invitation management
-        Route::inertia('/users/invite', 'Users/Invite')->name('users.invite');
     });
 
     // Role & Permission Management (system administrator only)
