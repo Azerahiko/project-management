@@ -12,9 +12,9 @@ beforeEach(function () {
     (new RolePermissionSeeder)->run();
 });
 
-it('exposes raw member roles on the teams page', function () {
-    [$admin, $pm, $member] = createTestUsers();
-    [$project] = createTestProjects($admin, $pm, $member);
+it('exposes raw developer roles on the teams page', function () {
+    [$admin, $pm, $developer] = createTestUsers();
+    [$project] = createTestProjects($admin, $pm, $developer);
 
     $response = $this->actingAs($admin)->get(route('teams'));
 
@@ -24,13 +24,13 @@ it('exposes raw member roles on the teams page', function () {
 
     expect($team)->not->toBeNull()
         ->and(collect($team['members'])->pluck('role')->all())
-        ->toContain('owner', 'manager', 'member');
+        ->toContain('owner', 'manager', 'developer');
 });
 
 it('exposes project status values and integer task counts on reports', function () {
-    [$admin, $pm, $member] = createTestUsers();
-    [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
-    createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject);
+    [$admin, $pm, $developer] = createTestUsers();
+    [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $developer);
+    createTestTasks($admin, $pm, $developer, $project, $pmProject, $otherProject);
 
     $response = $this->actingAs($admin)->get(route('reports'));
 
@@ -53,9 +53,9 @@ it('exposes project status values and integer task counts on reports', function 
 });
 
 it('filters the activity log by keyword and activity type', function () {
-    [$admin, $pm, $member] = createTestUsers();
-    [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
-    [$task] = createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject);
+    [$admin, $pm, $developer] = createTestUsers();
+    [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $developer);
+    [$task] = createTestTasks($admin, $pm, $developer, $project, $pmProject, $otherProject);
 
     TaskActivity::factory()->create([
         'task_id' => $task->id,

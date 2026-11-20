@@ -34,7 +34,7 @@ class ProjectMemberFactory extends Factory
     }
 
     /**
-     * Indicate that the member is a manager.
+     * Indicate that the developer is a manager.
      */
     public function manager(): static
     {
@@ -44,7 +44,7 @@ class ProjectMemberFactory extends Factory
     }
 
     /**
-     * Indicate that the member is a viewer.
+     * Indicate that the developer is a viewer.
      */
     public function viewer(): static
     {

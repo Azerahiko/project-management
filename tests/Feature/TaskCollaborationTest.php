@@ -10,7 +10,7 @@ use App\Models\User;
 
 describe('Task Collaboration', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
         // Create an outsider user not in the project
         $this->outsider = User::factory()->create([
             'email' => 'outsider@example.com',
@@ -19,15 +19,15 @@ describe('Task Collaboration', function () {
         ]);
         $this->outsider->assignRole('developer');
 
-        [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
-        [$this->task] = createTestTasks($this->admin, $this->pm, $this->member, $this->project, $this->project, $this->project);
+        [$this->project] = createTestProjects($this->admin, $this->pm, $this->developer);
+        [$this->task] = createTestTasks($this->admin, $this->pm, $this->developer, $this->project, $this->project, $this->project);
     });
 
     describe('Comments', function () {
-        it('allows project member to create comment on task', function () {
-            $this->actingAs($this->member)
+        it('allows project developer to create comment on task', function () {
+            $this->actingAs($this->developer)
                 ->postJson("/api/tasks/{$this->task->id}/comments", [
-                    'content' => 'Test comment from member',
+                    'content' => 'Test comment from developer',
                 ])
                 ->assertCreated()
                 ->assertJsonStructure([
@@ -36,13 +36,13 @@ describe('Task Collaboration', function () {
 
             $this->assertDatabaseHas('task_comments', [
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
-                'content' => 'Test comment from member',
+                'user_id' => $this->developer->id,
+                'content' => 'Test comment from developer',
             ]);
         });
 
         it('allows task assignee to create comment', function () {
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->postJson("/api/tasks/{$this->task->id}/comments", [
                     'content' => 'Assignee comment',
                 ])
@@ -76,11 +76,11 @@ describe('Task Collaboration', function () {
         it('allows comment author to update their comment', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Original content',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->putJson("/api/comments/{$comment->id}", [
                     'content' => 'Updated content',
                 ])
@@ -96,7 +96,7 @@ describe('Task Collaboration', function () {
         it('allows project owner to update any comment in project', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Original',
             ]);
 
@@ -110,7 +110,7 @@ describe('Task Collaboration', function () {
         it('allows project manager to update any comment in project', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Original',
             ]);
 
@@ -128,7 +128,7 @@ describe('Task Collaboration', function () {
                 'content' => 'PM comment',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->putJson("/api/comments/{$comment->id}", [
                     'content' => 'Member update attempt',
                 ])
@@ -138,11 +138,11 @@ describe('Task Collaboration', function () {
         it('allows comment author to delete their comment', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'To delete',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertNoContent();
 
@@ -152,7 +152,7 @@ describe('Task Collaboration', function () {
         it('allows project owner to delete any comment in project', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'To delete',
             ]);
 
@@ -166,7 +166,7 @@ describe('Task Collaboration', function () {
         it('denies project manager deleting comment (only owner can)', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'To delete',
             ]);
 
@@ -180,10 +180,10 @@ describe('Task Collaboration', function () {
         it('returns paginated comments with user', function () {
             TaskComment::factory()->count(5)->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/comments")
                 ->assertOk()
                 ->assertJsonStructure([
@@ -198,15 +198,15 @@ describe('Task Collaboration', function () {
         it('respects per_page limit (max 50)', function () {
             TaskComment::factory()->count(60)->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/comments?per_page=100")
                 ->assertOk()
                 ->assertJsonCount(50, 'data');
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/comments?per_page=-5")
                 ->assertOk()
                 ->assertJsonCount(1, 'data')
@@ -216,10 +216,10 @@ describe('Task Collaboration', function () {
         it('paginates correctly with page parameter', function () {
             TaskComment::factory()->count(25)->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/comments?per_page=10&page=2")
                 ->assertOk()
                 ->assertJsonCount(10, 'data')
@@ -229,7 +229,7 @@ describe('Task Collaboration', function () {
 
     describe('Activities', function () {
         it('returns activities for task with user', function () {
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities")
                 ->assertOk()
                 ->assertJsonStructure([
@@ -243,16 +243,16 @@ describe('Task Collaboration', function () {
             for ($i = 0; $i < 150; $i++) {
                 TaskActivity::factory()->create([
                     'task_id' => $this->task->id,
-                    'user_id' => $this->member->id,
+                    'user_id' => $this->developer->id,
                 ]);
             }
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities?limit=200")
                 ->assertOk()
                 ->assertJsonCount(100, 'data');
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities?limit=-5")
                 ->assertOk()
                 ->assertJsonCount(1, 'data');
@@ -290,20 +290,20 @@ describe('Task Collaboration', function () {
                 ])
                 ->assertOk();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities")
                 ->assertOk()
                 ->assertJsonFragment(['activity_type' => 'task.updated', 'field' => 'status']);
         });
 
         it('logs comment created activity', function () {
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->postJson("/api/tasks/{$this->task->id}/comments", [
                     'content' => 'Activity test comment',
                 ])
                 ->assertCreated();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities")
                 ->assertOk()
                 ->assertJsonFragment(['activity_type' => 'comment.created']);
@@ -312,17 +312,17 @@ describe('Task Collaboration', function () {
         it('logs comment updated activity', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Original',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->putJson("/api/comments/{$comment->id}", [
                     'content' => 'Updated',
                 ])
                 ->assertOk();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities")
                 ->assertOk()
                 ->assertJsonFragment(['activity_type' => 'comment.updated']);
@@ -331,15 +331,15 @@ describe('Task Collaboration', function () {
         it('logs comment deleted activity', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'To delete',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertNoContent();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/activities")
                 ->assertOk()
                 ->assertJsonFragment(['activity_type' => 'comment.deleted']);
@@ -382,15 +382,15 @@ describe('Task Collaboration', function () {
                 'content' => 'Other project comment',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$otherTask->id}/comments")
                 ->assertForbidden();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->putJson("/api/comments/{$comment->id}", ['content' => 'Hack'])
                 ->assertForbidden();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertForbidden();
         });
@@ -399,7 +399,7 @@ describe('Task Collaboration', function () {
             [$otherProject] = createTestProjects($this->outsider, $this->admin, $this->pm);
             [$otherTask] = createTestTasks($this->outsider, $this->admin, $this->pm, $otherProject, $otherProject, $otherProject);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$otherTask->id}/activities")
                 ->assertForbidden();
         });
@@ -409,11 +409,11 @@ describe('Task Collaboration', function () {
         it('soft deletes comment on destroy', function () {
             $comment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Soft delete test',
             ]);
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertNoContent();
 
@@ -423,18 +423,18 @@ describe('Task Collaboration', function () {
         it('excludes soft deleted comments from index', function () {
             $activeComment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Active',
             ]);
 
             $deletedComment = TaskComment::factory()->create([
                 'task_id' => $this->task->id,
-                'user_id' => $this->member->id,
+                'user_id' => $this->developer->id,
                 'content' => 'Deleted',
             ]);
             $deletedComment->delete();
 
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->getJson("/api/tasks/{$this->task->id}/comments")
                 ->assertOk()
                 ->assertJsonCount(1, 'data')
@@ -442,7 +442,7 @@ describe('Task Collaboration', function () {
         });
 
         it('activities remain after task soft delete', function () {
-            $this->actingAs($this->member)
+            $this->actingAs($this->developer)
                 ->postJson("/api/tasks/{$this->task->id}/comments", ['content' => 'Test'])
                 ->assertCreated();
 

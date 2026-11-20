@@ -22,9 +22,9 @@ describe('Task Management', function () {
             $this->actingAs($pm)->get('/tasks')->assertOk();
         });
 
-        it('allows member to access tasks index', function () {
-            [, , $member] = createTestUsers();
-            $this->actingAs($member)->get('/tasks')->assertOk();
+        it('allows developer to access tasks index', function () {
+            [, , $developer] = createTestUsers();
+            $this->actingAs($developer)->get('/tasks')->assertOk();
         });
 
         it('allows admin to access create task page', function () {
@@ -37,72 +37,72 @@ describe('Task Management', function () {
             $this->actingAs($pm)->get('/tasks/create')->assertOk();
         });
 
-        it('allows member to access create task page', function () {
-            [, , $member] = createTestUsers();
-            $this->actingAs($member)->get('/tasks/create')->assertOk();
+        it('allows developer to access create task page', function () {
+            [, , $developer] = createTestUsers();
+            $this->actingAs($developer)->get('/tasks/create')->assertOk();
         });
 
-        it('allows project member to view task detail', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->actingAs($member)->get("/tasks/{$task1->id}")->assertOk();
+        it('allows project developer to view task detail', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->actingAs($developer)->get("/tasks/{$task1->id}")->assertOk();
         });
 
         it('allows task creator to view task detail', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)->get("/tasks/{$task1->id}")->assertOk();
         });
 
         it('allows task assignee to view task detail', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($pm)->get("/tasks/{$task1->id}")->assertOk();
         });
 
-        it('denies access to task not member of project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            [, , , $task4] = createTestTasks($admin, $pm, $member, $project, $project, $otherProject);
-            $this->actingAs($member)->get("/tasks/{$task4->id}")->assertForbidden();
+        it('denies access to task not developer of project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            [, , , $task4] = createTestTasks($admin, $pm, $developer, $project, $project, $otherProject);
+            $this->actingAs($developer)->get("/tasks/{$task4->id}")->assertForbidden();
         });
 
         it('allows task owner to access edit page', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)->get("/tasks/{$task1->id}/edit")->assertOk();
         });
 
         it('allows task assignee to access edit page', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->actingAs($member)->get("/tasks/{$task1->id}/edit")->assertOk();
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->actingAs($developer)->get("/tasks/{$task1->id}/edit")->assertOk();
         });
 
         it('allows project manager role to access edit page', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($pm)->get("/tasks/{$task2->id}/edit")->assertOk();
         });
 
-        it('denies regular member (not creator/assignee/manager) editing task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->actingAs($member)->get("/tasks/{$task2->id}/edit")->assertForbidden();
+        it('denies regular developer (not creator/assignee/manager) editing task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->actingAs($developer)->get("/tasks/{$task2->id}/edit")->assertForbidden();
         });
     });
 
     describe('API CRUD', function () {
         it('allows admin to create task via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -110,7 +110,7 @@ describe('Task Management', function () {
                     'description' => 'Task description',
                     'status' => 'todo',
                     'priority' => 'high',
-                    'assignee_id' => $member->id,
+                    'assignee_id' => $developer->id,
                     'start_date' => now()->toDateString(),
                     'due_date' => now()->addWeek()->toDateString(),
                 ])
@@ -121,8 +121,8 @@ describe('Task Management', function () {
         });
 
         it('returns a null assignee for an unassigned task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
@@ -136,8 +136,8 @@ describe('Task Management', function () {
         });
 
         it('allows project manager to create task via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($pm)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -151,8 +151,8 @@ describe('Task Management', function () {
         });
 
         it('allows administrator to create task via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -163,10 +163,10 @@ describe('Task Management', function () {
                 ->assertCreated();
         });
 
-        it('denies creating task for project not member of', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+        it('denies creating task for project not developer of', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)
                 ->postJson('/api/tasks', [
                     'project_id' => $otherProject->id,
                     'title' => 'Unauthorized Task',
@@ -177,8 +177,8 @@ describe('Task Management', function () {
         });
 
         it('requires title for task creation', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -203,8 +203,8 @@ describe('Task Management', function () {
         });
 
         it('validates status enum', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -217,8 +217,8 @@ describe('Task Management', function () {
         });
 
         it('validates priority enum', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -231,8 +231,8 @@ describe('Task Management', function () {
         });
 
         it('validates due_date after start_date', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
                     'project_id' => $project->id,
@@ -244,9 +244,9 @@ describe('Task Management', function () {
                 ->assertJsonValidationErrors('due_date');
         });
 
-        it('prevents assignee not member of project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('prevents assignee not developer of project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $outsider = User::factory()->create(['email' => 'outsider@example.com']);
             $outsider->assignRole('developer');
 
@@ -263,8 +263,8 @@ describe('Task Management', function () {
         });
 
         it('returns a validation error for a non-existent assignee instead of crashing', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $this->actingAs($admin)
                 ->postJson('/api/tasks', [
@@ -277,9 +277,9 @@ describe('Task Management', function () {
         });
 
         it('returns a validation error when updating with a non-existent assignee', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
 
             $this->actingAs($admin)
                 ->putJson("/api/tasks/{$task->id}", [
@@ -290,9 +290,9 @@ describe('Task Management', function () {
         });
 
         it('allows admin to update task via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->putJson("/api/tasks/{$task1->id}", [
                     'title' => 'Updated Task Title',
@@ -309,9 +309,9 @@ describe('Task Management', function () {
         });
 
         it('allows task creator to update task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->putJson("/api/tasks/{$task1->id}", [
                     'priority' => 'urgent',
@@ -325,10 +325,10 @@ describe('Task Management', function () {
         });
 
         it('allows task assignee to update task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->actingAs($member)
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->actingAs($developer)
                 ->putJson("/api/tasks/{$task1->id}", [
                     'status' => 'in_progress',
                 ])
@@ -336,9 +336,9 @@ describe('Task Management', function () {
         });
 
         it('allows project manager role to update task in project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($pm)
                 ->putJson("/api/tasks/{$task2->id}", [
                     'title' => 'Updated by Manager Role',
@@ -346,11 +346,11 @@ describe('Task Management', function () {
                 ->assertOk();
         });
 
-        it('denies regular member (not creator/assignee/manager) updating task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->actingAs($member)
+        it('denies regular developer (not creator/assignee/manager) updating task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->actingAs($developer)
                 ->putJson("/api/tasks/{$task2->id}", [
                     'title' => 'Hacked Title',
                 ])
@@ -375,9 +375,9 @@ describe('Task Management', function () {
         });
 
         it('allows task creator to delete task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->deleteJson("/api/tasks/{$task1->id}")
                 ->assertNoContent();
@@ -386,36 +386,36 @@ describe('Task Management', function () {
         });
 
         it('allows project owner to delete task in project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->deleteJson("/api/tasks/{$task1->id}")
                 ->assertNoContent();
         });
 
         it('allows project manager to delete task via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($pm)
                 ->deleteJson("/api/tasks/{$task1->id}")
                 ->assertNoContent();
         });
 
-        it('denies member deleting task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->actingAs($member)
+        it('denies developer deleting task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->actingAs($developer)
                 ->deleteJson("/api/tasks/{$task1->id}")
                 ->assertForbidden();
         });
 
         it('sets completed_at when status changed to done', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->putJson("/api/tasks/{$task1->id}", [
                     'status' => 'done',
@@ -428,9 +428,9 @@ describe('Task Management', function () {
         });
 
         it('clears completed_at when status changed from done', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             // First set to done
             $task1->update(['status' => TaskStatus::DONE, 'completed_at' => now()]);
             $this->actingAs($admin)
@@ -447,9 +447,9 @@ describe('Task Management', function () {
 
     describe('API List and Filters', function () {
         it('allows admin to list tasks with filters', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->getJson('/api/tasks?search=Design&status=todo&priority=high&sort_by=title&sort_direction=asc')
                 ->assertOk()
@@ -459,11 +459,11 @@ describe('Task Management', function () {
                 ]);
         });
 
-        it('allows member to list accessible tasks', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            createTestTasks($admin, $pm, $member, $project, $project, $otherProject);
-            $this->actingAs($member)
+        it('allows developer to list accessible tasks', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            createTestTasks($admin, $pm, $developer, $project, $project, $otherProject);
+            $this->actingAs($developer)
                 ->getJson('/api/tasks')
                 ->assertOk()
                 ->assertJsonStructure([
@@ -472,7 +472,7 @@ describe('Task Management', function () {
                 ]);
 
             // Member should only see tasks from projects they are part of
-            $response = $this->actingAs($member)->getJson('/api/tasks');
+            $response = $this->actingAs($developer)->getJson('/api/tasks');
             $taskTitles = collect($response->json('data'))->pluck('title')->toArray();
             $this->assertContains('Design Homepage', $taskTitles);
             $this->assertContains('Implement API', $taskTitles);
@@ -480,9 +480,9 @@ describe('Task Management', function () {
         });
 
         it('returns pagination meta', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
                 ->getJson('/api/tasks?per_page=2')
                 ->assertOk()
@@ -497,21 +497,21 @@ describe('Task Management', function () {
         });
 
         it('filters tasks by assignee', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->actingAs($admin)
-                ->getJson("/api/tasks?assignee_id={$member->id}")
+                ->getJson("/api/tasks?assignee_id={$developer->id}")
                 ->assertOk();
-            $response = $this->actingAs($admin)->getJson("/api/tasks?assignee_id={$member->id}");
+            $response = $this->actingAs($admin)->getJson("/api/tasks?assignee_id={$developer->id}");
             $assigneeIds = collect($response->json('data'))->pluck('assignee_id')->unique()->toArray();
-            $this->assertEquals([$member->id], $assigneeIds);
+            $this->assertEquals([$developer->id], $assigneeIds);
         });
 
         it('filters tasks by project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, $pmProject] = createTestProjects($admin, $pm, $member);
-            createTestTasks($admin, $pm, $member, $project, $pmProject, $pmProject);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, $pmProject] = createTestProjects($admin, $pm, $developer);
+            createTestTasks($admin, $pm, $developer, $project, $pmProject, $pmProject);
             $this->actingAs($admin)
                 ->getJson("/api/tasks?project_id={$project->id}")
                 ->assertOk();
@@ -521,8 +521,8 @@ describe('Task Management', function () {
         });
 
         it('returns assignees for project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->getJson("/api/projects/{$project->id}/assignees")
                 ->assertOk()
@@ -532,108 +532,108 @@ describe('Task Management', function () {
 
     describe('Policy Authorization', function () {
         it('allows admin to view any task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            [, , , $task4] = createTestTasks($admin, $pm, $member, $project, $project, $otherProject);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            [, , , $task4] = createTestTasks($admin, $pm, $developer, $project, $project, $otherProject);
             $this->assertTrue($admin->can('view', $task4));
         });
 
         it('allows task creator to view task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->assertTrue($admin->can('view', $task1));
         });
 
         it('allows task assignee to view task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->assertTrue($member->can('view', $task1));
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->assertTrue($developer->can('view', $task1));
         });
 
-        it('allows project member to view task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->assertTrue($member->can('view', $task2));
+        it('allows project developer to view task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->assertTrue($developer->can('view', $task2));
         });
 
-        it('denies non-member viewing task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            [, , , $task4] = createTestTasks($admin, $pm, $member, $project, $project, $otherProject);
-            $this->assertFalse($member->can('view', $task4));
+        it('denies non-developer viewing task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            [, , , $task4] = createTestTasks($admin, $pm, $developer, $project, $project, $otherProject);
+            $this->assertFalse($developer->can('view', $task4));
         });
 
         it('allows admin to update any task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            [, , , $task4] = createTestTasks($admin, $pm, $member, $project, $project, $otherProject);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            [, , , $task4] = createTestTasks($admin, $pm, $developer, $project, $project, $otherProject);
             $this->assertTrue($admin->can('update', $task4));
         });
 
         it('allows task creator to update task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->assertTrue($admin->can('update', $task1));
         });
 
         it('allows task assignee to update task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->assertTrue($member->can('update', $task1));
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->assertTrue($developer->can('update', $task1));
         });
 
         it('allows project manager role to update task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->assertTrue($pm->can('update', $task2));
         });
 
-        it('denies regular member (not creator/assignee/manager) updating task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [, $task2] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->assertFalse($member->can('update', $task2));
+        it('denies regular developer (not creator/assignee/manager) updating task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [, $task2] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->assertFalse($developer->can('update', $task2));
         });
 
         it('allows admin to delete any task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, , $otherProject] = createTestProjects($admin, $pm, $member);
-            [, , , $task4] = createTestTasks($admin, $pm, $member, $project, $project, $otherProject);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            [, , , $task4] = createTestTasks($admin, $pm, $developer, $project, $project, $otherProject);
             $this->assertTrue($admin->can('delete', $task4));
         });
 
         it('allows task creator to delete task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->assertTrue($admin->can('delete', $task1));
         });
 
         it('allows project owner to delete task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->assertTrue($admin->can('delete', $task1));
         });
 
         it('allows project manager to delete task via policy', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
             $this->assertTrue($pm->can('delete', $task1));
         });
 
-        it('denies member deleting task', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            [$task1] = createTestTasks($admin, $pm, $member, $project, $project, $project);
-            $this->assertFalse($member->can('delete', $task1));
+        it('denies developer deleting task', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            [$task1] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
+            $this->assertFalse($developer->can('delete', $task1));
         });
     });
 

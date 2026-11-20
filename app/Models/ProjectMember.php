@@ -36,8 +36,8 @@ class ProjectMember extends Pivot
      */
     protected static function booted(): void
     {
-        static::creating(function (self $member): void {
-            $member->joined_at ??= Carbon::now();
+        static::creating(function (self $developer): void {
+            $developer->joined_at ??= Carbon::now();
         });
     }
 
@@ -55,7 +55,7 @@ class ProjectMember extends Pivot
     }
 
     /**
-     * Get the project that owns the member record.
+     * Get the project that owns the developer record.
      *
      * @return BelongsTo<Project, $this>
      */
@@ -65,7 +65,7 @@ class ProjectMember extends Pivot
     }
 
     /**
-     * Get the user that owns the member record.
+     * Get the user that owns the developer record.
      *
      * @return BelongsTo<User, $this>
      */
@@ -75,7 +75,7 @@ class ProjectMember extends Pivot
     }
 
     /**
-     * Check if this member is the project owner.
+     * Check if this developer is the project owner.
      */
     public function isOwner(): bool
     {

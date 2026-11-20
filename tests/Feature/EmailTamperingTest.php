@@ -35,7 +35,7 @@ describe('Invitation Verification Boundary', function () {
         $invitation = Invitation::create([
             'name' => 'Persisted User',
             'email' => 'persisted@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => hash('sha256', $token),
             'expires_at' => $expiresAt,
             'accepted_at' => null,
@@ -70,7 +70,7 @@ describe('Invitation Verification Boundary', function () {
         $invitation = Invitation::create([
             'name' => 'Expired User',
             'email' => 'expired-user@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => hash('sha256', $token),
             'expires_at' => $expiresAt,
             'accepted_at' => null,
@@ -103,7 +103,7 @@ describe('Invitation Verification Boundary', function () {
         $invitation = Invitation::create([
             'name' => 'Accepted User',
             'email' => 'already-accepted@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => hash('sha256', $token),
             'expires_at' => $expiresAt,
             'accepted_at' => now(),

@@ -35,7 +35,7 @@ describe('Concurrent Activation Protection', function () {
         $invitation = Invitation::create([
             'name' => 'Test User',
             'email' => 'concurrent-test@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => hash('sha256', $token),
             'expires_at' => $expiresAt,
             'accepted_at' => null,
@@ -94,7 +94,7 @@ describe('Concurrent Activation Protection', function () {
         $invitation = Invitation::create([
             'name' => 'Test User',
             'email' => 'sequential-test@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => hash('sha256', $token),
             'expires_at' => $expiresAt,
             'accepted_at' => null,

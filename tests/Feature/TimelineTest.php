@@ -15,11 +15,11 @@ beforeEach(function () {
 });
 
 it('shows accessible project tasks on the timeline', function () {
-    [$admin, $pm, $member] = createTestUsers();
-    [$project] = createTestProjects($admin, $pm, $member);
-    [$task] = createTestTasks($admin, $pm, $member, $project, $project, $project);
+    [$admin, $pm, $developer] = createTestUsers();
+    [$project] = createTestProjects($admin, $pm, $developer);
+    [$task] = createTestTasks($admin, $pm, $developer, $project, $project, $project);
 
-    $response = $this->actingAs($member)->get(route('timeline'));
+    $response = $this->actingAs($developer)->get(route('timeline'));
 
     $response->assertOk();
 
@@ -37,8 +37,8 @@ it('shows accessible project tasks on the timeline', function () {
 });
 
 it('allows clients to view the timeline for their accessible projects', function () {
-    [$admin, $pm, $member] = createTestUsers();
-    [$project] = createTestProjects($admin, $pm, $member);
+    [$admin, $pm, $developer] = createTestUsers();
+    [$project] = createTestProjects($admin, $pm, $developer);
 
     $client = User::factory()->create(['is_active' => true]);
     $client->assignRole('client');

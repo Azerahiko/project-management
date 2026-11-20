@@ -7,9 +7,9 @@ use App\Models\TaskComment;
 
 describe('Trashed Resources', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
-        [$this->task] = createTestTasks($this->admin, $this->pm, $this->member, $this->project, $this->project, $this->project);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project] = createTestProjects($this->admin, $this->pm, $this->developer);
+        [$this->task] = createTestTasks($this->admin, $this->pm, $this->developer, $this->project, $this->project, $this->project);
     });
 
     it('lists only trashed projects at the trashed endpoint', function () {

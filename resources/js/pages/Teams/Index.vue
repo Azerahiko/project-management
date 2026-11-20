@@ -44,14 +44,15 @@ function initials(name: string): string {
 const roleColors: Record<string, string> = {
     owner: 'bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300',
     manager: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300',
-    member: 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
+    developer:
+        'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
     viewer: 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400',
 };
 
 const roleLabels: Record<string, string> = {
     owner: 'Pemilik',
     manager: 'Manajer',
-    member: 'Anggota',
+    developer: 'Anggota',
     viewer: 'Peninjau',
 };
 
@@ -227,31 +228,34 @@ const totalMembersAllocated = computed(() => {
                         class="divide-y divide-surface-100 dark:divide-surface-800/60"
                     >
                         <div
-                            v-for="member in project.members"
-                            :key="member.id"
+                            v-for="developer in project.members"
+                            :key="developer.id"
                             class="flex items-center justify-between py-2 first:pt-0 last:pb-0"
                         >
                             <div class="flex min-w-0 items-center gap-2.5">
                                 <Avatar
-                                    :initials="initials(member.name)"
-                                    :src="member.avatar"
-                                    :alt="member.name"
+                                    :initials="initials(developer.name)"
+                                    :src="developer.avatar"
+                                    :alt="developer.name"
                                     size="sm"
                                 />
                                 <span
                                     class="truncate text-xs font-medium text-surface-800 dark:text-surface-200"
                                 >
-                                    {{ member.name }}
+                                    {{ developer.name }}
                                 </span>
                             </div>
 
                             <span
                                 class="py-0.2 shrink-0 rounded px-1.5 text-[9.5px] font-semibold"
                                 :class="
-                                    roleColors[member.role] || roleColors.member
+                                    roleColors[developer.role] ||
+                                    roleColors.developer
                                 "
                             >
-                                {{ roleLabels[member.role] ?? member.role }}
+                                {{
+                                    roleLabels[developer.role] ?? developer.role
+                                }}
                             </span>
                         </div>
                     </div>

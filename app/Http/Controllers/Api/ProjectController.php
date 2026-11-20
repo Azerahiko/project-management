@@ -89,7 +89,7 @@ class ProjectController extends Controller
 
             $project = Project::create($data);
 
-            // Add owner as project member with OWNER role
+            // Add owner as project developer with OWNER role
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $data['owner_id'],
@@ -154,7 +154,7 @@ class ProjectController extends Controller
             abort(403, 'Hanya pemilik proyek atau administrator yang dapat mengubah pemilik proyek.');
         }
 
-        // Validate new owner is a member of the project (or admin)
+        // Validate new owner is a developer of the project (or admin)
         if ($ownerChanged) {
             $newOwner = User::findOrFail($newOwnerId);
             if (! $newOwner->is_active) {
@@ -272,7 +272,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * Add a member to a project.
+     * Add a developer to a project.
      */
     public function addMember(ProjectMemberRequest $request, Project $project): JsonResponse
     {
@@ -280,8 +280,8 @@ class ProjectController extends Controller
 
         $validated = $request->validated();
 
-        $member = DB::transaction(function () use ($project, $validated) {
-            // Check if user is already a member
+        $developer = DB::transaction(function () use ($project, $validated) {
+            // Check if user is already a developer
             $user = User::findOrFail((int) $validated['user_id']);
             if ($project->hasMember($user)) {
                 abort(422, 'Pengguna sudah menjadi anggota proyek ini.');
@@ -295,8 +295,8 @@ class ProjectController extends Controller
             ])->load('user');
         });
 
-        // Send ProjectMemberAdded notification to the new member
-        $user = $member->user;
+        // Send ProjectMemberAdded notification to the new developer
+        $user = $developer->user;
         DB::afterCommit(function () use ($project, $user, $validated, $request) {
             $this->notificationSender->send($user, ProjectMemberAdded::class, [
                 'project_id' => $project->id,
@@ -307,13 +307,13 @@ class ProjectController extends Controller
             ]);
         });
 
-        return ProjectMemberResource::make($member)
+        return ProjectMemberResource::make($developer)
             ->response()
             ->setStatusCode(201);
     }
 
     /**
-     * Update a member's role in a project.
+     * Update a developer's role in a project.
      */
     public function updateMember(ProjectMemberRequest $request, Project $project, User $user): ProjectMemberResource
     {
@@ -324,17 +324,17 @@ class ProjectController extends Controller
             abort(422, 'Tidak dapat mengubah peran pemilik proyek.');
         }
 
-        $member = $project->projectMembers()->where('user_id', $user->id)->firstOrFail();
+        $developer = $project->projectMembers()->where('user_id', $user->id)->firstOrFail();
 
-        $member->update([
+        $developer->update([
             'role' => $request->validated('role'),
         ]);
 
-        return ProjectMemberResource::make($member->load('user'));
+        return ProjectMemberResource::make($developer->load('user'));
     }
 
     /**
-     * Remove a member from a project.
+     * Remove a developer from a project.
      */
     public function removeMember(Request $request, Project $project, User $user): JsonResponse
     {
@@ -356,10 +356,10 @@ class ProjectController extends Controller
             abort(422, 'Proyek harus mempertahankan minimal satu klien.');
         }
 
-        $member = $project->projectMembers()->where('user_id', $user->id)->firstOrFail();
+        $developer = $project->projectMembers()->where('user_id', $user->id)->firstOrFail();
 
-        DB::transaction(function () use ($member) {
-            $member->delete();
+        DB::transaction(function () use ($developer) {
+            $developer->delete();
         });
 
         return response()->json(status: 204);
@@ -477,7 +477,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * Keep the project member pivot in sync when ownership changes.
+     * Keep the project developer pivot in sync when ownership changes.
      */
     private function syncProjectOwner(Project $project, int $newOwnerId, int $previousOwnerId, ?User $transferredBy): void
     {

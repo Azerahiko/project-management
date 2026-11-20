@@ -22,8 +22,8 @@ function realUpload(string $name, string $content, ?string $mimeType = null): Up
 
 describe('Project file upload', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project, , $this->otherProject] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project, , $this->otherProject] = createTestProjects($this->admin, $this->pm, $this->developer);
         Storage::fake('local');
     });
 
@@ -145,8 +145,8 @@ describe('Project file upload', function () {
         ])->assertUnauthorized();
     });
 
-    it('rejects a project member without projects.update', function () {
-        $this->actingAs($this->member)
+    it('rejects a project developer without projects.update', function () {
+        $this->actingAs($this->developer)
             ->post("/api/projects/{$this->project->id}/files", [
                 'file' => UploadedFile::fake()->create('rencana.pdf', 10),
             ])
@@ -155,13 +155,13 @@ describe('Project file upload', function () {
         expect(File::count())->toBe(0);
     });
 
-    it('rejects a client role member', function () {
+    it('rejects a client role developer', function () {
         $client = User::factory()->create(['is_active' => true]);
         $client->assignRole('client');
         ProjectMember::create([
             'project_id' => $this->project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::MEMBER,
+            'role' => ProjectRole::DEVELOPER,
         ]);
 
         $this->actingAs($client)
@@ -172,7 +172,7 @@ describe('Project file upload', function () {
     });
 
     it('rejects a user of another project', function () {
-        $this->actingAs($this->member)
+        $this->actingAs($this->developer)
             ->post("/api/projects/{$this->otherProject->id}/files", [
                 'file' => UploadedFile::fake()->create('rencana.pdf', 10),
             ])
@@ -217,8 +217,8 @@ describe('Project file upload', function () {
 
 describe('Project file download', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project, , $this->otherProject] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project, , $this->otherProject] = createTestProjects($this->admin, $this->pm, $this->developer);
         Storage::fake('local');
     });
 
@@ -226,7 +226,7 @@ describe('Project file download', function () {
         $file = File::factory()->for($this->project)->create(['original_name' => 'Laporan Akhir.pdf']);
         Storage::disk('local')->put($file->storage_path, 'isi berkas');
 
-        $response = $this->actingAs($this->member)
+        $response = $this->actingAs($this->developer)
             ->get("/api/projects/{$this->project->id}/files/{$file->id}/download")
             ->assertOk()
             ->assertDownload('Laporan Akhir.pdf');
@@ -296,7 +296,7 @@ describe('Project file download', function () {
             ->toContain("filename*=utf-8''");
     });
 
-    it('lets a client role member download', function () {
+    it('lets a client role developer download', function () {
         $file = File::factory()->for($this->project)->create();
         Storage::disk('local')->put($file->storage_path, 'isi');
 
@@ -305,7 +305,7 @@ describe('Project file download', function () {
         ProjectMember::create([
             'project_id' => $this->project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::MEMBER,
+            'role' => ProjectRole::DEVELOPER,
         ]);
 
         $this->actingAs($client)
@@ -316,8 +316,8 @@ describe('Project file download', function () {
 
 describe('Project file storage cleanup', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project] = createTestProjects($this->admin, $this->pm, $this->developer);
         Storage::fake('local');
     });
 

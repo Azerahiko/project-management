@@ -60,7 +60,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $budi, $siti, $andi, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project1->id, 'user_id' => $u->id],
-                ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 
@@ -80,7 +80,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $budi, $siti, $andi, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project2->id, 'user_id' => $u->id],
-                ['role' => $u->id === $budi->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $budi->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 
@@ -100,7 +100,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $siti, $budi, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project3->id, 'user_id' => $u->id],
-                ['role' => $u->id === $siti->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $siti->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 
@@ -120,7 +120,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $andi, $budi, $siti] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project4->id, 'user_id' => $u->id],
-                ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 
@@ -140,7 +140,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $budi, $dewi, $andi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project5->id, 'user_id' => $u->id],
-                ['role' => $u->id === $budi->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $budi->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 
@@ -160,7 +160,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $siti, $andi, $budi, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project6->id, 'user_id' => $u->id],
-                ['role' => $u->id === $siti->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $siti->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 
@@ -180,7 +180,7 @@ class DummyDataSeeder extends Seeder
         foreach ([$admin, $budi, $siti, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project7->id, 'user_id' => $u->id],
-                ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::MEMBER, 'joined_at' => now()]
+                ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
             );
         }
 

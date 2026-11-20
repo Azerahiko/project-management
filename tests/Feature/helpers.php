@@ -57,7 +57,7 @@ if (! function_exists('createTestUsers')) {
             return [$admin, $pm, $client];
         }
 
-        $member = User::factory()->create([
+        $developer = User::factory()->create([
             'email' => 'developer@example.com',
             'password' => bcrypt('password'),
             'is_active' => true,
@@ -65,14 +65,14 @@ if (! function_exists('createTestUsers')) {
             'onboarding_password_changed_at' => now(),
             'onboarding_completed_at' => now(),
         ]);
-        $member->assignRole('developer');
+        $developer->assignRole('developer');
 
-        return [$admin, $pm, $member, $client];
+        return [$admin, $pm, $developer, $client];
     }
 }
 
 if (! function_exists('createTestProjects')) {
-    function createTestProjects($admin, $pm, $member)
+    function createTestProjects($admin, $pm, $developer)
     {
         $project = Project::create([
             'name' => 'Redesain Website Perusahaan',
@@ -98,8 +98,8 @@ if (! function_exists('createTestProjects')) {
 
         ProjectMember::create([
             'project_id' => $project->id,
-            'user_id' => $member->id,
-            'role' => ProjectRole::MEMBER,
+            'user_id' => $developer->id,
+            'role' => ProjectRole::DEVELOPER,
         ]);
 
         $pmProject = Project::create([
@@ -120,8 +120,8 @@ if (! function_exists('createTestProjects')) {
 
         ProjectMember::create([
             'project_id' => $pmProject->id,
-            'user_id' => $member->id,
-            'role' => ProjectRole::MEMBER,
+            'user_id' => $developer->id,
+            'role' => ProjectRole::DEVELOPER,
         ]);
 
         $otherProject = Project::create([
@@ -143,7 +143,7 @@ if (! function_exists('createTestProjects')) {
 }
 
 if (! function_exists('createTestTasks')) {
-    function createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject)
+    function createTestTasks($admin, $pm, $developer, $project, $pmProject, $otherProject)
     {
         $task1 = Task::create([
             'project_id' => $project->id,
@@ -151,7 +151,7 @@ if (! function_exists('createTestTasks')) {
             'description' => 'Create homepage design',
             'status' => TaskStatus::TODO,
             'priority' => TaskPriority::HIGH,
-            'assignee_id' => $member->id,
+            'assignee_id' => $developer->id,
             'creator_id' => $admin->id,
             'start_date' => now()->subDays(5),
             'due_date' => now()->addDays(10),
@@ -175,7 +175,7 @@ if (! function_exists('createTestTasks')) {
             'description' => 'Run database migrations',
             'status' => TaskStatus::DONE,
             'priority' => TaskPriority::URGENT,
-            'assignee_id' => $member->id,
+            'assignee_id' => $developer->id,
             'creator_id' => $pm->id,
             'start_date' => now()->subDays(10),
             'due_date' => now()->subDays(2),

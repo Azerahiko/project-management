@@ -196,7 +196,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all projects this user is a member of.
+     * Get all projects this user is a developer of.
      *
      * @return BelongsToMany<Project, $this, ProjectMember>
      */
@@ -219,7 +219,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is a member of a project.
+     * Check if user is a developer of a project.
      */
     public function isMemberOf(Project $project): bool
     {

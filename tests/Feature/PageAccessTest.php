@@ -13,16 +13,16 @@ beforeEach(function () {
 });
 
 it('guards placeholder pages with their related permissions', function () {
-    $member = User::factory()->create(['is_active' => true]);
-    $member->assignRole('developer');
+    $developer = User::factory()->create(['is_active' => true]);
+    $developer->assignRole('developer');
 
-    $this->actingAs($member)->get('/collaboration')->assertOk();
-    $this->actingAs($member)->get('/calendar')->assertOk();
-    $this->actingAs($member)->get('/documents')->assertOk();
+    $this->actingAs($developer)->get('/collaboration')->assertOk();
+    $this->actingAs($developer)->get('/calendar')->assertOk();
+    $this->actingAs($developer)->get('/documents')->assertOk();
 
-    $this->actingAs($member)->get('/teams')->assertForbidden();
-    $this->actingAs($member)->get('/reports')->assertForbidden();
-    $this->actingAs($member)->get('/activity-log')->assertForbidden();
+    $this->actingAs($developer)->get('/teams')->assertForbidden();
+    $this->actingAs($developer)->get('/reports')->assertForbidden();
+    $this->actingAs($developer)->get('/activity-log')->assertForbidden();
 });
 
 it('denies clients access to the notifications page', function () {

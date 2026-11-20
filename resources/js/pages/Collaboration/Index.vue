@@ -1265,14 +1265,14 @@ function projectInitials(name: string): string {
                                 class="flex shrink-0 items-center -space-x-2"
                             >
                                 <Avatar
-                                    v-for="member in project.members.slice(
+                                    v-for="developer in project.members.slice(
                                         0,
                                         3,
                                     )"
-                                    :key="member.id"
-                                    :initials="member.initials"
-                                    :src="member.avatar"
-                                    :alt="member.name"
+                                    :key="developer.id"
+                                    :initials="developer.initials"
+                                    :src="developer.avatar"
+                                    :alt="developer.name"
                                     size="xs"
                                     class="ring-2 ring-white dark:ring-surface-900"
                                 />
@@ -1321,17 +1321,17 @@ function projectInitials(name: string): string {
 
                     <div v-if="teamMembers.length > 0" class="mt-3 space-y-1">
                         <div
-                            v-for="member in visibleTeamMembers"
-                            :key="member.id"
+                            v-for="developer in visibleTeamMembers"
+                            :key="developer.id"
                             class="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 transition hover:bg-surface-50 dark:hover:bg-surface-800/50"
                         >
                             <div
                                 class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900"
                             >
                                 <Avatar
-                                    :initials="member.initials"
-                                    :src="member.avatar"
-                                    :alt="member.name"
+                                    :initials="developer.initials"
+                                    :src="developer.avatar"
+                                    :alt="developer.name"
                                     size="sm"
                                 />
                             </div>
@@ -1339,7 +1339,7 @@ function projectInitials(name: string): string {
                                 <p
                                     class="truncate text-xs font-medium text-surface-800 dark:text-surface-100"
                                 >
-                                    {{ member.name }}
+                                    {{ developer.name }}
                                 </p>
                                 <p
                                     class="text-[10px] text-surface-400 dark:text-surface-500"

@@ -6,7 +6,7 @@ enum ProjectRole: string
 {
     case OWNER = 'owner';
     case MANAGER = 'manager';
-    case MEMBER = 'member';
+    case DEVELOPER = 'developer';
     case VIEWER = 'viewer';
 
     public function label(): string
@@ -14,7 +14,7 @@ enum ProjectRole: string
         return match ($this) {
             self::OWNER => 'Pemilik',
             self::MANAGER => 'Manajer',
-            self::MEMBER => 'Anggota',
+            self::DEVELOPER => 'Anggota',
             self::VIEWER => 'Peninjau',
         };
     }
@@ -32,6 +32,6 @@ enum ProjectRole: string
      */
     public static function assignable(): array
     {
-        return [self::MANAGER, self::MEMBER, self::VIEWER];
+        return [self::MANAGER, self::DEVELOPER, self::VIEWER];
     }
 }

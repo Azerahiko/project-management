@@ -59,7 +59,7 @@ const projectStatusForBadge = computed(() => {
 
 const memberRoleOptions = [
     { value: 'manager', label: 'Manajer' },
-    { value: 'member', label: 'Anggota' },
+    { value: 'developer', label: 'Anggota' },
     { value: 'viewer', label: 'Peninjau' },
 ];
 
@@ -84,7 +84,7 @@ const loadingAvailableUsers = ref(false);
 const addMemberModalOpen = ref(false);
 const newMemberForm = reactive({
     user_id: '' as string,
-    role: 'member' as string,
+    role: 'developer' as string,
 });
 const newMemberErrors = ref<Record<string, string[]>>({});
 const newMemberErrorBag = computed(() => newMemberErrors.value);
@@ -93,7 +93,7 @@ const addingMember = ref(false);
 const deleteModalOpen = ref(false);
 const deleteLoading = ref(false);
 
-const editMemberRole = ref<{ member: ProjectMember; role: string } | null>(
+const editMemberRole = ref<{ developer: ProjectMember; role: string } | null>(
     null,
 );
 const savingMemberRole = ref(false);
@@ -276,7 +276,7 @@ async function loadAvailableUsers(): Promise<void> {
 
 function openAddMemberModal(): void {
     newMemberForm.user_id = '';
-    newMemberForm.role = 'member';
+    newMemberForm.role = 'developer';
     newMemberErrors.value = {};
     addMemberModalOpen.value = true;
     void loadAvailableUsers();
@@ -308,22 +308,25 @@ async function executeAddMember(): Promise<void> {
     }
 }
 
-function startEditMemberRole(member: ProjectMember): void {
+function startEditMemberRole(developer: ProjectMember): void {
     // Don't allow editing owner
-    if (member.is_owner) return;
-    editMemberRole.value = { member, role: member.role };
+    if (developer.is_owner) return;
+    editMemberRole.value = { developer, role: developer.role };
 }
 
 async function saveMemberRole(): Promise<void> {
     if (!editMemberRole.value || savingMemberRole.value) return;
 
-    const { member, role } = editMemberRole.value;
+    const { developer, role } = editMemberRole.value;
 
     savingMemberRole.value = true;
 
     try {
-        await updateMember(projectId, member.user_id, role);
-        success('Peran diperbarui', `Peran ${member.user?.name} telah diubah.`);
+        await updateMember(projectId, developer.user_id, role);
+        success(
+            'Peran diperbarui',
+            `Peran ${developer.user?.name} telah diubah.`,
+        );
         editMemberRole.value = null;
         router.reload();
     } catch (err: any) {
@@ -339,8 +342,8 @@ function cancelEditMemberRole(): void {
     editMemberRole.value = null;
 }
 
-async function confirmRemoveMember(member: ProjectMember): Promise<void> {
-    if (member.is_owner) {
+async function confirmRemoveMember(developer: ProjectMember): Promise<void> {
+    if (developer.is_owner) {
         warning(
             'Tidak dapat dihapus',
             'Pemilik proyek tidak dapat dihapus dari anggota.',
@@ -349,10 +352,10 @@ async function confirmRemoveMember(member: ProjectMember): Promise<void> {
     }
 
     try {
-        await removeMember(projectId, member.user_id);
+        await removeMember(projectId, developer.user_id);
         success(
             'Anggota dihapus',
-            `${member.user?.name} telah dihapus dari proyek.`,
+            `${developer.user?.name} telah dihapus dari proyek.`,
         );
         router.reload();
     } catch (err: any) {
@@ -682,7 +685,7 @@ function formatDateShort(dateString: string | null): string {
                     <div
                         v-if="
                             editMemberRole &&
-                            editMemberRole.member.id === row.id
+                            editMemberRole.developer.id === row.id
                         "
                     >
                         <Select
@@ -700,7 +703,7 @@ function formatDateShort(dateString: string | null): string {
                                     ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/30 dark:text-primary-300'
                                     : row.role === 'manager'
                                       ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                                      : row.role === 'member'
+                                      : row.role === 'developer'
                                         ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                                         : 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
                             ]"

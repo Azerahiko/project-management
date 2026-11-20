@@ -27,7 +27,7 @@ export type ProjectStatus =
     | 'completed'
     | 'archived';
 export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
-export type ProjectRole = 'owner' | 'manager' | 'member' | 'viewer';
+export type ProjectRole = 'owner' | 'manager' | 'developer' | 'viewer';
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';

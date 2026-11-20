@@ -25,9 +25,9 @@ describe('Dashboard Controller', function () {
 
     describe('Statistics accuracy', function () {
         it('admin sees global stats across all projects', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
-            [$task1, $task2, $task3, $task4] = createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $developer);
+            [$task1, $task2, $task3, $task4] = createTestTasks($admin, $pm, $developer, $project, $pmProject, $otherProject);
 
             // Add an overdue task
             Task::create([
@@ -35,7 +35,7 @@ describe('Dashboard Controller', function () {
                 'title' => 'Overdue Task',
                 'status' => TaskStatus::TODO,
                 'priority' => TaskPriority::HIGH,
-                'assignee_id' => $member->id,
+                'assignee_id' => $developer->id,
                 'creator_id' => $admin->id,
                 'due_date' => now()->subDay(),
             ]);
@@ -46,7 +46,7 @@ describe('Dashboard Controller', function () {
                 'title' => 'Done Overdue Task',
                 'status' => TaskStatus::DONE,
                 'priority' => TaskPriority::HIGH,
-                'assignee_id' => $member->id,
+                'assignee_id' => $developer->id,
                 'creator_id' => $admin->id,
                 'due_date' => now()->subDay(),
                 'completed_at' => now()->subHour(),
@@ -69,15 +69,15 @@ describe('Dashboard Controller', function () {
             // 1 overdue task (the one we added), task3 is DONE so not counted
             expect($stats['overdue_count'])->toBe(1);
 
-            // Admin + PM + member = 3 unique members across accessible projects
+            // Admin + PM + developer = 3 unique members across accessible projects
             expect($stats['team_members_count'])->toBe(3);
 
             expect($stats['notifications_unread'])->toBe(0);
         });
 
-        it('project_manager sees only owned and member projects', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
+        it('project_manager sees only owned and developer projects', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $developer);
 
             $response = $this->actingAs($pm)->get(route('dashboard'));
             $response->assertOk();
@@ -87,8 +87,8 @@ describe('Dashboard Controller', function () {
         });
 
         it('team_leader sees unique members from accessible projects', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $teamLeader = User::factory()->create(['is_active' => true]);
             $teamLeader->assignRole('team_leader');
@@ -96,7 +96,7 @@ describe('Dashboard Controller', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $teamLeader->id,
-                'role' => ProjectRole::MEMBER,
+                'role' => ProjectRole::DEVELOPER,
             ]);
 
             $response = $this->actingAs($teamLeader)->get(route('dashboard'));
@@ -106,12 +106,12 @@ describe('Dashboard Controller', function () {
             expect($stats['team_members_count'])->toBe(4);
         });
 
-        it('member sees only assigned tasks in my_tasks_count', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
-            [$task1, $task2, $task3, $task4] = createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject);
+        it('developer sees only assigned tasks in my_tasks_count', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $developer);
+            [$task1, $task2, $task3, $task4] = createTestTasks($admin, $pm, $developer, $project, $pmProject, $otherProject);
 
-            $response = $this->actingAs($member)->get(route('dashboard'));
+            $response = $this->actingAs($developer)->get(route('dashboard'));
             $response->assertOk();
 
             $stats = $response->inertiaProps('stats');
@@ -175,7 +175,7 @@ describe('Dashboard Controller', function () {
 
     describe('Data isolation per role', function () {
         it('client does not receive activities or internal comments', function () {
-            [$admin, $pm, $member, $client] = createTestUsers();
+            [$admin, $pm, $developer, $client] = createTestUsers();
 
             $project = Project::create([
                 'name' => 'Client Project',
@@ -197,7 +197,7 @@ describe('Dashboard Controller', function () {
                 'title' => 'Client Task',
                 'status' => TaskStatus::TODO,
                 'priority' => TaskPriority::MEDIUM,
-                'assignee_id' => $member->id,
+                'assignee_id' => $developer->id,
                 'creator_id' => $admin->id,
             ]);
 
@@ -218,7 +218,7 @@ describe('Dashboard Controller', function () {
         });
 
         it('reviewer sees activities for assigned tasks', function () {
-            [$admin, $pm, $member] = createTestUsers();
+            [$admin, $pm, $developer] = createTestUsers();
 
             $reviewer = User::factory()->create([
                 'email' => 'reviewer@example.com',
@@ -237,7 +237,7 @@ describe('Dashboard Controller', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $reviewer->id,
-                'role' => ProjectRole::MEMBER,
+                'role' => ProjectRole::DEVELOPER,
             ]);
 
             $task = Task::create([
@@ -373,9 +373,9 @@ describe('Dashboard Controller', function () {
 
     describe('Tasks by status', function () {
         it('includes done tasks in the status breakdown', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $member);
-            createTestTasks($admin, $pm, $member, $project, $pmProject, $otherProject);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project, $pmProject, $otherProject] = createTestProjects($admin, $pm, $developer);
+            createTestTasks($admin, $pm, $developer, $project, $pmProject, $otherProject);
 
             $response = $this->actingAs($admin)->get(route('dashboard'));
             $tasksByStatus = $response->inertiaProps('tasks_by_status');

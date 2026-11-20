@@ -84,11 +84,11 @@ class WorkspaceOverviewController extends Controller
             'projects' => $projects->map(fn (Project $project): array => [
                 'id' => $project->id,
                 'name' => $project->name,
-                'members' => $project->projectMembers->map(fn (ProjectMember $member): array => [
-                    'id' => $member->user_id,
-                    'name' => $member->user->name,
-                    'avatar' => $member->user->avatar,
-                    'role' => $member->role->value,
+                'members' => $project->projectMembers->map(fn (ProjectMember $developer): array => [
+                    'id' => $developer->user_id,
+                    'name' => $developer->user->name,
+                    'avatar' => $developer->user->avatar,
+                    'role' => $developer->role->value,
                 ]),
             ]),
             'can_view_projects' => $request->user()->can('projects.view'),

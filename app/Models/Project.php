@@ -141,7 +141,7 @@ class Project extends Model
     }
 
     /**
-     * Check if a user is a member of this project.
+     * Check if a user is a developer of this project.
      */
     public function hasMember(User $user): bool
     {
@@ -222,7 +222,7 @@ class Project extends Model
     }
 
     /**
-     * Scope with member count.
+     * Scope with developer count.
      *
      * @param  Builder<Project>  $query
      * @return Builder<Project>

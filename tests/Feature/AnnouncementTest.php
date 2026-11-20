@@ -8,14 +8,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('allows members to read announcements but not manage them', function () {
-    [$admin, , $member] = createTestUsers();
+    [$admin, , $developer] = createTestUsers();
 
     Announcement::factory()->create([
         'user_id' => $admin->id,
         'title' => 'Informasi Sprint',
     ]);
 
-    $response = $this->actingAs($member)->get(route('announcements.index'));
+    $response = $this->actingAs($developer)->get(route('announcements.index'));
 
     $response->assertOk();
 
@@ -53,9 +53,9 @@ it('validates announcement input', function () {
 });
 
 it('forbids members from creating announcements', function () {
-    [, , $member] = createTestUsers();
+    [, , $developer] = createTestUsers();
 
-    $this->actingAs($member)
+    $this->actingAs($developer)
         ->post(route('announcements.store'), [
             'title' => 'Tidak boleh',
             'body' => 'Anggota biasa tidak boleh membuat pengumuman.',

@@ -18,20 +18,20 @@ class ProjectMemberResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var ProjectMember $member */
-        $member = $this->resource;
+        /** @var ProjectMember $developer */
+        $developer = $this->resource;
 
         return [
-            'id' => $member->id,
-            'project_id' => $member->project_id,
-            'user_id' => $member->user_id,
-            'role' => $member->role->value,
-            'role_label' => $member->role->label(),
-            'joined_at' => $member->joined_at->toISOString(),
-            'user' => $member->relationLoaded('user') ? UserResource::make($member->user)->resolve() : null,
-            'is_owner' => $member->isOwner(),
-            'created_at' => $member->created_at?->toISOString(),
-            'updated_at' => $member->updated_at?->toISOString(),
+            'id' => $developer->id,
+            'project_id' => $developer->project_id,
+            'user_id' => $developer->user_id,
+            'role' => $developer->role->value,
+            'role_label' => $developer->role->label(),
+            'joined_at' => $developer->joined_at->toISOString(),
+            'user' => $developer->relationLoaded('user') ? UserResource::make($developer->user)->resolve() : null,
+            'is_owner' => $developer->isOwner(),
+            'created_at' => $developer->created_at?->toISOString(),
+            'updated_at' => $developer->updated_at?->toISOString(),
         ];
     }
 }

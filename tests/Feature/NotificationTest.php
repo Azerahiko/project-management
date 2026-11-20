@@ -72,14 +72,14 @@ beforeEach(function () {
     ProjectMember::create([
         'project_id' => $this->project->id,
         'user_id' => $this->member1->id,
-        'role' => ProjectRole::MEMBER,
+        'role' => ProjectRole::DEVELOPER,
         'joined_at' => now(),
     ]);
 
     ProjectMember::create([
         'project_id' => $this->project->id,
         'user_id' => $this->member2->id,
-        'role' => ProjectRole::MEMBER,
+        'role' => ProjectRole::DEVELOPER,
         'joined_at' => now(),
     ]);
 
@@ -272,7 +272,7 @@ test('status changed creates notifications for assignee, creator, and project ma
         ->count();
     $this->assertEquals(0, $countPm, 'pm (actor) should have 0 notifications');
 
-    // member2 (regular member) should NOT receive
+    // member2 (regular developer) should NOT receive
     $count2 = DB::table('notifications')
         ->where('notifiable_id', $this->member2->id)
         ->where('type', TaskStatusChanged::class)
@@ -364,10 +364,10 @@ test('status changed notification is idempotent per status transition', function
 });
 
 // ===========================================
-// PROJECT MEMBER ADDED NOTIFICATIONS
+// PROJECT DEVELOPER ADDED NOTIFICATIONS
 // ===========================================
 
-test('project member added creates notification for new member', function () {
+test('project developer added creates notification for new developer', function () {
     $this->actingAs($this->pm);
 
     $newUser = User::factory()->create([
@@ -379,7 +379,7 @@ test('project member added creates notification for new member', function () {
 
     $response = $this->postJson("/api/projects/{$this->project->id}/members", [
         'user_id' => $newUser->id,
-        'role' => 'member',
+        'role' => 'developer',
     ]);
 
     $response->assertStatus(201);
@@ -389,18 +389,18 @@ test('project member added creates notification for new member', function () {
     $this->assertEquals(ProjectMemberAdded::class, $notification->type);
     $this->assertEquals('project_member_added', $notification->data['action']);
     $this->assertEquals($this->project->id, $notification->data['project_id']);
-    $this->assertEquals('member', $notification->data['role']);
+    $this->assertEquals('developer', $notification->data['role']);
     $this->assertEquals($this->pm->name, $notification->data['added_by_name']);
     $this->assertSame("/projects/{$this->project->id}", $notification->data['url']);
 });
 
-test('project member added notification is idempotent', function () {
+test('project developer added notification is idempotent', function () {
     $sender = app(NotificationSender::class);
 
     $result1 = $sender->send($this->member1, ProjectMemberAdded::class, [
         'project_id' => $this->project->id,
         'project_name' => $this->project->name,
-        'role' => 'member',
+        'role' => 'developer',
         'added_by_name' => 'PM',
         'action' => 'project_member_added',
     ]);
@@ -408,7 +408,7 @@ test('project member added notification is idempotent', function () {
     $result2 = $sender->send($this->member1, ProjectMemberAdded::class, [
         'project_id' => $this->project->id,
         'project_name' => $this->project->name,
-        'role' => 'member',
+        'role' => 'developer',
         'added_by_name' => 'PM',
         'action' => 'project_member_added',
     ]);
@@ -961,7 +961,7 @@ test('notification respects mentions preference for ProjectMemberAdded', functio
     $result = $sender->send($this->member1, ProjectMemberAdded::class, [
         'project_id' => $this->project->id,
         'project_name' => $this->project->name,
-        'role' => 'member',
+        'role' => 'developer',
         'added_by_name' => 'PM',
         'action' => 'project_member_added',
     ]);

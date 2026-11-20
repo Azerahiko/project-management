@@ -35,7 +35,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('projects/{project}', [ProjectController::class, 'update'])->middleware('can:projects.update', 'token.ability:projects:write');
         Route::delete('projects/{project}', [ProjectController::class, 'destroy'])->middleware('can:projects.delete', 'token.ability:projects:write');
 
-        // Project member routes
+        // Project developer routes
         Route::post('projects/{project}/members', [ProjectController::class, 'addMember'])->middleware('can:projects.manage_members', 'token.ability:projects:write');
         Route::put('projects/{project}/members/{user}', [ProjectController::class, 'updateMember'])->middleware('can:projects.manage_members', 'token.ability:projects:write');
         Route::delete('projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->middleware('can:projects.manage_members', 'token.ability:projects:write');
@@ -70,7 +70,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('projects/trashed', [ProjectController::class, 'trashed'])->middleware('can:projects.view', 'token.ability:projects:read');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->middleware('can:projects.view', 'token.ability:projects:read');
 
-    // Project member routes (read-only)
+    // Project developer routes (read-only)
     Route::get('projects/{project}/members', [ProjectController::class, 'members'])->middleware('can:projects.view', 'token.ability:projects:read');
     Route::get('projects/{project}/available-users', [ProjectController::class, 'availableUsers'])->middleware('can:projects.manage_members', 'token.ability:projects:read');
 

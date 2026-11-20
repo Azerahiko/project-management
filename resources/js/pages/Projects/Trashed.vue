@@ -547,18 +547,18 @@ watch(
                                 "
                             >
                                 <div
-                                    v-for="member in project.members.slice(
+                                    v-for="developer in project.members.slice(
                                         0,
                                         3,
                                     )"
-                                    :key="member.id"
+                                    :key="developer.id"
                                     class="relative inline-block rounded-full ring-2 ring-white dark:ring-surface-900"
-                                    :title="member.user?.name"
+                                    :title="developer.user?.name"
                                 >
                                     <Avatar
-                                        :initials="member.user?.initials"
-                                        :src="member.user?.avatar"
-                                        :alt="member.user?.name"
+                                        :initials="developer.user?.initials"
+                                        :src="developer.user?.avatar"
+                                        :alt="developer.user?.name"
                                         size="sm"
                                     />
                                 </div>

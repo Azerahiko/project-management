@@ -21,9 +21,9 @@ describe('Project Management', function () {
             $this->actingAs($pm)->get('/projects')->assertOk();
         });
 
-        it('allows member to access projects index', function () {
-            [, , $member] = createTestUsers();
-            $this->actingAs($member)->get('/projects')->assertOk();
+        it('allows developer to access projects index', function () {
+            [, , $developer] = createTestUsers();
+            $this->actingAs($developer)->get('/projects')->assertOk();
         });
 
         it('allows admin to access create project page', function () {
@@ -36,27 +36,27 @@ describe('Project Management', function () {
             $this->actingAs($pm)->get('/projects/create')->assertOk();
         });
 
-        it('denies member access to create project page', function () {
-            [, , $member] = createTestUsers();
-            $this->actingAs($member)->get('/projects/create')->assertForbidden();
+        it('denies developer access to create project page', function () {
+            [, , $developer] = createTestUsers();
+            $this->actingAs($developer)->get('/projects/create')->assertForbidden();
         });
 
         it('allows project owner to access edit page', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)->get("/projects/{$project->id}/edit")->assertOk();
         });
 
         it('allows project manager (role) to access edit page', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($pm)->get("/projects/{$project->id}/edit")->assertOk();
         });
 
-        it('denies member access to edit page', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)->get("/projects/{$project->id}/edit")->assertForbidden();
+        it('denies developer access to edit page', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)->get("/projects/{$project->id}/edit")->assertForbidden();
         });
 
         it('denies project managers access to edit pages for projects they cannot manage', function () {
@@ -71,16 +71,16 @@ describe('Project Management', function () {
             $this->actingAs($pm)->get("/projects/{$target->id}/edit")->assertForbidden();
         });
 
-        it('allows project member to view project detail', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)->get("/projects/{$project->id}")->assertOk();
+        it('allows project developer to view project detail', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)->get("/projects/{$project->id}")->assertOk();
         });
 
-        it('denies access to project not member of', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)->get("/projects/{$otherProject->id}")->assertForbidden();
+        it('denies access to project not developer of', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)->get("/projects/{$otherProject->id}")->assertForbidden();
         });
     });
 
@@ -117,9 +117,9 @@ describe('Project Management', function () {
             $this->assertDatabaseHas('projects', ['name' => 'PM Project']);
         });
 
-        it('denies member creating project via API', function () {
-            [, , $member] = createTestUsers();
-            $this->actingAs($member)
+        it('denies developer creating project via API', function () {
+            [, , $developer] = createTestUsers();
+            $this->actingAs($developer)
                 ->postJson('/api/projects', [
                     'name' => 'Member Project',
                     'status' => 'draft',
@@ -129,8 +129,8 @@ describe('Project Management', function () {
         });
 
         it('allows admin to update project via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->putJson("/api/projects/{$project->id}", [
                     'name' => 'Updated Project Name',
@@ -146,8 +146,8 @@ describe('Project Management', function () {
         });
 
         it('allows project owner to update project via API', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, $pmProject] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [, $pmProject] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($pm)
                 ->putJson("/api/projects/{$pmProject->id}", [
                     'name' => 'Updated by PM',
@@ -161,9 +161,9 @@ describe('Project Management', function () {
             ]);
         });
 
-        it('allows project member with manager role to update project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('allows project developer with manager role to update project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($pm)
                 ->putJson("/api/projects/{$project->id}", [
                     'name' => 'Updated by Manager Role',
@@ -171,10 +171,10 @@ describe('Project Management', function () {
                 ->assertOk();
         });
 
-        it('denies regular member updating project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+        it('denies regular developer updating project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)
                 ->putJson("/api/projects/{$project->id}", [
                     'name' => 'Hacked Name',
                 ])
@@ -182,8 +182,8 @@ describe('Project Management', function () {
         });
 
         it('syncs project ownership when the owner changes', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $this->actingAs($admin)
                 ->putJson("/api/projects/{$project->id}", [
@@ -209,8 +209,8 @@ describe('Project Management', function () {
         });
 
         it('rejects transferring ownership to an inactive user', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $inactive = User::factory()->create([
                 'email' => 'inactive@example.com',
                 'is_active' => false,
@@ -231,8 +231,8 @@ describe('Project Management', function () {
         });
 
         it('denies project managers from transferring project ownership', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $this->actingAs($pm)
                 ->putJson("/api/projects/{$project->id}", [
@@ -279,17 +279,17 @@ describe('Project Management', function () {
         });
 
         it('denies project manager (role) deleting project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($pm)
                 ->deleteJson("/api/projects/{$project->id}")
                 ->assertForbidden();
         });
 
-        it('denies member deleting project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+        it('denies developer deleting project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)
                 ->deleteJson("/api/projects/{$project->id}")
                 ->assertForbidden();
         });
@@ -297,8 +297,8 @@ describe('Project Management', function () {
 
     describe('API List and Filters', function () {
         it('allows admin to list projects with filters', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->getJson('/api/projects?search=Redesain&status=active&priority=high&sort_by=name&sort_direction=asc')
                 ->assertOk()
@@ -308,10 +308,10 @@ describe('Project Management', function () {
                 ]);
         });
 
-        it('allows member to list accessible projects', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+        it('allows developer to list accessible projects', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)
                 ->getJson('/api/projects')
                 ->assertOk()
                 ->assertJsonStructure([
@@ -320,17 +320,17 @@ describe('Project Management', function () {
                 ]);
 
             // Member should only see projects they are part of
-            $response = $this->actingAs($member)->getJson('/api/projects');
+            $response = $this->actingAs($developer)->getJson('/api/projects');
             $projectNames = collect($response->json('data'))->pluck('name')->toArray();
             $this->assertContains('Redesain Website Perusahaan', $projectNames);
             $this->assertContains('Sistem Manajemen Inventaris', $projectNames);
-            // Should not see project they're not member of
+            // Should not see project they're not developer of
             $this->assertNotContains('Aplikasi Mobile Internal', $projectNames);
         });
 
         it('returns pagination meta', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->getJson('/api/projects?per_page=2')
                 ->assertOk()
@@ -344,9 +344,9 @@ describe('Project Management', function () {
                 ->assertJsonPath('meta.per_page', 1);
         });
 
-        it('returns accurate member counts in the project listing', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            createTestProjects($admin, $pm, $member);
+        it('returns accurate developer counts in the project listing', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            createTestProjects($admin, $pm, $developer);
 
             $response = $this->actingAs($admin)
                 ->getJson('/api/projects?search=Redesain')
@@ -380,8 +380,8 @@ describe('Project Management', function () {
         });
 
         it('includes project-level managers when a project is given', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $projectManager = User::factory()->create(['is_active' => true]);
             $projectManager->assignRole('developer');
@@ -399,8 +399,8 @@ describe('Project Management', function () {
         });
 
         it('excludes managers from other projects when a project is given', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
             $otherProject = Project::create([
                 'name' => 'Proyek Lain',
@@ -430,8 +430,8 @@ describe('Project Management', function () {
 
     describe('Project Members API', function () {
         it('allows admin to list project members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->getJson("/api/projects/{$project->id}/members")
                 ->assertOk()
@@ -439,32 +439,32 @@ describe('Project Management', function () {
         });
 
         it('allows project manager to list project members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($pm)
                 ->getJson("/api/projects/{$project->id}/members")
                 ->assertOk();
         });
 
-        it('allows member to list project members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+        it('allows developer to list project members', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)
                 ->getJson("/api/projects/{$project->id}/members")
                 ->assertOk();
         });
 
-        it('denies non-member listing project members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
-            $this->actingAs($member)
+        it('denies non-developer listing project members', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            $this->actingAs($developer)
                 ->getJson("/api/projects/{$otherProject->id}/members")
                 ->assertForbidden();
         });
 
         it('lists only active users who are not already project members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $candidate = User::factory()->create([
                 'email' => 'candidate@example.com',
                 'is_active' => true,
@@ -485,22 +485,22 @@ describe('Project Management', function () {
             expect($ids)->toContain($candidate->id);
             expect($ids)->not->toContain($admin->id);
             expect($ids)->not->toContain($pm->id);
-            expect($ids)->not->toContain($member->id);
+            expect($ids)->not->toContain($developer->id);
             expect($ids)->not->toContain($inactive->id);
         });
 
         it('denies regular members from listing available users', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
 
-            $this->actingAs($member)
+            $this->actingAs($developer)
                 ->getJson("/api/projects/{$project->id}/available-users")
                 ->assertForbidden();
         });
 
-        it('allows admin to add member to project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('allows admin to add developer to project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $newUser = User::factory()->create([
                 'email' => 'newmember@example.com',
                 'password' => bcrypt('password'),
@@ -510,7 +510,7 @@ describe('Project Management', function () {
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $newUser->id,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertCreated()
                 ->assertJsonStructure(['data' => ['id', 'user_id', 'role', 'user']]);
@@ -518,13 +518,13 @@ describe('Project Management', function () {
             $this->assertDatabaseHas('project_members', [
                 'project_id' => $project->id,
                 'user_id' => $newUser->id,
-                'role' => 'member',
+                'role' => 'developer',
             ]);
         });
 
-        it('allows project manager to add member', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('allows project manager to add developer', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $newUser = User::factory()->create([
                 'email' => 'newmember2@example.com',
                 'password' => bcrypt('password'),
@@ -534,42 +534,42 @@ describe('Project Management', function () {
             $this->actingAs($pm)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $newUser->id,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertCreated();
         });
 
-        it('denies regular member adding member', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('denies regular developer adding developer', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $newUser = User::factory()->create([
                 'email' => 'newmember3@example.com',
                 'password' => bcrypt('password'),
             ]);
             $newUser->assignRole('developer');
 
-            $this->actingAs($member)
+            $this->actingAs($developer)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $newUser->id,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertForbidden();
         });
 
-        it('prevents adding duplicate member', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('prevents adding duplicate developer', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
-                    'user_id' => $member->id,
-                    'role' => 'member',
+                    'user_id' => $developer->id,
+                    'role' => 'developer',
                 ])
                 ->assertUnprocessable()
                 ->assertJsonFragment(['message' => 'Pengguna sudah menjadi anggota proyek ini.']);
         });
 
-        it('allows admin to update member role', function () {
-            [$admin, $pm, $member] = createTestUsers();
+        it('allows admin to update developer role', function () {
+            [$admin, $pm, $developer] = createTestUsers();
             $project = Project::create([
                 'name' => 'Test Project',
                 'description' => 'Test project',
@@ -587,7 +587,7 @@ describe('Project Management', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $pm->id,
-                'role' => 'member',
+                'role' => 'developer',
             ]);
 
             $this->actingAs($admin)
@@ -604,32 +604,32 @@ describe('Project Management', function () {
         });
 
         it('prevents changing owner role', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->putJson("/api/projects/{$project->id}/members/{$admin->id}", [
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertUnprocessable()
                 ->assertJsonFragment(['message' => 'Tidak dapat mengubah peran pemilik proyek.']);
         });
 
-        it('allows admin to remove member', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('allows admin to remove developer', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
-                ->deleteJson("/api/projects/{$project->id}/members/{$member->id}")
+                ->deleteJson("/api/projects/{$project->id}/members/{$developer->id}")
                 ->assertNoContent();
 
             $this->assertDatabaseMissing('project_members', [
                 'project_id' => $project->id,
-                'user_id' => $member->id,
+                'user_id' => $developer->id,
             ]);
         });
 
         it('prevents removing owner', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->deleteJson("/api/projects/{$project->id}/members/{$admin->id}")
                 ->assertUnprocessable()
@@ -639,93 +639,93 @@ describe('Project Management', function () {
 
     describe('Policy Authorization', function () {
         it('allows admin to view any project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('view', $otherProject));
         });
 
         it('allows project owner to view project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('view', $project));
         });
 
-        it('allows project member to view project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->assertTrue($member->can('view', $project));
+        it('allows project developer to view project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->assertTrue($developer->can('view', $project));
         });
 
-        it('denies non-member viewing project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
-            $this->assertFalse($member->can('view', $otherProject));
+        it('denies non-developer viewing project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
+            $this->assertFalse($developer->can('view', $otherProject));
         });
 
         it('allows admin to update any project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('update', $otherProject));
         });
 
         it('allows project owner to update project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('update', $project));
         });
 
         it('allows project manager role to update project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($pm->can('update', $project));
         });
 
-        it('denies regular member updating project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->assertFalse($member->can('update', $project));
+        it('denies regular developer updating project', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->assertFalse($developer->can('update', $project));
         });
 
         it('allows admin to delete any project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('delete', $otherProject));
         });
 
         it('allows project owner to delete project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('delete', $project));
         });
 
         it('denies project manager role deleting project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertFalse($pm->can('delete', $project));
         });
 
         it('allows admin to manage members of any project', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [, , $otherProject] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [, , $otherProject] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('manageMembers', $otherProject));
         });
 
         it('allows project owner to manage members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($admin->can('manageMembers', $project));
         });
 
         it('allows project manager role to manage members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->assertTrue($pm->can('manageMembers', $project));
         });
 
-        it('denies regular member managing members', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
-            $this->assertFalse($member->can('manageMembers', $project));
+        it('denies regular developer managing members', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
+            $this->assertFalse($developer->can('manageMembers', $project));
         });
     });
 
@@ -783,9 +783,9 @@ describe('Project Management', function () {
                 ->assertJsonValidationErrors('end_date');
         });
 
-        it('validates member role enum', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('validates developer role enum', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $newUser = User::factory()->create(['email' => 'test@test.test']);
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
@@ -796,13 +796,13 @@ describe('Project Management', function () {
                 ->assertJsonValidationErrors('role');
         });
 
-        it('prevents adding owner as member', function () {
-            [$admin, $pm, $member] = createTestUsers();
-            [$project] = createTestProjects($admin, $pm, $member);
+        it('prevents adding owner as developer', function () {
+            [$admin, $pm, $developer] = createTestUsers();
+            [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $admin->id,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertUnprocessable();
         });
@@ -811,8 +811,8 @@ describe('Project Management', function () {
 
 describe('Ownership transfer notifications (H-4)', function () {
     it('notifies previous and new owners with correct payload and project URL', function () {
-        [$admin, $pm, $member] = createTestUsers();
-        [$project] = createTestProjects($admin, $pm, $member);
+        [$admin, $pm, $developer] = createTestUsers();
+        [$project] = createTestProjects($admin, $pm, $developer);
 
         $this->actingAs($admin)
             ->putJson("/api/projects/{$project->id}", [
@@ -844,8 +844,8 @@ describe('Ownership transfer notifications (H-4)', function () {
     });
 
     it('uses idempotency key with project and owner ids', function () {
-        [$admin, $pm, $member] = createTestUsers();
-        [$project] = createTestProjects($admin, $pm, $member);
+        [$admin, $pm, $developer] = createTestUsers();
+        [$project] = createTestProjects($admin, $pm, $developer);
 
         // Transfer twice
         $this->actingAs($admin)->putJson("/api/projects/{$project->id}", ['owner_id' => $pm->id])->assertOk();

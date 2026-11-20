@@ -402,7 +402,7 @@ describe('User Management RBAC', function () {
     describe('API list and roles', function () {
         it('allows admin to list users with filters', function () {
             $this->actingAs($this->admin)
-                ->getJson('/api/users?search=user&role=member&is_active=true&sort_by=name&sort_direction=asc')
+                ->getJson('/api/users?search=user&role=developer&is_active=true&sort_by=name&sort_direction=asc')
                 ->assertOk()
                 ->assertJsonStructure([
                     'data',
@@ -452,7 +452,7 @@ describe('User Management RBAC', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $this->user->id,
-                'role' => ProjectRole::MEMBER,
+                'role' => ProjectRole::DEVELOPER,
             ]);
 
             $task = Task::factory()->create([

@@ -94,12 +94,12 @@ describe('Authentication', function () {
 
     it('handles password reset link requests', function () {
         $user = User::factory()->create([
-            'email' => 'member@example.com',
+            'email' => 'developer@example.com',
             'is_active' => true,
         ]);
 
         $response = $this->post('/forgot-password', [
-            'email' => 'member@example.com',
+            'email' => 'developer@example.com',
         ]);
 
         $response->assertSessionHas('status');

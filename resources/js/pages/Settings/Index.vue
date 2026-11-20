@@ -140,7 +140,7 @@ const roleDisplayNames: Record<string, string> = {
     administrator: 'Administrator',
     project_manager: 'Manajer Proyek',
     team_leader: 'Ketua Tim',
-    member: 'Anggota',
+    developer: 'Anggota',
     reviewer: 'Peninjau',
     client: 'Klien',
 };

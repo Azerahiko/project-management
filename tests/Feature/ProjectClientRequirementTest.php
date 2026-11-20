@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 describe('Project Client Requirement Enforcement', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
 
         $this->client = User::factory()->create(['is_active' => true]);
         $this->client->assignRole(Roles::CLIENT);
@@ -45,7 +45,7 @@ describe('Project Client Requirement Enforcement', function () {
         $this->actingAs($this->admin)
             ->postJson('/api/projects', [
                 'name' => 'Project Non Client User',
-                'client_ids' => [$this->member->id],
+                'client_ids' => [$this->developer->id],
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['client_ids'])
@@ -54,7 +54,7 @@ describe('Project Client Requirement Enforcement', function () {
             ]);
     });
 
-    it('succeeds when a valid client is provided and attaches client as member (201)', function () {
+    it('succeeds when a valid client is provided and attaches client as developer (201)', function () {
         $response = $this->actingAs($this->admin)
             ->postJson('/api/projects', [
                 'name' => 'Valid Client Project',
@@ -94,7 +94,7 @@ describe('Project Client Requirement Enforcement', function () {
             ->assertJsonValidationErrors(['client_ids']);
     });
 
-    it('rejects removing the last remaining client member (422)', function () {
+    it('rejects removing the last remaining client developer (422)', function () {
         $response = $this->actingAs($this->admin)
             ->postJson('/api/projects', [
                 'name' => 'Single Client Project',

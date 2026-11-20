@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Storage;
 
 describe('Project files API authentication', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project] = createTestProjects($this->admin, $this->pm, $this->developer);
     });
 
     it('rejects guests', function () {
@@ -73,21 +73,21 @@ describe('Project files API authentication', function () {
 
 describe('Project files authorization', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project] = createTestProjects($this->admin, $this->pm, $this->developer);
     });
 
-    it('lets a project member read the file list', function () {
+    it('lets a project developer read the file list', function () {
         File::factory()->count(2)->for($this->project)->create();
 
-        $this->actingAs($this->member)
+        $this->actingAs($this->developer)
             ->getJson("/api/projects/{$this->project->id}/files")
             ->assertOk()
             ->assertJsonCount(2, 'data')
             ->assertJsonPath('data.0.project_id', $this->project->id);
     });
 
-    it('denies a user who is not a project member', function () {
+    it('denies a user who is not a project developer', function () {
         File::factory()->for($this->project)->create();
 
         $outsider = User::factory()->create(['is_active' => true]);
@@ -98,7 +98,7 @@ describe('Project files authorization', function () {
             ->assertForbidden();
     });
 
-    it('lets a client role member read files even without documents.view', function () {
+    it('lets a client role developer read files even without documents.view', function () {
         File::factory()->for($this->project)->create();
 
         $client = User::factory()->create(['is_active' => true]);
@@ -106,7 +106,7 @@ describe('Project files authorization', function () {
         ProjectMember::create([
             'project_id' => $this->project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::MEMBER,
+            'role' => ProjectRole::DEVELOPER,
         ]);
 
         expect($client->can('documents.view'))->toBeFalse();
@@ -117,16 +117,16 @@ describe('Project files authorization', function () {
             ->assertJsonCount(1, 'data');
     });
 
-    it('denies delete and restore to a member without projects.update', function () {
+    it('denies delete and restore to a developer without projects.update', function () {
         $active = File::factory()->for($this->project)->create();
         $trashed = File::factory()->for($this->project)->create();
         $trashed->delete();
 
-        $this->actingAs($this->member)
+        $this->actingAs($this->developer)
             ->deleteJson("/api/projects/{$this->project->id}/files/{$active->id}")
             ->assertForbidden();
 
-        $this->actingAs($this->member)
+        $this->actingAs($this->developer)
             ->postJson("/api/projects/{$this->project->id}/files/{$trashed->id}/restore")
             ->assertForbidden();
 
@@ -153,8 +153,8 @@ describe('Project files authorization', function () {
 
 describe('Project files scoped binding', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project, $this->pmProject] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project, $this->pmProject] = createTestProjects($this->admin, $this->pm, $this->developer);
     });
 
     it('never lists files of another project', function () {
@@ -218,8 +218,8 @@ describe('Project files scoped binding', function () {
 
 describe('Project files soft delete', function () {
     beforeEach(function () {
-        [$this->admin, $this->pm, $this->member] = createTestUsers();
-        [$this->project] = createTestProjects($this->admin, $this->pm, $this->member);
+        [$this->admin, $this->pm, $this->developer] = createTestUsers();
+        [$this->project] = createTestProjects($this->admin, $this->pm, $this->developer);
         Storage::fake('local');
     });
 
