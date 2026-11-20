@@ -12,7 +12,7 @@ use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 
 if (! function_exists('createTestUsers')) {
-    function createTestUsers()
+    function createTestUsers($roleConfig = null)
     {
         // Ensure migrations run
 
@@ -39,6 +39,24 @@ if (! function_exists('createTestUsers')) {
         ]);
         $pm->assignRole('project_manager');
 
+        $client = User::factory()->create([
+            'email' => 'client@example.com',
+            'password' => bcrypt('password'),
+            'is_active' => true,
+            'email_verified_at' => now(),
+            'onboarding_password_changed_at' => now(),
+            'onboarding_completed_at' => now(),
+        ]);
+        $client->assignRole('client');
+
+        if ($roleConfig === 'client') {
+            return [$admin, $client];
+        }
+
+        if ($roleConfig === ['client', 'pm']) {
+            return [$admin, $pm, $client];
+        }
+
         $member = User::factory()->create([
             'email' => 'developer@example.com',
             'password' => bcrypt('password'),
@@ -49,7 +67,7 @@ if (! function_exists('createTestUsers')) {
         ]);
         $member->assignRole('developer');
 
-        return [$admin, $pm, $member];
+        return [$admin, $pm, $member, $client];
     }
 }
 

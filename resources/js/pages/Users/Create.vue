@@ -57,8 +57,8 @@ async function generateTemporaryPassword(
 
     try {
         const response = await api.post<{ temporary_password: string }>(
-                '/users/generate-temporary-password',
-            );
+            '/users/generate-temporary-password',
+        );
         form.temporary_password = response.data.temporary_password;
 
         if (isRegeneration) {

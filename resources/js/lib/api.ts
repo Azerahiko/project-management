@@ -62,14 +62,28 @@ function buildUrl(url: string, params?: Record<string, unknown>): string {
     for (const [key, val] of Object.entries(params)) {
         if (val === undefined || val === null || val === '') continue;
         if (Array.isArray(val)) {
-            val.forEach((item: unknown) => searchParams.append(`${key}[]`, String(item)));
+            val.forEach((item: unknown) =>
+                searchParams.append(
+                    `${key}[]`,
+                    typeof item === 'object' && item !== null
+                        ? JSON.stringify(item)
+                        : String(item as string | number | boolean),
+                ),
+            );
         } else {
-            searchParams.append(key, String(val));
+            searchParams.append(
+                key,
+                typeof val === 'object' && val !== null
+                    ? JSON.stringify(val)
+                    : String(val as string | number | boolean),
+            );
         }
     }
 
     const query = searchParams.toString();
-    return query ? `${resolvedUrl}${resolvedUrl.includes('?') ? '&' : '?'}${query}` : resolvedUrl;
+    return query
+        ? `${resolvedUrl}${resolvedUrl.includes('?') ? '&' : '?'}${query}`
+        : resolvedUrl;
 }
 
 async function request<T = unknown>(
@@ -115,7 +129,11 @@ async function request<T = unknown>(
             signal: config?.signal,
         });
     } catch (networkError: unknown) {
-        throw new ApiError(networkError instanceof Error ? networkError.message : 'Network request failed');
+        throw new ApiError(
+            networkError instanceof Error
+                ? networkError.message
+                : 'Network request failed',
+        );
     }
 
     // Convert response headers to lowercase map
@@ -151,10 +169,14 @@ async function request<T = unknown>(
     }
 
     if (!response.ok) {
+        const rawMessage = (responseData as { message?: unknown })?.message;
         const message =
-            (responseData as { message?: unknown })?.message ||
-            `Request failed with status code ${response.status}`;
-        throw new ApiError(String(message), {
+            typeof rawMessage === 'string'
+                ? rawMessage
+                : rawMessage
+                  ? JSON.stringify(rawMessage)
+                  : `Request failed with status code ${response.status}`;
+        throw new ApiError(message, {
             status: response.status,
             statusText: response.statusText,
             data: responseData as any,
@@ -172,7 +194,10 @@ async function request<T = unknown>(
 }
 
 const api = {
-    get<T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> {
+    get<T = unknown>(
+        url: string,
+        config?: RequestConfig,
+    ): Promise<ApiResponse<T>> {
         return request<T>('GET', url, undefined, config);
     },
     post<T = unknown>(

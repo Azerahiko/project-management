@@ -49,18 +49,14 @@ const editStatus = ref(false);
 
 // Role-based capability flags
 const userRoles = computed(() => user?.roles ?? []);
-const isManagerial = computed(
-    () => userRoles.value.some((r: string) => ['administrator', 'project_manager', 'team_leader'].includes(r)),
+const isManagerial = computed(() =>
+    userRoles.value.some((r: string) =>
+        ['administrator', 'project_manager', 'team_leader'].includes(r),
+    ),
 );
-const isDeveloper = computed(
-    () => userRoles.value.includes('developer'),
-);
-const isReviewer = computed(
-    () => userRoles.value.includes('reviewer'),
-);
-const isClient = computed(
-    () => userRoles.value.includes('client'),
-);
+const isDeveloper = computed(() => userRoles.value.includes('developer'));
+const isReviewer = computed(() => userRoles.value.includes('reviewer'));
+const isClient = computed(() => userRoles.value.includes('client'));
 const isAssignee = computed(() => task.assignee_id === user?.id);
 
 // Status options filtering based on role & current status

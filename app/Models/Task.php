@@ -37,6 +37,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, TaskActivity> $activities
  * @property bool|null $can_update
  * @property bool|null $can_delete
+ * @property bool|null $can_restore
+ * @property bool|null $can_force_delete
  */
 #[Fillable([
     'project_id',

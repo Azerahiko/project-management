@@ -101,7 +101,7 @@ class ProjectController extends Controller
             if (isset($data['client_ids']) && is_array($data['client_ids'])) {
                 foreach ($data['client_ids'] as $clientId) {
                     $client = User::find($clientId);
-                    if ($client && $client->hasRole('client')) {
+                    if ($client instanceof User && $client->hasRole('client')) {
                         ProjectMember::create([
                             'project_id' => $project->id,
                             'user_id' => $clientId,
@@ -183,7 +183,7 @@ class ProjectController extends Controller
 
                 foreach ($data['client_ids'] as $clientId) {
                     $client = User::find($clientId);
-                    if ($client && $client->hasRole('client') && ! $project->projectMembers()
+                    if ($client instanceof User && $client->hasRole('client') && ! $project->projectMembers()
                         ->where('user_id', $clientId)
                         ->exists()) {
                         ProjectMember::create([

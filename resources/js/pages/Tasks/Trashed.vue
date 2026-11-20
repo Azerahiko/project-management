@@ -60,7 +60,6 @@ const restoreModalOpen = ref(false);
 const taskToRestore = ref<Task | null>(null);
 const restoring = ref(false);
 
-
 const sortValue = ref('deleted_at:desc');
 
 const sortOptions = [

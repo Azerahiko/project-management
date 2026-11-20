@@ -160,8 +160,9 @@ async function uploadFiles(projectId: number): Promise<void> {
         formData.append('file', file);
 
         try {
-            const { data: { data: uploadData } } = await api.post<
-                { data: { original_name: string } }>(
+            const {
+                data: { data: uploadData },
+            } = await api.post<{ data: { original_name: string } }>(
                 `/projects/${projectId}/files`,
                 formData,
             );

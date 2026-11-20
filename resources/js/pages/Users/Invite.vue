@@ -55,10 +55,9 @@ async function handleSubmit(): Promise<void> {
     inviteResult.value = null;
 
     try {
-        const response = await api.post<{ user: { name: string; email: string; role: string } }>(
-                '/invitations',
-                form,
-            );
+        const response = await api.post<{
+            user: { name: string; email: string; role: string };
+        }>('/invitations', form);
         inviteResult.value = {
             user: {
                 name: response.data.user.name,

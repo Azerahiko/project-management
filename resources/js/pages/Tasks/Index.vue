@@ -49,15 +49,21 @@ const user = computed(() => page.props.auth.user);
 const userRoles = computed(() => user.value?.roles ?? []);
 
 const isManagerial = computed(() =>
-    userRoles.value.some((r) => ['administrator', 'project_manager', 'team_leader'].includes(r)),
+    userRoles.value.some((r) =>
+        ['administrator', 'project_manager', 'team_leader'].includes(r),
+    ),
 );
 
 const canCreate = computed(
-    () => isManagerial.value || Boolean(user.value?.permissions.includes('tasks.create')),
+    () =>
+        isManagerial.value ||
+        Boolean(user.value?.permissions.includes('tasks.create')),
 );
 
-const canViewTrashed = computed(() =>
-    isManagerial.value || Boolean(user.value?.permissions.includes('tasks.delete')),
+const canViewTrashed = computed(
+    () =>
+        isManagerial.value ||
+        Boolean(user.value?.permissions.includes('tasks.delete')),
 );
 
 const search = ref('');

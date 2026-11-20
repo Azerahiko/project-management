@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProjectRole;
 use App\Mail\InvitationCreated;
 use App\Models\Invitation;
 use App\Models\Project;
@@ -63,7 +64,7 @@ describe('User Management RBAC', function () {
                     'name' => 'New User',
                     'email' => 'new@example.com',
                     'temporary_password' => 'TemporaryPass123!',
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertCreated()
                 ->assertJsonStructure(['data' => ['id', 'name', 'email']]);
@@ -75,7 +76,7 @@ describe('User Management RBAC', function () {
             Invitation::create([
                 'name' => 'Existing Invite',
                 'email' => 'invited@example.com',
-                'role' => 'member',
+                'role' => 'developer',
                 'token_hash' => hash('sha256', Str::random(64)),
                 'expires_at' => now()->addHours(72),
                 'invited_by' => $this->admin->id,
@@ -86,7 +87,7 @@ describe('User Management RBAC', function () {
                     'name' => 'Duplicate User',
                     'email' => 'invited@example.com',
                     'temporary_password' => 'TemporaryPass123!',
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertStatus(422)
                 ->assertJsonValidationErrors('email');
@@ -102,7 +103,7 @@ describe('User Management RBAC', function () {
             Invitation::create([
                 'name' => $target->name,
                 'email' => $target->email,
-                'role' => 'member',
+                'role' => 'developer',
                 'token_hash' => hash('sha256', Str::random(64)),
                 'expires_at' => now()->addHours(72),
                 'invited_by' => $this->admin->id,
@@ -124,7 +125,7 @@ describe('User Management RBAC', function () {
                     'name' => 'Temp Password User',
                     'email' => 'temp-email@example.com',
                     'temporary_password' => 'TemporaryPass123!',
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertCreated();
 
@@ -141,7 +142,7 @@ describe('User Management RBAC', function () {
                     'name' => 'URL Test User',
                     'email' => 'url-test@example.com',
                     'temporary_password' => 'TemporaryPass123!',
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertCreated();
 
@@ -156,7 +157,7 @@ describe('User Management RBAC', function () {
                     'name' => 'New User',
                     'email' => 'new@example.com',
                     'temporary_password' => 'TemporaryPass123!',
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertForbidden();
         });
@@ -291,7 +292,7 @@ describe('User Management RBAC', function () {
                 ->putJson("/api/users/{$this->admin->id}", [
                     'name' => $this->admin->name,
                     'email' => $this->admin->email,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertForbidden();
 
@@ -310,12 +311,12 @@ describe('User Management RBAC', function () {
                 ->putJson("/api/users/{$this->admin->id}", [
                     'name' => $this->admin->name,
                     'email' => $this->admin->email,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertOk();
 
             expect($this->admin->fresh()->hasRole('administrator'))->toBeFalse();
-            expect($this->admin->fresh()->hasRole('member'))->toBeTrue();
+            expect($this->admin->fresh()->hasRole('developer'))->toBeTrue();
         });
     });
 
@@ -361,7 +362,7 @@ describe('User Management RBAC', function () {
                     'name' => 'Temp Password User',
                     'email' => 'temp-password@example.com',
                     'temporary_password' => $password,
-                    'role' => 'member',
+                    'role' => 'developer',
                 ])
                 ->assertCreated();
 
@@ -451,7 +452,7 @@ describe('User Management RBAC', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $this->user->id,
-                'role' => 'member',
+                'role' => ProjectRole::MEMBER,
             ]);
 
             $task = Task::factory()->create([
@@ -502,7 +503,7 @@ describe('User Management RBAC', function () {
             $this->assertDatabaseMissing('users', ['email' => 'newadmin@example.com']);
         });
 
-        it('allows non-administrators with users.create permission to assign member role', function () {
+        it('allows non-administrators with users.create permission to assign developer role', function () {
             $pm = User::factory()->create(['is_active' => true]);
             $pm->assignRole('project_manager');
             $pm->givePermissionTo('users.create');
@@ -512,7 +513,7 @@ describe('User Management RBAC', function () {
                     'name' => 'New Member',
                     'email' => 'newmember@example.com',
                     'temporary_password' => 'TemporaryPass123!',
-                    'role' => 'member',
+                    'role' => 'developer',
                     'is_active' => true,
                 ]);
 

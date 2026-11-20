@@ -116,7 +116,8 @@ class Project extends Model
             ->whereHas('roles', function ($roleQuery) {
                 $roleQuery->where('name', 'client');
             })
-            ->withPivot('role');
+            ->withPivot('role')
+            ->using(ProjectMember::class);
     }
 
     /**

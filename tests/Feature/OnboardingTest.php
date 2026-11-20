@@ -21,7 +21,7 @@ describe('Invitation System', function () {
             ->post('/api/invitations', [
                 'name' => 'Test User',
                 'email' => 'testinvite@example.com',
-                'role' => 'member',
+                'role' => 'developer',
             ]);
 
         // May redirect or return JSON depending on middleware
@@ -46,7 +46,7 @@ describe('Invitation System', function () {
             ->post('/api/invitations', [
                 'name' => 'Test User',
                 'email' => 'testinvite2@example.com',
-                'role' => 'member',
+                'role' => 'developer',
             ]);
 
         $this->assertTrue(
@@ -62,7 +62,7 @@ describe('Invitation System', function () {
         $invitation = Invitation::create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours(72),
         ]);
@@ -85,7 +85,7 @@ describe('Invitation System', function () {
         Invitation::create([
             'name' => 'Test User',
             'email' => 'expired@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->subHour(),
         ]);
@@ -105,7 +105,7 @@ describe('Invitation System', function () {
         Invitation::create([
             'name' => 'Test User',
             'email' => 'accepted@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours(72),
             'accepted_at' => now(),
@@ -131,7 +131,7 @@ describe('Invitation System', function () {
         $invitation = Invitation::create([
             'name' => 'Test User',
             'email' => 'accept@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours(72),
         ]);
@@ -291,7 +291,7 @@ describe('Onboarding Findings Verification', function () {
             ->postJson('/api/invitations', [
                 'name' => 'Raw Token User',
                 'email' => 'rawtoken@example.com',
-                'role' => 'member',
+                'role' => 'developer',
             ])
             ->assertCreated();
 
@@ -316,7 +316,7 @@ describe('Onboarding Findings Verification', function () {
                 'name' => 'Created Via Admin',
                 'email' => 'createdadmin@example.com',
                 'temporary_password' => 'TemporaryPass123!',
-                'role' => 'member',
+                'role' => 'developer',
             ])
             ->assertCreated();
 
@@ -340,7 +340,7 @@ describe('Onboarding Findings Verification', function () {
             ->postJson('/api/invitations', [
                 'name' => 'Resend Test',
                 'email' => 'resendtest@example.com',
-                'role' => 'member',
+                'role' => 'developer',
             ]);
 
         $invitation = Invitation::where('email', 'resendtest@example.com')->firstOrFail();
@@ -419,7 +419,7 @@ describe('Onboarding Findings Verification', function () {
         Invitation::create([
             'name' => 'Expired User',
             'email' => 'expired-brand@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->subHour(),
         ]);
@@ -443,7 +443,7 @@ describe('Invitation security (H-1)', function () {
             ->postJson('/api/invitations', [
                 'name' => 'Invited User',
                 'email' => 'invited@example.com',
-                'role' => 'member',
+                'role' => 'developer',
             ])
             ->assertCreated();
 
@@ -467,7 +467,7 @@ describe('Invitation security (H-1)', function () {
         Invitation::create([
             'name' => 'Test User',
             'email' => 'require-pass@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours(72),
         ]);
@@ -493,7 +493,7 @@ describe('Invitation security (H-1)', function () {
         Invitation::create([
             'name' => 'Single Use User',
             'email' => 'singleuse@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours(72),
         ]);
@@ -526,7 +526,7 @@ describe('Invitation security (H-1)', function () {
         Invitation::create([
             'name' => 'Chosen Password User',
             'email' => 'chosenpass@example.com',
-            'role' => 'member',
+            'role' => 'developer',
             'token_hash' => $tokenHash,
             'expires_at' => now()->addHours(72),
         ]);

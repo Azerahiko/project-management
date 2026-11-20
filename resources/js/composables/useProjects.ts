@@ -181,7 +181,7 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
                 role: 'client',
             },
         });
-        ;(clients as any).value = users;
+        (clients as any).value = users;
     }
 
     const queryString = computed(() => ({
@@ -208,6 +208,7 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
         removeMember,
         fetchManagers,
         fetchAvailableUsers,
+        fetchClients,
         clients,
         queryString,
     };

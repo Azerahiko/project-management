@@ -198,7 +198,6 @@ class Permissions
             ],
             Roles::CLIENT => [
                 self::DASHBOARD_VIEW,
-                self::NOTIFICATIONS_VIEW,
                 self::PROJECTS_VIEW,
                 self::TASKS_VIEW,
                 self::TASK_COMMENTS_CREATE,
@@ -206,7 +205,6 @@ class Permissions
                 self::TASK_COMMENTS_DELETE,
                 self::TASK_COLLABORATION_VIEW,
                 self::CALENDAR_VIEW,
-                self::DOCUMENTS_VIEW,
                 self::SETTINGS_VIEW,
             ],
         ];

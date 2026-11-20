@@ -35,7 +35,7 @@ it('renders the settings page with account and notification data', function () {
             ->where('account.name', $user->name)
             ->where('account.email', $user->email)
             ->where('account.email_verified', true)
-            ->where('account.roles', ['member'])
+            ->where('account.roles', ['developer'])
             ->has('notification_preferences')
             ->has('notification_options')
             ->where('notification_preferences.task_updates', true)

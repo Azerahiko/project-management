@@ -119,10 +119,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->middleware('can:task-comments.create', 'token.ability:tasks:write');
         Route::put('comments/{comment}', [TaskCommentController::class, 'update'])->middleware('can:task-comments.update', 'token.ability:tasks:write');
         Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->middleware('can:task-comments.delete', 'token.ability:tasks:write');
+        // Project task trash
+        Route::get('projects/{project}/tasks/trashed', [TaskController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
+        // Task comment trash
+        Route::get('tasks/{task}/comments/trashed', [TaskCommentController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
+        Route::post('comments/{comment}/restore', [TaskCommentController::class, 'restore'])->withTrashed()->middleware('can:task-comments.update', 'token.ability:tasks:write');
         // Project files
         Route::post('projects/{project}/files', [ProjectFileController::class, 'store'])
             ->middleware(['can:projects.update', 'token.ability:projects:write']);
         Route::delete('projects/{project}/files/{file}', [ProjectFileController::class, 'destroy'])
+            ->scopeBindings()
+            ->middleware(['can:projects.update', 'token.ability:projects:write']);
+        Route::post('projects/{project}/files/{file}/restore', [ProjectFileController::class, 'restore'])
+            ->withTrashed()
             ->scopeBindings()
             ->middleware(['can:projects.update', 'token.ability:projects:write']);
     });

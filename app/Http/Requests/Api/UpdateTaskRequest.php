@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api;
 
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
@@ -56,7 +57,7 @@ class UpdateTaskRequest extends FormRequest
             $task = $this->route('task');
             $user = $this->user();
 
-            if (! $task || ! $user) {
+            if (! $task instanceof Task || ! $user) {
                 return;
             }
 
@@ -95,7 +96,7 @@ class UpdateTaskRequest extends FormRequest
 
                 // Reviewer can only perform valid review status transitions
                 if ($this->has('status')) {
-                    $currentStatus = $task->status?->value ?? '';
+                    $currentStatus = $task->status->value;
                     $newStatus = $this->input('status');
 
                     // Valid review transitions

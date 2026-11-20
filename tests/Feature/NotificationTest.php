@@ -317,10 +317,7 @@ test('status changed deduplicates recipients with multiple roles', function () {
     // Make pm both owner and assignee
     $this->task->update(['assignee_id' => $this->pm->id]);
 
-    // Make member1 a manager so they can update the task
-    $this->project->members()->updateExistingPivot($this->member1->id, ['role' => ProjectRole::MANAGER]);
-
-    $this->actingAs($this->member1);
+    $this->actingAs($this->admin);
 
     $this->putJson("/api/tasks/{$this->task->id}", [
         'status' => TaskStatus::IN_PROGRESS->value,

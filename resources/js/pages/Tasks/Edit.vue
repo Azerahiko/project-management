@@ -26,18 +26,14 @@ const user = page.props.auth?.user as User | null;
 
 // Role-based capability flags
 const userRoles = computed(() => user?.roles ?? []);
-const isManagerial = computed(
-    () => userRoles.value.some((r: string) => ['administrator', 'project_manager', 'team_leader'].includes(r)),
+const isManagerial = computed(() =>
+    userRoles.value.some((r: string) =>
+        ['administrator', 'project_manager', 'team_leader'].includes(r),
+    ),
 );
-const isDeveloper = computed(
-    () => userRoles.value.includes('developer'),
-);
-const isReviewer = computed(
-    () => userRoles.value.includes('reviewer'),
-);
-const isClient = computed(
-    () => userRoles.value.includes('client'),
-);
+const isDeveloper = computed(() => userRoles.value.includes('developer'));
+const isReviewer = computed(() => userRoles.value.includes('reviewer'));
+const isClient = computed(() => userRoles.value.includes('client'));
 
 const isAssignee = computed(() => task.assignee_id === user?.id);
 
@@ -81,14 +77,40 @@ const priorityOptions = [
 ];
 
 const form = reactive({
-    project_id: isDeveloper.value && isAssignee.value ? String(task.project_id) : String(task.project_id),
+    project_id:
+        isDeveloper.value && isAssignee.value
+            ? String(task.project_id)
+            : String(task.project_id),
     title: isDeveloper.value && isAssignee.value ? task.title : task.title,
-    description: isDeveloper.value && isAssignee.value ? (task.description || '') : (task.description || ''),
+    description:
+        isDeveloper.value && isAssignee.value
+            ? task.description || ''
+            : task.description || '',
     status: task.status,
-    priority: isDeveloper.value && isAssignee.value ? task.priority : task.priority,
-    assignee_id: isDeveloper.value && isAssignee.value ? String(task.assignee_id) : (task.assignee_id ? String(task.assignee_id) : ''),
-    start_date: isDeveloper.value && isAssignee.value ? (task.start_date ? task.start_date.split('T')[0] : '') : (task.start_date ? task.start_date.split('T')[0] : ''),
-    due_date: isDeveloper.value && isAssignee.value ? (task.due_date ? task.due_date.split('T')[0] : '') : (task.due_date ? task.due_date.split('T')[0] : ''),
+    priority:
+        isDeveloper.value && isAssignee.value ? task.priority : task.priority,
+    assignee_id:
+        isDeveloper.value && isAssignee.value
+            ? String(task.assignee_id)
+            : task.assignee_id
+              ? String(task.assignee_id)
+              : '',
+    start_date:
+        isDeveloper.value && isAssignee.value
+            ? task.start_date
+                ? task.start_date.split('T')[0]
+                : ''
+            : task.start_date
+              ? task.start_date.split('T')[0]
+              : '',
+    due_date:
+        isDeveloper.value && isAssignee.value
+            ? task.due_date
+                ? task.due_date.split('T')[0]
+                : ''
+            : task.due_date
+              ? task.due_date.split('T')[0]
+              : '',
 });
 
 const errors = ref<Record<string, string[]>>({});

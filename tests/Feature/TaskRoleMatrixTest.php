@@ -5,13 +5,25 @@ namespace Tests\Feature;
 use App\Enums\ProjectRole;
 use App\Enums\TaskStatus;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\Task;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TaskRoleMatrixTest extends TestCase
 {
-    /** @test */
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolePermissionSeeder::class);
+    }
+
+    #[Test]
     public function administrator_can_do_all_task_actions()
     {
         $admin = User::factory()->create();
@@ -42,7 +54,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertTrue($admin->can('forceDelete', $task));
     }
 
-    /** @test */
+    #[Test]
     public function project_manager_can_view_and_update_tasks_in_project_but_cannot_delete_or_force_delete()
     {
         $pm = User::factory()->create();
@@ -80,7 +92,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertTrue($pm->can('forceDelete', $task));
     }
 
-    /** @test */
+    #[Test]
     public function team_leader_can_view_and_update_tasks_in_project_but_cannot_delete_or_force_delete()
     {
         $tl = User::factory()->create();
@@ -118,7 +130,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($tl->can('forceDelete', $task));
     }
 
-    /** @test */
+    #[Test]
     public function developer_can_only_update_assigned_tasks_execution_fields()
     {
         $developer = User::factory()->create();
@@ -158,7 +170,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($developer->can('forceDelete', $task));
     }
 
-    /** @test */
+    #[Test]
     public function reviewer_can_only_update_review_status_transitions()
     {
         $reviewer = User::factory()->create();
@@ -198,7 +210,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($reviewer->can('forceDelete', $task));
     }
 
-    /** @test */
+    #[Test]
     public function client_can_only_view_tasks()
     {
         $client = User::factory()->create();
@@ -236,7 +248,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($client->can('forceDelete', $task));
     }
 
-    /** @test */
+    #[Test]
     public function developer_cannot_create_tasks()
     {
         $developer = User::factory()->create();
@@ -248,7 +260,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($developer->can('create', $project));
     }
 
-    /** @test */
+    #[Test]
     public function reviewer_cannot_create_tasks()
     {
         $reviewer = User::factory()->create();
@@ -260,7 +272,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($reviewer->can('create', $project));
     }
 
-    /** @test */
+    #[Test]
     public function client_cannot_create_tasks()
     {
         $client = User::factory()->create();
@@ -272,7 +284,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertFalse($client->can('create', $project));
     }
 
-    /** @test */
+    #[Test]
     public function developer_cannot_set_status_to_done()
     {
         $developer = User::factory()->create();
@@ -299,7 +311,7 @@ class TaskRoleMatrixTest extends TestCase
         $this->assertEquals(TaskStatus::TODO->value, $task->status->value);
     }
 
-    /** @test */
+    #[Test]
     public function reviewer_cannot_transition_from_invalid_status()
     {
         $reviewer = User::factory()->create();

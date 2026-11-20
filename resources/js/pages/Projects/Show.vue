@@ -124,11 +124,14 @@ async function loadFiles(): Promise<void> {
     filesError.value = false;
 
     try {
-        const { data: { data: filesData } } = await api.get<
-                { data: ProjectFile[] }>(
-            `/projects/${projectId}/files`, {
-            params: { per_page: 100 },
-        });
+        const {
+            data: { data: filesData },
+        } = await api.get<{ data: ProjectFile[] }>(
+            `/projects/${projectId}/files`,
+            {
+                params: { per_page: 100 },
+            },
+        );
         files.value = filesData;
     } catch {
         filesError.value = true;
@@ -170,10 +173,7 @@ async function submitUpload(): Promise<void> {
         );
         files.value.unshift(data as ProjectFile);
         uploadModalOpen.value = false;
-        success(
-            'Berkas diunggah',
-            `${data.original_name} berhasil diunggah.`,
-        );
+        success('Berkas diunggah', `${data.original_name} berhasil diunggah.`);
     } catch (err: any) {
         uploadError.value =
             err.response?.data?.errors?.file?.[0] ??
@@ -207,7 +207,7 @@ async function downloadFile(file: ProjectFile): Promise<void> {
     try {
         const response = await api.get(
             `/projects/${projectId}/files/${file.id}/download`,
-            { responseType: 'blob' }
+            { responseType: 'blob' },
         );
         const blobData = response.data as Blob;
         const url = URL.createObjectURL(blobData);

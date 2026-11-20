@@ -39,7 +39,10 @@ async function handleVerify(): Promise<void> {
     try {
         const response = await api.post(activate.url({ token }), form);
         submitted.value = true;
-        success('Verifikasi Berhasil', (response.data as { message: string }).message);
+        success(
+            'Verifikasi Berhasil',
+            (response.data as { message: string }).message,
+        );
         setTimeout(() => {
             router.visit('/login');
         }, 2000);
