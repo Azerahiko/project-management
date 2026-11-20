@@ -70,7 +70,7 @@ describe('Role & Permission Management', function () {
 
     describe('Permission Update', function () {
         it('allows administrator to update role permissions', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
             $newPermissions = [
                 'dashboard.view',
                 'notifications.view',
@@ -95,7 +95,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('denies non-admin updating role permissions', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
 
             $this->actingAs($this->user)
                 ->put("/roles/permissions/{$role->id}", [
@@ -105,7 +105,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('denies unauthenticated updating role permissions', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
 
             $this->put("/roles/permissions/{$role->id}", [
                 'permissions' => ['dashboard.view'],
@@ -114,7 +114,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('rejects invalid permissions', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
 
             $response = $this->actingAs($this->admin)
                 ->put("/roles/permissions/{$role->id}", [
@@ -142,7 +142,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('clears permission cache after update', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
             $newPermissions = ['dashboard.view', 'notifications.view'];
 
             $this->actingAs($this->admin)
@@ -157,7 +157,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('validates permissions array is required', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
 
             $response = $this->actingAs($this->admin)
                 ->put("/roles/permissions/{$role->id}", []);
@@ -167,7 +167,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('validates each permission exists in database', function () {
-            $role = Role::where('name', 'member')->first();
+            $role = Role::where('name', 'developer')->first();
 
             $response = $this->actingAs($this->admin)
                 ->put("/roles/permissions/{$role->id}", [

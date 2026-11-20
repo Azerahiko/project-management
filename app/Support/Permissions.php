@@ -203,7 +203,6 @@ class Permissions
                 self::TASK_COMMENTS_CREATE,
                 self::TASK_COMMENTS_UPDATE,
                 self::TASK_COMMENTS_DELETE,
-                self::TASK_COLLABORATION_VIEW,
                 self::CALENDAR_VIEW,
                 self::SETTINGS_VIEW,
             ],

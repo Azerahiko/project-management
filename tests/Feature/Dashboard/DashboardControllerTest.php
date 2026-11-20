@@ -175,15 +175,7 @@ describe('Dashboard Controller', function () {
 
     describe('Data isolation per role', function () {
         it('client does not receive activities or internal comments', function () {
-            [$admin, $pm, $member] = createTestUsers();
-
-            // Create client user
-            $client = User::factory()->create([
-                'email' => 'client@example.com',
-                'password' => bcrypt('password'),
-                'is_active' => true,
-            ]);
-            $client->assignRole('client');
+            [$admin, $pm, $member, $client] = createTestUsers();
 
             $project = Project::create([
                 'name' => 'Client Project',
