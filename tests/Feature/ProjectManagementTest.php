@@ -121,7 +121,7 @@ describe('Project Management', function () {
             [, , $developer] = createTestUsers();
             $this->actingAs($developer)
                 ->postJson('/api/projects', [
-                    'name' => 'Member Project',
+                    'name' => 'Developer Project',
                     'status' => 'draft',
                     'priority' => 'medium',
                 ])
@@ -319,7 +319,7 @@ describe('Project Management', function () {
                     'meta' => ['current_page', 'last_page', 'total'],
                 ]);
 
-            // Member should only see projects they are part of
+            // Developer should only see projects they are part of
             $response = $this->actingAs($developer)->getJson('/api/projects');
             $projectNames = collect($response->json('data'))->pluck('name')->toArray();
             $this->assertContains('Redesain Website Perusahaan', $projectNames);
@@ -428,7 +428,7 @@ describe('Project Management', function () {
         });
     });
 
-    describe('Project Members API', function () {
+    describe('Project Developers API', function () {
         it('allows admin to list project members', function () {
             [$admin, $pm, $developer] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $developer);

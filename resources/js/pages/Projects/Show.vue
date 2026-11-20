@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
-import { router } from '@inertiajs/vue3';
-import { usePage, Link } from '@inertiajs/vue3';
-import projects from '@/routes/projects';
-import tasks from '@/routes/tasks';
-import api from '@/lib/api';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { useProjects } from '@/composables/useProjects';
-import { useToast } from '@/composables/useToast';
-import { getIcon } from '@/components/sidebar/icons';
-import Button from '@/components/ui/Button.vue';
-import Dropdown from '@/components/ui/Dropdown.vue';
-import Avatar from '@/components/ui/Avatar.vue';
-import Modal from '@/components/ui/Modal.vue';
-import Table from '@/components/ui/Table.vue';
-import Input from '@/components/ui/Input.vue';
-import Select from '@/components/ui/Select.vue';
-import DeadlineBadge from '@/components/tasks/DeadlineBadge.vue';
+import { ref, reactive, computed, onMounted } from "vue";
+import { router } from "@inertiajs/vue3";
+import { usePage, Link } from "@inertiajs/vue3";
+import projects from "@/routes/projects";
+import tasks from "@/routes/tasks";
+import api from "@/lib/api";
+import AppLayout from "@/layouts/AppLayout.vue";
+import { useProjects } from "@/composables/useProjects";
+import { useToast } from "@/composables/useToast";
+import { getIcon } from "@/components/sidebar/icons";
+import Button from "@/components/ui/Button.vue";
+import Dropdown from "@/components/ui/Dropdown.vue";
+import Avatar from "@/components/ui/Avatar.vue";
+import Modal from "@/components/ui/Modal.vue";
+import Table from "@/components/ui/Table.vue";
+import Input from "@/components/ui/Input.vue";
+import Select from "@/components/ui/Select.vue";
+import DeadlineBadge from "@/components/tasks/DeadlineBadge.vue";
 import type {
     Project,
     ProjectMember,
     ProjectFile,
     ProjectFilters,
-} from '@/types';
+} from "@/types";
 
 defineOptions({
     layout: AppLayout,
@@ -37,7 +37,7 @@ const project = page.props.project as Project;
 
 const canViewTrashedTasks = computed(() => {
     const userPerms = (page.props.auth?.user as any)?.permissions || [];
-    return userPerms.includes('tasks.view');
+    return userPerms.includes("tasks.view");
 });
 
 const canManageTrashedTasks = computed(() => {
@@ -45,29 +45,29 @@ const canManageTrashedTasks = computed(() => {
     const userPerms = page.props.auth?.user?.permissions ?? [];
     return (
         userRoles.some((r: string) =>
-            ['administrator', 'project_manager', 'team_leader'].includes(r),
-        ) || userPerms.includes('tasks.delete')
+            ["administrator", "project_manager", "team_leader"].includes(r),
+        ) || userPerms.includes("tasks.delete")
     );
 });
 const projectId = project.id;
 
 const projectStatusForBadge = computed(() => {
-    if (project.status === 'completed') return 'done';
-    if (project.status === 'archived') return 'done';
-    return 'todo';
+    if (project.status === "completed") return "done";
+    if (project.status === "archived") return "done";
+    return "todo";
 });
 
 const memberRoleOptions = [
-    { value: 'manager', label: 'Manajer' },
-    { value: 'developer', label: 'Anggota' },
-    { value: 'viewer', label: 'Peninjau' },
+    { value: "manager", label: "Manajer" },
+    { value: "developer", label: "Anggota" },
+    { value: "viewer", label: "Peninjau" },
 ];
 
 const memberColumns = [
-    { key: 'user', label: 'Anggota', class: 'max-w-xs' },
-    { key: 'role', label: 'Peran', class: 'max-w-xs' },
-    { key: 'joined_at', label: 'Bergabung', class: 'max-w-xs' },
-    { key: 'actions', label: 'Aksi' },
+    { key: "user", label: "Anggota", class: "max-w-xs" },
+    { key: "role", label: "Peran", class: "max-w-xs" },
+    { key: "joined_at", label: "Bergabung", class: "max-w-xs" },
+    { key: "actions", label: "Aksi" },
 ];
 
 const availableUsers = ref<
@@ -83,8 +83,8 @@ const loadingAvailableUsers = ref(false);
 
 const addMemberModalOpen = ref(false);
 const newMemberForm = reactive({
-    user_id: '' as string,
-    role: 'developer' as string,
+    user_id: "" as string,
+    role: "developer" as string,
 });
 const newMemberErrors = ref<Record<string, string[]>>({});
 const newMemberErrorBag = computed(() => newMemberErrors.value);
@@ -99,11 +99,11 @@ const editMemberRole = ref<{ developer: ProjectMember; role: string } | null>(
 const savingMemberRole = ref(false);
 
 const fileColumns = [
-    { key: 'name', label: 'Berkas', class: 'max-w-xs' },
-    { key: 'size', label: 'Ukuran', class: 'max-w-xs' },
-    { key: 'uploader', label: 'Pengunggah', class: 'max-w-xs' },
-    { key: 'created_at', label: 'Diunggah', class: 'max-w-xs' },
-    { key: 'actions', label: 'Aksi' },
+    { key: "name", label: "Berkas", class: "max-w-xs" },
+    { key: "size", label: "Ukuran", class: "max-w-xs" },
+    { key: "uploader", label: "Pengunggah", class: "max-w-xs" },
+    { key: "created_at", label: "Diunggah", class: "max-w-xs" },
+    { key: "actions", label: "Aksi" },
 ];
 
 const files = ref<ProjectFile[]>([]);
@@ -156,7 +156,7 @@ async function submitUpload(): Promise<void> {
     if (!selectedFile.value || uploading.value) return;
 
     if (selectedFile.value.size > 25 * 1024 * 1024) {
-        uploadError.value = 'Ukuran berkas melebihi batas 25 MB.';
+        uploadError.value = "Ukuran berkas melebihi batas 25 MB.";
         return;
     }
 
@@ -164,7 +164,7 @@ async function submitUpload(): Promise<void> {
     uploadError.value = null;
 
     const formData = new FormData();
-    formData.append('file', selectedFile.value);
+    formData.append("file", selectedFile.value);
 
     try {
         const { data } = await api.post<ProjectFile>(
@@ -173,12 +173,12 @@ async function submitUpload(): Promise<void> {
         );
         files.value.unshift(data as ProjectFile);
         uploadModalOpen.value = false;
-        success('Berkas diunggah', `${data.original_name} berhasil diunggah.`);
+        success("Berkas diunggah", `${data.original_name} berhasil diunggah.`);
     } catch (err: any) {
         uploadError.value =
             err.response?.data?.errors?.file?.[0] ??
             err.response?.data?.message ??
-            'Berkas gagal diunggah.';
+            "Berkas gagal diunggah.";
     } finally {
         uploading.value = false;
     }
@@ -207,19 +207,19 @@ async function downloadFile(file: ProjectFile): Promise<void> {
     try {
         const response = await api.get(
             `/projects/${projectId}/files/${file.id}/download`,
-            { responseType: 'blob' },
+            { responseType: "blob" },
         );
         const blobData = response.data as Blob;
         const url = URL.createObjectURL(blobData);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
-        link.download = file.original_name ?? 'download.bin';
+        link.download = file.original_name ?? "download.bin";
         document.body.appendChild(link);
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
     } catch {
-        toastError('Gagal mengunduh berkas', 'Silakan coba lagi.');
+        toastError("Gagal mengunduh berkas", "Silakan coba lagi.");
     } finally {
         downloadingFileId.value = null;
     }
@@ -240,11 +240,11 @@ async function executeDeleteFile(): Promise<void> {
         files.value = files.value.filter((item) => item.id !== file.id);
         fileToDelete.value = null;
         success(
-            'Berkas dihapus',
+            "Berkas dihapus",
             `${file.original_name} dihapus dari daftar proyek.`,
         );
     } catch {
-        toastError('Gagal menghapus berkas', 'Silakan coba lagi.');
+        toastError("Gagal menghapus berkas", "Silakan coba lagi.");
     } finally {
         deletingFile.value = false;
     }
@@ -257,8 +257,8 @@ function formatFileSize(bytes: number): string {
 }
 
 function fileExtension(name: string): string {
-    const extension = name.split('.').pop();
-    return extension && extension !== name ? extension.toUpperCase() : 'FILE';
+    const extension = name.split(".").pop();
+    return extension && extension !== name ? extension.toUpperCase() : "FILE";
 }
 
 onMounted(loadFiles);
@@ -268,15 +268,15 @@ async function loadAvailableUsers(): Promise<void> {
     try {
         availableUsers.value = await fetchAvailableUsers(projectId);
     } catch {
-        toastError('Gagal memuat daftar pengguna', 'Silakan coba lagi.');
+        toastError("Gagal memuat daftar pengguna", "Silakan coba lagi.");
     } finally {
         loadingAvailableUsers.value = false;
     }
 }
 
 function openAddMemberModal(): void {
-    newMemberForm.user_id = '';
-    newMemberForm.role = 'developer';
+    newMemberForm.user_id = "";
+    newMemberForm.role = "developer";
     newMemberErrors.value = {};
     addMemberModalOpen.value = true;
     void loadAvailableUsers();
@@ -294,14 +294,14 @@ async function executeAddMember(): Promise<void> {
             Number(newMemberForm.user_id),
             newMemberForm.role,
         );
-        success('Anggota ditambahkan', 'Pengguna telah ditambahkan ke proyek.');
+        success("Anggota ditambahkan", "Pengguna telah ditambahkan ke proyek.");
         addMemberModalOpen.value = false;
         router.reload();
     } catch (err: any) {
         if (err.response?.data?.errors) {
             newMemberErrors.value = err.response.data.errors;
         } else if (err.response?.data?.message) {
-            toastError('Gagal menambah anggota', err.response.data.message);
+            toastError("Gagal menambah anggota", err.response.data.message);
         }
     } finally {
         addingMember.value = false;
@@ -324,14 +324,14 @@ async function saveMemberRole(): Promise<void> {
     try {
         await updateMember(projectId, developer.user_id, role);
         success(
-            'Peran diperbarui',
+            "Peran diperbarui",
             `Peran ${developer.user?.name} telah diubah.`,
         );
         editMemberRole.value = null;
         router.reload();
     } catch (err: any) {
         if (err.response?.data?.message) {
-            toastError('Gagal memperbarui peran', err.response.data.message);
+            toastError("Gagal memperbarui peran", err.response.data.message);
         }
     } finally {
         savingMemberRole.value = false;
@@ -345,8 +345,8 @@ function cancelEditMemberRole(): void {
 async function confirmRemoveMember(developer: ProjectMember): Promise<void> {
     if (developer.is_owner) {
         warning(
-            'Tidak dapat dihapus',
-            'Pemilik proyek tidak dapat dihapus dari anggota.',
+            "Tidak dapat dihapus",
+            "Pemilik proyek tidak dapat dihapus dari anggota.",
         );
         return;
     }
@@ -354,13 +354,13 @@ async function confirmRemoveMember(developer: ProjectMember): Promise<void> {
     try {
         await removeMember(projectId, developer.user_id);
         success(
-            'Anggota dihapus',
+            "Anggota dihapus",
             `${developer.user?.name} telah dihapus dari proyek.`,
         );
         router.reload();
     } catch (err: any) {
         if (err.response?.data?.message) {
-            toastError('Gagal menghapus anggota', err.response.data.message);
+            toastError("Gagal menghapus anggota", err.response.data.message);
         }
     }
 }
@@ -374,7 +374,7 @@ async function executeDeleteProject(): Promise<void> {
 
     try {
         await api.delete(`/projects/${projectId}`);
-        success('Proyek dihapus', 'Proyek telah berhasil dihapus.');
+        success("Proyek dihapus", "Proyek telah berhasil dihapus.");
         router.visit(projects.index.url());
     } catch {
         // Error handled by api interceptor
@@ -384,20 +384,20 @@ async function executeDeleteProject(): Promise<void> {
 }
 
 function formatDate(dateString: string | null): string {
-    if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
     });
 }
 
 function formatDateShort(dateString: string | null): string {
-    if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
     });
 }
 </script>
@@ -427,7 +427,7 @@ function formatDateShort(dateString: string | null): string {
                 <p
                     class="mt-1 text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
-                    {{ project.description || 'Tidak ada deskripsi' }}
+                    {{ project.description || "Tidak ada deskripsi" }}
                 </p>
             </div>
 
@@ -633,7 +633,7 @@ function formatDateShort(dateString: string | null): string {
             </dl>
         </div>
 
-        <!-- Members Section -->
+        <!-- Developers Section -->
         <div class="card">
             <div
                 class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -870,7 +870,7 @@ function formatDateShort(dateString: string | null): string {
 
                 <template #uploader="{ row }">
                     <p class="text-sm text-surface-500 dark:text-surface-400">
-                        {{ row.uploader?.name ?? '—' }}
+                        {{ row.uploader?.name ?? "—" }}
                     </p>
                 </template>
 
@@ -910,7 +910,7 @@ function formatDateShort(dateString: string | null): string {
         </div>
     </div>
 
-    <!-- Add Member Modal -->
+    <!-- Add Developer Modal -->
     <Modal
         :open="addMemberModalOpen"
         title="Tambah Anggota Proyek"
@@ -1027,7 +1027,7 @@ function formatDateShort(dateString: string | null): string {
                     {{
                         selectedFile
                             ? selectedFile.name
-                            : 'Pilih berkas untuk diunggah'
+                            : "Pilih berkas untuk diunggah"
                     }}
                 </span>
                 <input

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { usePage, Link, router } from '@inertiajs/vue3';
-import { getIcon } from './icons';
-import { LogOut, X, Sparkles, ChevronDown, Plus, Search } from '@lucide/vue';
-import { gsap } from 'gsap';
-import { prefersReducedMotion } from '@/lib/motion';
-import { useNotifications } from '@/composables/useNotifications';
-import { logout } from '@/routes';
-import tasks from '@/routes/tasks';
-import projects from '@/routes/projects';
-import users from '@/routes/users';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { usePage, Link, router } from "@inertiajs/vue3";
+import { getIcon } from "./icons";
+import { LogOut, X, Sparkles, ChevronDown, Plus, Search } from "@lucide/vue";
+import { gsap } from "gsap";
+import { prefersReducedMotion } from "@/lib/motion";
+import { useNotifications } from "@/composables/useNotifications";
+import { logout } from "@/routes";
+import tasks from "@/routes/tasks";
+import projects from "@/routes/projects";
+import users from "@/routes/users";
 
 interface Props {
     open: boolean;
@@ -43,17 +43,17 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 
 const currentPath = computed(() => {
-    const rawUrl = page.url || '';
-    return rawUrl.split('?')[0].split('#')[0];
+    const rawUrl = page.url || "";
+    return rawUrl.split("?")[0].split("#")[0];
 });
 
 function isActive(href?: string): boolean {
     if (!href) return false;
     const path = currentPath.value;
-    const cleanHref = href.split('?')[0].split('#')[0];
+    const cleanHref = href.split("?")[0].split("#")[0];
 
-    if (cleanHref === '/dashboard' || cleanHref === '/') {
-        return path === '/dashboard' || path === '/';
+    if (cleanHref === "/dashboard" || cleanHref === "/") {
+        return path === "/dashboard" || path === "/";
     }
 
     return path === cleanHref || path.startsWith(`${cleanHref}/`);
@@ -73,109 +73,109 @@ const { unreadCount } = useNotifications();
 
 const menuSections = computed<MenuSection[]>(() => [
     {
-        title: 'UTAMA',
+        title: "UTAMA",
         items: [
             {
-                label: 'Dashboard',
-                href: '/dashboard',
-                icon: 'Home',
-                permission: 'dashboard.view',
+                label: "Dashboard",
+                href: "/dashboard",
+                icon: "Home",
+                permission: "dashboard.view",
             },
             {
-                label: 'Tugas Saya',
+                label: "Tugas Saya",
                 href: tasks.index.url(),
-                icon: 'CheckSquare',
-                permission: 'tasks.view',
+                icon: "CheckSquare",
+                permission: "tasks.view",
                 badge: stats.value.my_tasks_count,
             },
             {
-                label: 'Proyek Tim',
+                label: "Proyek Tim",
                 href: projects.index.url(),
-                icon: 'FolderKanban',
-                permission: 'projects.view',
+                icon: "FolderKanban",
+                permission: "projects.view",
                 badge: stats.value.projects_count,
             },
             {
-                label: 'Jadwal & Kalender',
-                href: '/calendar',
-                icon: 'Calendar',
-                permission: 'calendar.view',
+                label: "Jadwal & Kalender",
+                href: "/calendar",
+                icon: "Calendar",
+                permission: "calendar.view",
             },
             {
-                label: 'Timeline & Roadmap',
-                href: '/timeline',
-                icon: 'TrendingUp',
-                permission: 'projects.view',
+                label: "Timeline & Roadmap",
+                href: "/timeline",
+                icon: "TrendingUp",
+                permission: "projects.view",
             },
         ],
     },
     {
-        title: 'KOLABORASI',
+        title: "KOLABORASI",
         items: [
             {
-                label: 'Anggota Tim',
-                href: can('users.view') ? users.index.url() : '/teams',
-                icon: 'Users',
-                permission: can('users.view') ? 'users.view' : 'teams.view',
+                label: "Anggota Tim",
+                href: can("users.view") ? users.index.url() : "/teams",
+                icon: "Users",
+                permission: can("users.view") ? "users.view" : "teams.view",
                 badge: stats.value.team_members_count,
             },
             {
-                label: 'Notifikasi',
-                href: '/notifications',
-                icon: 'Bell',
-                permission: 'notifications.view',
+                label: "Notifikasi",
+                href: "/notifications",
+                icon: "Bell",
+                permission: "notifications.view",
                 badge: unreadCount.value,
             },
             {
-                label: 'Papan Kolaborasi',
-                href: '/collaboration',
-                icon: 'Activity',
-                permission: 'task-collaboration.view',
+                label: "Papan Kolaborasi",
+                href: "/collaboration",
+                icon: "Activity",
+                permission: "task-collaboration.view",
             },
             {
-                label: 'Pengumuman Tim',
-                href: '/announcements',
-                icon: 'Radio',
-                permission: 'dashboard.view',
-            },
-        ],
-    },
-    {
-        title: 'DOKUMEN & KPI',
-        items: [
-            {
-                label: 'Laporan & KPI',
-                href: '/reports',
-                icon: 'BarChart3',
-                permission: 'reports.view',
-            },
-            {
-                label: 'Berkas Dokumen',
-                href: '/documents',
-                icon: 'FileText',
-                permission: 'documents.view',
-            },
-            {
-                label: 'Log Aktivitas',
-                href: '/activity-log',
-                icon: 'Sparkles',
-                permission: 'activity-log.view',
+                label: "Pengumuman Tim",
+                href: "/announcements",
+                icon: "Radio",
+                permission: "dashboard.view",
             },
         ],
     },
     {
-        title: 'SISTEM',
+        title: "DOKUMEN & KPI",
         items: [
             {
-                label: 'Role & Permissions',
-                href: '/roles/permissions',
-                icon: 'Shield',
-                permission: 'roles.view',
+                label: "Laporan & KPI",
+                href: "/reports",
+                icon: "BarChart3",
+                permission: "reports.view",
             },
             {
-                label: 'Pengaturan Akun',
-                href: '/settings',
-                icon: 'Settings',
+                label: "Berkas Dokumen",
+                href: "/documents",
+                icon: "FileText",
+                permission: "documents.view",
+            },
+            {
+                label: "Log Aktivitas",
+                href: "/activity-log",
+                icon: "Sparkles",
+                permission: "activity-log.view",
+            },
+        ],
+    },
+    {
+        title: "SISTEM",
+        items: [
+            {
+                label: "Role & Permissions",
+                href: "/roles/permissions",
+                icon: "Shield",
+                permission: "roles.view",
+            },
+            {
+                label: "Pengaturan Akun",
+                href: "/settings",
+                icon: "Settings",
             },
         ],
     },
@@ -187,8 +187,8 @@ const comingSoonModal = ref<{
     desc: string;
 }>({
     isOpen: false,
-    title: '',
-    desc: '',
+    title: "",
+    desc: "",
 });
 
 function openComingSoon(item: SidebarItem): void {
@@ -197,7 +197,7 @@ function openComingSoon(item: SidebarItem): void {
         title: item.label,
         desc:
             item.comingSoonDesc ||
-            'Fitur ini sedang dalam tahap pengembangan dan akan segera siap digunakan.',
+            "Fitur ini sedang dalam tahap pengembangan dan akan segera siap digunakan.",
     };
 }
 
@@ -215,22 +215,22 @@ const SIDEBAR_WIDTH = 250;
 let drawerCtx: gsap.Context | null = null;
 
 function drawer(): HTMLElement | null {
-    return document.querySelector<HTMLElement>('[data-sidebar]');
+    return document.querySelector<HTMLElement>("[data-sidebar]");
 }
 
 function isMobile(): boolean {
     return (
-        typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
+        typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT
     );
 }
 
 onMounted(() => {
     syncDrawerPosition();
-    window.addEventListener('resize', syncDrawerPosition);
+    window.addEventListener("resize", syncDrawerPosition);
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('resize', syncDrawerPosition);
+    window.removeEventListener("resize", syncDrawerPosition);
     drawerCtx?.revert();
     drawerCtx = null;
 });
@@ -243,7 +243,7 @@ function syncDrawerPosition(): void {
     if (!element) return;
 
     if (!isMobile()) {
-        gsap.set(element, { clearProps: 'transform' });
+        gsap.set(element, { clearProps: "transform" });
         return;
     }
 
@@ -266,7 +266,7 @@ watch(
             gsap.to(drawer(), {
                 x: open ? 0 : -SIDEBAR_WIDTH,
                 duration: open ? 0.3 : 0.22,
-                ease: open ? 'power3.out' : 'power2.in',
+                ease: open ? "power3.out" : "power2.in",
             });
         });
     },
@@ -292,7 +292,7 @@ watch(
                             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-xs font-semibold tracking-tight text-white shadow-xs dark:bg-primary-500 dark:text-surface-950"
                         >
                             {{
-                                (page.props.app.shortName || 'PX')
+                                (page.props.app.shortName || "PX")
                                     .slice(0, 2)
                                     .toUpperCase()
                             }}
@@ -456,7 +456,7 @@ watch(
                             {{ user.name }}
                         </span>
                         <span class="truncate text-[10px] text-surface-400">
-                            {{ user.roles?.[0] || 'Member' }}
+                            {{ user.roles?.[0] || "Developer" }}
                         </span>
                     </div>
                 </Link>

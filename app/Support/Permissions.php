@@ -73,7 +73,7 @@ class Permissions
                 self::PROJECTS_CREATE => 'Projects Create',
                 self::PROJECTS_UPDATE => 'Projects Update',
                 self::PROJECTS_DELETE => 'Projects Delete',
-                self::PROJECTS_MANAGE_MEMBERS => 'Projects Manage Members',
+                self::PROJECTS_MANAGE_MEMBERS => 'Projects Manage Developers',
                 self::TASKS_VIEW => 'Tasks View',
                 self::TASKS_CREATE => 'Tasks Create',
                 self::TASKS_UPDATE => 'Tasks Update',

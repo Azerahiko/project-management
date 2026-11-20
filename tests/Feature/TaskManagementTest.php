@@ -471,7 +471,7 @@ describe('Task Management', function () {
                     'meta' => ['current_page', 'last_page', 'total'],
                 ]);
 
-            // Member should only see tasks from projects they are part of
+            // Developer should only see tasks from projects they are part of
             $response = $this->actingAs($developer)->getJson('/api/tasks');
             $taskTitles = collect($response->json('data'))->pluck('title')->toArray();
             $this->assertContains('Design Homepage', $taskTitles);

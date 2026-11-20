@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { usePage, Link } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import Avatar from '@/components/ui/Avatar.vue';
+import { computed } from "vue";
+import { usePage, Link } from "@inertiajs/vue3";
+import AppLayout from "@/layouts/AppLayout.vue";
+import Avatar from "@/components/ui/Avatar.vue";
 import {
     Users,
     FolderKanban,
     ArrowUpRight,
     ShieldCheck,
     UserCheck,
-} from '@lucide/vue';
-import projectsRoute from '@/routes/projects';
+} from "@lucide/vue";
+import projectsRoute from "@/routes/projects";
 
 defineOptions({
     layout: AppLayout,
@@ -35,25 +35,25 @@ const projects = (page.props.projects as TeamProject[]) ?? [];
 function initials(name: string): string {
     return name
         .split(/\s+/)
-        .map((word) => word[0] ?? '')
+        .map((word) => word[0] ?? "")
         .slice(0, 2)
-        .join('')
+        .join("")
         .toUpperCase();
 }
 
 const roleColors: Record<string, string> = {
-    owner: 'bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300',
-    manager: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300',
+    owner: "bg-primary-100 text-primary-800 dark:bg-primary-950/40 dark:text-primary-300",
+    manager: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
     developer:
-        'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
-    viewer: 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400',
+        "bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300",
+    viewer: "bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400",
 };
 
 const roleLabels: Record<string, string> = {
-    owner: 'Pemilik',
-    manager: 'Manajer',
-    developer: 'Anggota',
-    viewer: 'Peninjau',
+    owner: "Pemilik",
+    manager: "Manajer",
+    developer: "Anggota",
+    viewer: "Peninjau",
 };
 
 const totalMembersAllocated = computed(() => {
@@ -222,7 +222,7 @@ const totalMembersAllocated = computed(() => {
                         </span>
                     </div>
 
-                    <!-- Members List -->
+                    <!-- Developers List -->
                     <div
                         v-if="project.members.length > 0"
                         class="divide-y divide-surface-100 dark:divide-surface-800/60"

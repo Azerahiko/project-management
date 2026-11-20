@@ -130,7 +130,7 @@ describe('Task Collaboration', function () {
 
             $this->actingAs($this->developer)
                 ->putJson("/api/comments/{$comment->id}", [
-                    'content' => 'Member update attempt',
+                    'content' => 'Developer update attempt',
                 ])
                 ->assertForbidden();
         });

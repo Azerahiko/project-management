@@ -510,7 +510,7 @@ describe('User Management RBAC', function () {
 
             $response = $this->actingAs($pm)
                 ->postJson('/api/users', [
-                    'name' => 'New Member',
+                    'name' => 'New Developer',
                     'email' => 'newmember@example.com',
                     'temporary_password' => 'TemporaryPass123!',
                     'role' => 'developer',
@@ -518,7 +518,7 @@ describe('User Management RBAC', function () {
                 ]);
 
             $response->assertCreated();
-            $this->assertDatabaseHas('users', ['email' => 'newmember@example.com', 'name' => 'New Member']);
+            $this->assertDatabaseHas('users', ['email' => 'newmember@example.com', 'name' => 'New Developer']);
         });
     });
 });

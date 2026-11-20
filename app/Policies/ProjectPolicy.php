@@ -35,7 +35,7 @@ class ProjectPolicy
             return true;
         }
 
-        // Members can view
+        // Developers can view
         if ($project->hasMember($user)) {
             return true;
         }
