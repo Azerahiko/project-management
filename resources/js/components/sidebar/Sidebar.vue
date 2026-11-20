@@ -456,7 +456,7 @@ watch(
                             {{ user.name }}
                         </span>
                         <span class="truncate text-[10px] text-surface-400">
-                            {{ user.roles?.[0] || 'Developer' }}
+                            {{ user.roles?.[0] || 'Member' }}
                         </span>
                     </div>
                 </Link>

@@ -62,7 +62,7 @@ const roleLabels: Record<string, string> = {
     administrator: 'Administrator',
     project_manager: 'Manajer Proyek',
     team_leader: 'Ketua Tim',
-    member: 'Developer',
+    member: 'Anggota',
     reviewer: 'Peninjau',
     client: 'Klien',
 };
@@ -71,7 +71,7 @@ const roleDescriptions: Record<string, string> = {
     administrator: 'Akses penuh dan kontrol sistem tertinggi',
     project_manager: 'Mengelola proyek, tugas, dan anggota tim',
     team_leader: 'Memimpin koordinasi alur kerja tim',
-    member: 'Membuat dan berkontribusi pada pengembangan proyek',
+    member: 'Mengerjakan tugas dan berkolaborasi dalam proyek',
     reviewer: 'Meninjau hasil pekerjaan dan memberikan validasi',
     client: 'Akses terbatas untuk meninjau progres proyek',
 };
