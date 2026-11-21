@@ -24,6 +24,7 @@ const {
     markAsRead,
     markAllAsRead,
     fetchNotifications,
+    stopPolling,
 } = useNotifications();
 const { error: toastError } = useToast();
 
@@ -160,6 +161,7 @@ onUnmounted(() => {
     document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('keydown', onEscape);
     dropdownCtx?.revert();
+    stopPolling();
 });
 </script>
 

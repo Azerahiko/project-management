@@ -1,4 +1,4 @@
-import { ref, readonly } from 'vue';
+import { ref } from 'vue';
 import api from '@/lib/api';
 import type { Notification, PaginatedResponse } from '@/types';
 
@@ -16,9 +16,13 @@ const meta = ref({
 const loading = ref(false);
 const error = ref<string | null>(null);
 const unreadCount = ref(0);
+const isFetching = ref(false);
+
+// Polling lifecycle state
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let visibilityHandler: (() => void) | null = null;
 let isInitialized = false;
+let subscriberCount = 0;
 
 // --- Internal helpers ---
 
@@ -69,6 +73,13 @@ async function doFetchNotifications(
 }
 
 async function doFetchUnreadCount(): Promise<void> {
+    // Skip if a fetch is already in flight or the tab is hidden.
+    if (isFetching.value || document.hidden) {
+        return;
+    }
+
+    isFetching.value = true;
+
     try {
         const { data } = await api.get<{ count: number }>(
             '/notifications/unread-count',
@@ -80,14 +91,18 @@ async function doFetchUnreadCount(): Promise<void> {
             return;
         }
         console.error('[Notifications] Unread count fetch failed:', e);
+    } finally {
+        isFetching.value = false;
     }
 }
 
 // --- Polling lifecycle ---
 
 function startPolling(): void {
-    if (pollTimer) return; // Already running
-    // Initial fetch immediate
+    // Strict no-op if a timer is already running.
+    if (pollTimer) return;
+
+    // Initial fetch immediately.
     void doFetchUnreadCount();
     pollTimer = setInterval(doFetchUnreadCount, 30_000);
 
@@ -100,28 +115,45 @@ function startPolling(): void {
                     pollTimer = null;
                 }
             } else {
-                startPolling();
+                // Only restart if there is still at least one active subscriber.
+                if (subscriberCount > 0) {
+                    startPolling();
+                }
             }
         };
         document.addEventListener('visibilitychange', visibilityHandler);
     }
+
+    // Track this composable as an active consumer.
+    subscriberCount++;
 }
 
 function stopPolling(): void {
-    if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-    }
+    // Decrement the active consumer count.
+    subscriberCount--;
 
-    if (visibilityHandler) {
-        document.removeEventListener('visibilitychange', visibilityHandler);
-        visibilityHandler = null;
+    // If no more consumers, clear the timer and remove the listener.
+    if (subscriberCount <= 0) {
+        subscriberCount = 0;
+
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+
+        if (visibilityHandler) {
+            document.removeEventListener('visibilitychange', visibilityHandler);
+            visibilityHandler = null;
+        }
     }
 }
 
 // --- Public composable ---
 
 export function useNotifications() {
+    // Increment the active consumer count so the timer starts on first use.
+    subscriberCount++;
+
     // Initialize once per app session: seed unread count + start polling.
     // The list itself is fetched by whoever needs it (page mount / dropdown open).
     if (!isInitialized) {
@@ -161,13 +193,14 @@ export function useNotifications() {
         await doFetchNotifications(1);
     }
 
-    // Expose stopPolling for cleanup global (e.g., in AppLayout onUnmounted)
+    // Expose stopPolling for cleanup. When the last consumer calls stopPolling(),
+    // the timer and visibility listener are torn down.
     return {
-        notifications: readonly(notifications),
-        meta: readonly(meta),
-        loading: readonly(loading),
-        error: readonly(error),
-        unreadCount: readonly(unreadCount),
+        notifications: notifications,
+        meta: meta,
+        loading: loading,
+        error: error,
+        unreadCount: unreadCount,
         fetchNotifications: doFetchNotifications,
         fetchUnreadCount: doFetchUnreadCount,
         markAsRead,
@@ -175,12 +208,9 @@ export function useNotifications() {
         refresh,
         startPolling,
         stopPolling,
-        _internal: { isInitialized: () => isInitialized }, // for testing
+        _internal: {
+            isInitialized: () => isInitialized,
+            subscriberCount: () => subscriberCount,
+        }, // for testing
     };
-}
-
-// Auto-cleanup when app unmounts (optional, call in AppLayout)
-export function cleanupNotifications(): void {
-    stopPolling();
-    isInitialized = false;
 }
