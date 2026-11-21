@@ -70,14 +70,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware('can:projects.create')->group(function () {
-        Route::inertia('/projects/create', 'Projects/Create', [
-            'clients' => User::whereHas('roles', function ($query) {
-                $query->where('name', 'client');
-            })
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'email', 'avatar']),
-        ])->name('projects.create');
+        Route::inertia('/projects/create', 'Projects/Create')->name('projects.create');
     });
 
     Route::middleware('can:projects.view')->group(function () {
