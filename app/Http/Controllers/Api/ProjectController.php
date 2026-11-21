@@ -181,9 +181,15 @@ class ProjectController extends Controller
                     }))
                     ->delete();
 
+                // Batch-load all clients in a single query to avoid N+1
+                $clients = User::whereIn('id', $data['client_ids'])
+                    ->where('is_active', true)
+                    ->get()
+                    ->keyBy('id');
+
                 foreach ($data['client_ids'] as $clientId) {
-                    $client = User::find($clientId);
-                    if ($client instanceof User && $client->hasRole('client') && ! $project->projectMembers()
+                    $client = $clients[$clientId] ?? null;
+                    if ($client instanceof User && ! $project->projectMembers()
                         ->where('user_id', $clientId)
                         ->exists()) {
                         ProjectMember::create([

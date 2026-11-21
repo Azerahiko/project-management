@@ -348,11 +348,7 @@ class TaskController extends Controller
                     $request->string('sort_direction')->toString() === 'desc' ? 'desc' : 'asc'
                 );
             }, fn ($query) => $query->latest('deleted_at'))
-            ->when($project !== null && $project->exists, function ($query) use ($project) {
-                $query->where('project_id', $project->id);
-            }, function ($query) use ($request) {
-                $query->accessibleBy($request->user());
-            })
+            ->accessibleBy($request->user())
             ->paginate($perPage)
             ->withQueryString();
 

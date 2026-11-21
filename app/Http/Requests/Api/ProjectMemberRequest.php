@@ -7,6 +7,7 @@ use App\Models\Project;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProjectMemberRequest extends FormRequest
 {
@@ -46,7 +47,9 @@ class ProjectMemberRequest extends FormRequest
 
         // Prevent adding the project owner as a developer (they're already owner)
         if ($this->has('user_id') && (int) $this->input('user_id') === $project->owner_id) {
-            $this->merge(['user_id' => null]); // Will fail validation
+            throw ValidationException::withMessages([
+                'user_id' => 'Tidak dapat menambahkan pemilik proyek sebagai developer.',
+            ]);
         }
     }
 }

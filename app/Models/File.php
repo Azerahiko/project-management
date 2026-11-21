@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Storage;
  * @property-read Project $project
  * @property-read User|null $uploader
  */
-#[Fillable(['project_id', 'original_name', 'storage_path', 'mime_type', 'size', 'uploaded_by'])]
+#[Fillable(['project_id', 'original_name', 'mime_type', 'size', 'uploaded_by', 'storage_path'])]
 class File extends Model
 {
     /** @use HasFactory<FileFactory> */
@@ -42,6 +42,8 @@ class File extends Model
             'uploaded_by' => 'integer',
         ];
     }
+
+    protected $hidden = ['storage_path'];
 
     protected static function booted(): void
     {
