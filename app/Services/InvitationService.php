@@ -71,9 +71,16 @@ class InvitationService
         DB::transaction(function () use ($invitation, $token, $expiresAt) {
             $lockedInvitation = Invitation::query()->whereKey($invitation->getKey())->lockForUpdate()->firstOrFail();
 
+            // Enforce business rules inside the lock to prevent race conditions
             if ($lockedInvitation->isAccepted()) {
                 throw ValidationException::withMessages([
                     'message' => 'Undangan sudah diterima dan tidak dapat dikirim ulang.',
+                ]);
+            }
+
+            if ($lockedInvitation->isExpired()) {
+                throw ValidationException::withMessages([
+                    'message' => 'Undangan sudah kedaluwarsa. Silakan minta undangan baru.',
                 ]);
             }
 

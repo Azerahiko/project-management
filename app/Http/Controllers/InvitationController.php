@@ -70,6 +70,8 @@ class InvitationController extends Controller
 
     /**
      * Activate the invited account with a password chosen by the user.
+     * The entire flow is wrapped in a single transaction with strict lock ordering
+     * (Invitation first, then User) to prevent PostgreSQL deadlocks and TOCTOU races.
      */
     public function activate(Request $request, string $token): JsonResponse
     {
@@ -78,24 +80,29 @@ class InvitationController extends Controller
         ]);
 
         return DB::transaction(function () use ($token, $validated) {
+            // Lock invitation first to establish the primary lock (strict order: Invitation -> User)
             $invitation = Invitation::query()
                 ->where('token_hash', hash('sha256', $token))
                 ->lockForUpdate()
                 ->first();
 
+            // Re-validate inside the locked block
             if (! $invitation || $invitation->isAccepted() || $invitation->isExpired()) {
                 return response()->json(['message' => 'Undangan tidak valid atau sudah kedaluwarsa.'], 410);
             }
 
+            // Lock user second (strict order: Invitation -> User prevents deadlocks)
             $user = User::where('email', $invitation->email)
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Mutate user state inside the lock
             $user->forceFill([
                 'password' => Hash::make($validated['password']),
                 'email_verified_at' => now(),
             ])->save();
 
+            // Mutate invitation state inside the same lock
             $invitation->forceFill([
                 'accepted_at' => now(),
             ])->save();
