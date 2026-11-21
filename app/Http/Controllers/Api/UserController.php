@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -55,12 +54,50 @@ class UserController extends Controller
 
     /**
      * Generate a temporary password for user creation.
+     *
+     * Guarantees at least one character from each required class:
+     * uppercase, lowercase, digits, and symbols, using random_int for
+     * cryptographic security, then shuffles the result.
+     */
+    protected function generateSecureTemporaryPassword(int $length = 20): string
+    {
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $digits = '0123456789';
+        $symbols = '!@#$%^&*()-_=+[]{}|;:,.<>?/';
+
+        // Pick one random character from each class
+        $password = $uppercase[random_int(0, strlen($uppercase) - 1)]
+                  .$lowercase[random_int(0, strlen($lowercase) - 1)]
+                  .$digits[random_int(0, strlen($digits) - 1)]
+                  .$symbols[random_int(0, strlen($symbols) - 1)];
+
+        // Fill remaining characters from combined pool
+        $pool = $uppercase.$lowercase.$digits.$symbols;
+        while (strlen($password) < $length) {
+            $password .= $pool[random_int(0, strlen($pool) - 1)];
+        }
+
+        // Shuffle cryptographically using random_int
+        $passwordArray = str_split($password);
+        for ($i = count($passwordArray) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            $tmp = $passwordArray[$i];
+            $passwordArray[$i] = $passwordArray[$j];
+            $passwordArray[$j] = $tmp;
+        }
+
+        return implode('', $passwordArray);
+    }
+
+    /**
+     * Generate a temporary password for user creation.
      */
     public function generateTemporaryPassword(Request $request): JsonResponse
     {
         $this->authorize('users.create');
 
-        $temporaryPassword = Str::password(20);
+        $temporaryPassword = $this->generateSecureTemporaryPassword(20);
 
         return response()->json([
             'temporary_password' => $temporaryPassword,

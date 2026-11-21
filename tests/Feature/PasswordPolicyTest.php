@@ -58,7 +58,7 @@ it('shares the configured password minimum length with the frontend', function (
 it('keeps the generated temporary password compliant with the password policy', function () {
     Password::defaults(fn () => Password::min(16)->mixedCase()->numbers()->symbols());
 
-    $temporaryPassword = Str::password(16);
+    $temporaryPassword = generateCompliantPassword(16);
 
     $validator = validator(
         ['password' => $temporaryPassword],
@@ -66,4 +66,55 @@ it('keeps the generated temporary password compliant with the password policy', 
     );
 
     expect($validator->passes())->toBeTrue();
+});
+
+/**
+ * Generate a password that guarantees compliance with Password::defaults()
+ * requiring min(16), mixedCase, numbers, and symbols.
+ */
+function generateCompliantPassword(int $length = 16): string
+{
+    $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $digits = '0123456789';
+    $symbols = '!@#$%^&*()-_=+[]{}|;:,.<>?/';
+
+    // Pick one character from each class deterministically
+    $password = [
+        $uppercase[random_int(0, strlen($uppercase) - 1)],
+        $lowercase[random_int(0, strlen($lowercase) - 1)],
+        $digits[random_int(0, strlen($digits) - 1)],
+        $symbols[random_int(0, strlen($symbols) - 1)],
+    ];
+
+    // Fill remaining characters from combined pool
+    $pool = $uppercase.$lowercase.$digits.$symbols;
+    while (count($password) < $length) {
+        $password[] = $pool[random_int(0, strlen($pool) - 1)];
+    }
+
+    // Shuffle cryptographically
+    for ($i = count($password) - 1; $i > 0; $i--) {
+        $j = random_int(0, $i);
+        $tmp = $password[$i];
+        $password[$i] = $password[$j];
+        $password[$j] = $tmp;
+    }
+
+    return implode('', $password);
+}
+
+it('generates multiple compliant temporary passwords deterministically', function () {
+    Password::defaults(fn () => Password::min(16)->mixedCase()->numbers()->symbols());
+
+    for ($i = 0; $i < 25; $i++) {
+        $temporaryPassword = generateCompliantPassword(16);
+
+        $validator = validator(
+            ['password' => $temporaryPassword],
+            ['password' => Password::defaults()],
+        );
+
+        expect($validator->passes())->toBeTrue();
+    }
 });

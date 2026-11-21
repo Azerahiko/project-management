@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @use \Illuminate\Database\Concerns\BuildsQueries<\App\Models\User>
+ */
+
 namespace App\Models;
 
 use App\Enums\ProjectRole;
@@ -97,6 +101,14 @@ class User extends Authenticatable
             self::defaultNotificationPreferences(),
             $this->notification_preferences ?? [],
         );
+    }
+
+    /**
+     * Get the user's notifications.
+     */
+    public function notifications(): mixed
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
     }
 
     /**
