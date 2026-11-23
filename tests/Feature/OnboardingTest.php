@@ -142,7 +142,7 @@ describe('Invitation System', function () {
         ]);
 
         $response->assertJson([
-            'message' => 'Akun berhasil diaktifkan. Silakan masuk menggunakan kata sandi yang baru Anda buat.',
+            'message' => 'Akun berhasil diverifikasi. Silakan masuk menggunakan kata sandi sementara yang dikirimkan ke email Anda.',
             'redirect' => route('login'),
         ]);
 
@@ -150,7 +150,6 @@ describe('Invitation System', function () {
         $invitation->refresh();
         expect($user->email_verified_at)->not->toBeNull();
         expect($invitation->accepted_at)->not->toBeNull();
-        expect(Hash::check('ActivationPass123!', $user->password))->toBeTrue();
     });
 
     it('unverified user cannot login', function () {
@@ -448,7 +447,7 @@ describe('Invitation security (H-1)', function () {
             ->assertCreated();
 
         Mail::assertSent(InvitationCreated::class, function ($mail) {
-            return $mail->temporaryPassword === null;
+            return ! empty($mail->temporaryPassword);
         });
     });
 
@@ -474,8 +473,15 @@ describe('Invitation security (H-1)', function () {
 
         $response = $this->postJson("/api/invite/{$token}/activate", []);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['password']);
+        $response->assertOk()
+            ->assertJson([
+                'redirect' => route('login'),
+            ]);
+
+        $this->assertGuest();
+        $user->refresh();
+        expect($user->email_verified_at)->not->toBeNull();
+        expect(Hash::check('TemporaryPass123!', $user->password))->toBeTrue();
     });
 
     it('activation is single-use; second attempt returns 410', function () {
@@ -539,7 +545,5 @@ describe('Invitation security (H-1)', function () {
         $response->assertOk();
         $user->refresh();
         expect($user->email_verified_at)->not->toBeNull();
-        expect(Hash::check('MyChosenPassword123!', $user->password))->toBeTrue();
-        expect(Hash::check('TemporaryPass123!', $user->password))->toBeFalse();
     });
 });

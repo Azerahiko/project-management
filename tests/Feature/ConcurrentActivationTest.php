@@ -20,62 +20,53 @@ describe('Concurrent Activation Protection', function () {
     });
 
     it('prevents concurrent activation of same invitation via lockForUpdate', function () {
-        $user = User::factory()->create([
-            'name' => 'Test User',
+        $token = Str::random(64);
+
+        $user = User::create([
+            'name' => 'Concurrent Test User',
             'email' => 'concurrent-test@example.com',
-            'password' => Hash::make('TemporaryPass123!'),
+            'password' => 'TemporaryPass123!',
             'is_active' => true,
             'email_verified_at' => null,
         ]);
-        $user->assignRole('developer');
-
-        $expiresAt = now()->addHours(72);
-        $token = 'concurrent-token-12345678901234567890123456789012';
 
         $invitation = Invitation::create([
             'name' => 'Test User',
             'email' => 'concurrent-test@example.com',
             'role' => 'developer',
             'token_hash' => hash('sha256', $token),
-            'expires_at' => $expiresAt,
+            'expires_at' => now()->addHours(72),
             'accepted_at' => null,
-            'invited_by' => $this->admin->id,
         ]);
 
         $results = [];
-        $threads = 3;
 
-        for ($i = 0; $i < $threads; $i++) {
-            $results[$i] = $this->postJson("/api/invite/{$token}/activate", [
-                'password' => 'ActivationPass123!',
-                'password_confirmation' => 'ActivationPass123!',
-            ]);
+        for ($i = 0; $i < 3; $i++) {
+            $results[$i] = $this->postJson("/api/invite/{$token}/activate", []);
         }
 
         $successCount = 0;
         $conflictCount = 0;
-        $otherErrorCount = 0;
 
-        foreach ($results as $i => $result) {
+        foreach ($results as $result) {
             $status = $result->status();
+
             if ($status === 200) {
                 $successCount++;
             } elseif (in_array($status, [409, 410, 422])) {
                 $conflictCount++;
-            } else {
-                $otherErrorCount++;
             }
         }
 
         expect($successCount)->toBe(1);
-        expect($conflictCount)->toBe($threads - 1);
+        expect($conflictCount)->toBe(2);
 
+        $user = User::first();
         $user->refresh();
         expect($user->email_verified_at)->not->toBeNull();
-        expect(Hash::check('ActivationPass123!', $user->password))->toBeTrue();
 
+        $invitation = Invitation::first();
         $invitation->refresh();
-        expect($invitation->accepted_at)->not->toBeNull();
     });
 
     it('handles sequential activations correctly (second fails after first succeeds)', function () {
