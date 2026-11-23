@@ -366,6 +366,18 @@ describe('Project Management', function () {
                 ->assertJsonStructure(['data' => [['id', 'name', 'email']]]);
         });
 
+        it('allows getting project clients list', function () {
+            [$admin] = createTestUsers();
+            $client = User::factory()->create(['is_active' => true]);
+            $client->assignRole('client');
+
+            $this->actingAs($admin)
+                ->getJson('/api/projects/clients')
+                ->assertOk()
+                ->assertJsonStructure(['data' => [['id', 'name', 'email']]])
+                ->assertJsonFragment(['id' => $client->id, 'name' => $client->name]);
+        });
+
         it('includes team leaders in the project managers list', function () {
             [$admin] = createTestUsers();
 

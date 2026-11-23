@@ -18,7 +18,9 @@ defineOptions({
 });
 
 const { success, error: toastError, warning } = useToast();
-const { fetchManagers, clients } = useProjects({} as ProjectFilters);
+const { fetchManagers, fetchClients, clients } = useProjects(
+      {} as ProjectFilters,
+  );
 
 const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -58,6 +60,7 @@ const managers = ref<
     }>
 >([]);
 const loadingManagers = ref(false);
+  const loadingClients = ref(false);
 
 // Client Assets
 const selectedFiles = ref<File[]>([]);
@@ -182,7 +185,21 @@ async function loadManagers(): Promise<void> {
     }
 }
 
-onMounted(loadManagers);
+onMounted(() => {
+      loadManagers();
+      loadClients();
+  });
+
+  async function loadClients(): Promise<void> {
+      loadingClients.value = true;
+      try {
+          await fetchClients();
+      } catch {
+          toastError('Gagal memuat daftar klien', 'Silakan coba lagi.');
+      } finally {
+          loadingClients.value = false;
+      }
+  }
 
 function setErrors(err: Record<string, string[]>): void {
     errors.value = err;
@@ -366,14 +383,16 @@ function goBack(): void {
 
                 <Select
                     v-model="form.client_id"
-                    :options="
-                        clients.map((c) => ({
+                    :options="[
+                        { value: '', label: 'Pilih Klien' },
+                        ...clients.map((c) => ({
                             value: String(c.id),
-                            label: `${c.name} ${c.email || ''}`.trim(),
-                        }))
-                    "
+                            label: c.email ? `${c.name} (${c.email})` : c.name,
+                        })),
+                    ]"
                     label="Klien (Client) *"
                     required
+                    :loading="loadingClients"
                     :error="errors.client_id?.[0]"
                     @change="clearError('client_id')"
                 >

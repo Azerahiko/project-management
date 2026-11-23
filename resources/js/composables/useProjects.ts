@@ -175,13 +175,12 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
         return response.data;
     }
 
-    async function fetchClients(): Promise<void> {
-        const { data: users } = await api.get<{ data: User[] }>('/users', {
-            params: {
-                role: 'client',
-            },
-        });
-        (clients as any).value = users;
+    async function fetchClients(): Promise<User[]> {
+        const { data: response } = await api.get<{
+            data: User[];
+        }>('/projects/clients');
+        clients.value = response.data;
+        return response.data;
     }
 
     const queryString = computed(() => ({

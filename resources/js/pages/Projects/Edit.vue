@@ -11,14 +11,15 @@ import Select from '@/components/ui/Select.vue';
 import { useToast } from '@/composables/useToast';
 import { useProjects } from '@/composables/useProjects';
 import type { Project, ProjectFilters } from '@/types';
-const { clients } = useProjects({} as ProjectFilters);
 
 defineOptions({
     layout: AppLayout,
 });
 
 const { success, error: toastError } = useToast();
-const { fetchManagers } = useProjects({} as ProjectFilters);
+const { fetchManagers, fetchClients, clients } = useProjects(
+      {} as ProjectFilters,
+  );
 
 const page = usePage();
 const initialProject = page.props.project as Project;
@@ -69,6 +70,7 @@ const managers = ref<
     }>
 >([]);
 const loadingManagers = ref(false);
+  const loadingClients = ref(false);
 
 function loadProject(): void {
     form.name = initialProject.name;
@@ -103,9 +105,21 @@ async function loadManagers(): Promise<void> {
     }
 }
 
+async function loadClients(): Promise<void> {
+      loadingClients.value = true;
+      try {
+          await fetchClients();
+      } catch {
+          toastError('Gagal memuat daftar klien', 'Silakan coba lagi.');
+      } finally {
+          loadingClients.value = false;
+      }
+  }
+
 onMounted(() => {
     loadProject();
     loadManagers();
+    loadClients();
 });
 
 function setErrors(err: Record<string, string[]>): void {
@@ -279,13 +293,15 @@ function goBack(): void {
 
                 <Select
                     v-model="form.client_id"
-                    :options="
-                        clients.map((c) => ({
+                    :options="[
+                        { value: '', label: 'Pilih Klien' },
+                        ...clients.map((c) => ({
                             value: String(c.id),
-                            label: `${c.name} ${c.email || ''}`.trim(),
-                        }))
-                    "
+                            label: c.email ? `${c.name} (${c.email})` : c.name,
+                        })),
+                    ]"
                     label="Klien (Client)"
+                    :loading="loadingClients"
                     :error="errors.client_id?.[0]"
                     @change="clearError('client_id')"
                 >
