@@ -9,9 +9,8 @@ use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Response;
 
 class InvitationController extends Controller
@@ -29,7 +28,8 @@ class InvitationController extends Controller
             'role' => ['required', 'string', Rule::in(Roles::assignableBy($request->user()))],
         ]);
 
-        $result = $this->invitations->create($validated, null, $request->user());
+        $temporaryPassword = Str::password(16);
+        $result = $this->invitations->create($validated, $temporaryPassword, $request->user());
 
         return response()->json([
             'message' => 'Undangan berhasil dikirim.',
@@ -75,11 +75,7 @@ class InvitationController extends Controller
      */
     public function activate(Request $request, string $token): JsonResponse
     {
-        $validated = $request->validate([
-            'password' => ['required', 'string', 'confirmed', Password::defaults()],
-        ]);
-
-        return DB::transaction(function () use ($token, $validated) {
+        return DB::transaction(function () use ($token) {
             // Lock invitation first to establish the primary lock (strict order: Invitation -> User)
             $invitation = Invitation::query()
                 ->where('token_hash', hash('sha256', $token))
@@ -96,9 +92,8 @@ class InvitationController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Mutate user state inside the lock
+            // Mutate user state inside the lock (email verified only, password unchanged)
             $user->forceFill([
-                'password' => Hash::make($validated['password']),
                 'email_verified_at' => now(),
             ])->save();
 
@@ -108,7 +103,7 @@ class InvitationController extends Controller
             ])->save();
 
             return response()->json([
-                'message' => 'Akun berhasil diaktifkan. Silakan masuk menggunakan kata sandi yang baru Anda buat.',
+                'message' => 'Akun berhasil diverifikasi. Silakan masuk menggunakan kata sandi sementara yang dikirimkan ke email Anda.',
                 'redirect' => route('login'),
             ]);
         });

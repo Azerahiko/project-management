@@ -192,10 +192,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('activity-log')
         ->middleware('can:activity-log.view');
 
-    // Admin-only routes (create/invite require users.create permission)
+    // Admin-only routes (create requires users.create permission)
     Route::middleware('can:users.create')->group(function () {
         Route::inertia('/users/create', 'Users/Create')->name('users.create');
-        Route::inertia('/users/invite', 'Users/Invite')->name('users.invite');
     });
 
     // User listing and details require users.view permission
