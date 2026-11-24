@@ -139,7 +139,6 @@ const panelMeta = computed(() => {
 const roleDisplayNames: Record<string, string> = {
     administrator: 'Administrator',
     project_manager: 'Manajer Proyek',
-    team_leader: 'Ketua Tim',
     developer: 'Anggota',
     reviewer: 'Peninjau',
     client: 'Klien',

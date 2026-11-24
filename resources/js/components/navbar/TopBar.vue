@@ -59,7 +59,7 @@ const canCreateTask = computed(() => {
     const perms = user.value?.permissions ?? [];
     return (
         roles.some((r: string) =>
-            ['administrator', 'project_manager', 'team_leader'].includes(r),
+            ['administrator', 'project_manager'].includes(r),
         ) || perms.includes('tasks.create')
     );
 });

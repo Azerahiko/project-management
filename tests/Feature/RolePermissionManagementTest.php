@@ -57,13 +57,13 @@ describe('Role & Permission Management', function () {
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page
                     ->component('Roles/Permissions')
-                    ->where('summary.roles_count', 6)
+                    ->where('summary.roles_count', 5)
                     ->where('summary.permissions_count', count(Permissions::slugs()))
                     ->where('summary.assignments_count', $expectedAssignments)
                     ->where('summary.members_count', 2)
                     ->where('roles.0.name', 'administrator')
                     ->where('roles.0.users_count', 1)
-                    ->has('roles', 6)
+                    ->has('roles', 5)
                 );
         });
     });
@@ -222,7 +222,7 @@ describe('Role & Permission Management', function () {
         });
 
         it('maintains role-permission relationship integrity', function () {
-            $role = Role::where('name', 'team_leader')->first();
+            $role = Role::where('name', 'developer')->first();
 
             // Add a permission
             $permission = Permission::where('name', 'projects.create')->first();

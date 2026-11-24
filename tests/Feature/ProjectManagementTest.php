@@ -128,6 +128,37 @@ describe('Project Management', function () {
                 ->assertForbidden();
         });
 
+        it('ignores a client-supplied owner and assigns the creator as project manager', function () {
+            [$admin, $pm, $client] = createTestUsers(['client', 'pm']);
+
+            $this->actingAs($admin)
+                ->postJson('/api/projects', [
+                    'name' => 'Spoofed Owner Project',
+                    'client_ids' => [$client->id],
+                    'owner_id' => $pm->id,
+                ])
+                ->assertCreated()
+                ->assertJsonPath('data.owner_id', $admin->id);
+
+            $this->assertDatabaseHas('projects', [
+                'name' => 'Spoofed Owner Project',
+                'owner_id' => $admin->id,
+            ]);
+        });
+
+        it('grants project creation only to administrators and project managers', function () {
+            [, $pm] = createTestUsers();
+
+            foreach (['developer', 'reviewer', 'client'] as $role) {
+                $user = User::factory()->create(['is_active' => true]);
+                $user->assignRole($role);
+
+                expect($user->can('projects.create'))->toBeFalse();
+            }
+
+            expect($pm->can('projects.create'))->toBeTrue();
+        });
+
         it('allows admin to update project via API', function () {
             [$admin, $pm, $developer] = createTestUsers();
             [$project] = createTestProjects($admin, $pm, $developer);
@@ -376,19 +407,6 @@ describe('Project Management', function () {
                 ->assertOk()
                 ->assertJsonStructure(['data' => [['id', 'name', 'email']]])
                 ->assertJsonFragment(['id' => $client->id, 'name' => $client->name]);
-        });
-
-        it('includes team leaders in the project managers list', function () {
-            [$admin] = createTestUsers();
-
-            $teamLeader = User::factory()->create(['is_active' => true]);
-            $teamLeader->assignRole('team_leader');
-
-            $response = $this->actingAs($admin)
-                ->getJson('/api/projects/managers')
-                ->assertOk();
-
-            expect(collect($response->json('data'))->pluck('id'))->toContain($teamLeader->id);
         });
 
         it('includes project-level managers when a project is given', function () {

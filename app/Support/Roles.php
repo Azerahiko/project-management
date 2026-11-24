@@ -10,8 +10,6 @@ class Roles
 
     public const PROJECT_MANAGER = 'project_manager';
 
-    public const TEAM_LEADER = 'team_leader';
-
     public const DEVELOPER = 'developer';
 
     public const REVIEWER = 'reviewer';
@@ -28,7 +26,6 @@ class Roles
         return [
             self::ADMINISTRATOR => 'Administrator',
             self::PROJECT_MANAGER => 'Project Manager',
-            self::TEAM_LEADER => 'Team Leader',
             self::DEVELOPER => 'Developer',
             self::REVIEWER => 'Reviewer',
             self::CLIENT => 'Client',

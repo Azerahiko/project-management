@@ -26,7 +26,7 @@ const user = usePage().props.auth?.user;
 onMounted(() => {
     const userRoles = (user?.roles ?? []) as string[];
     const isManagerial = userRoles.some((r: string) =>
-        ['administrator', 'project_manager', 'team_leader'].includes(r),
+        ['administrator', 'project_manager'].includes(r),
     );
     const hasCreatePerm = user?.permissions?.includes('tasks.create') ?? false;
 
@@ -81,6 +81,7 @@ const loadingProjects = ref(false);
 const loadingAssignees = ref(false);
 
 // Client Assets
+const isDragging = ref(false);
 const selectedFiles = ref<File[]>([]);
 const fileErrors = ref<Record<number, string>>({});
 const uploadingFiles = ref(false);
@@ -126,17 +127,24 @@ function validateFile(file: File, index: number): boolean {
     return true;
 }
 
-function handleFileChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const newFiles = Array.from(input.files ?? []);
-
+function addFiles(incoming: FileList | null | undefined): void {
+    const newFiles = Array.from(incoming ?? []);
     newFiles.forEach((file, i) => {
         const index = selectedFiles.value.length + i;
         validateFile(file, index);
     });
-
     selectedFiles.value.push(...newFiles);
+}
+
+function handleFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    addFiles(input.files);
     input.value = '';
+}
+
+function handleFileDrop(event: DragEvent): void {
+    isDragging.value = false;
+    addFiles(event.dataTransfer?.files);
 }
 
 function removeFile(index: number): void {
@@ -314,7 +322,12 @@ watch(() => form.project_id, loadAssignees);
             </Link>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-6">
+        <form
+            @submit.prevent="handleSubmit"
+            @dragover.prevent
+            @drop.prevent
+            class="space-y-6"
+        >
             <div class="card space-y-6">
                 <h2
                     class="text-lg font-semibold text-surface-900 dark:text-surface-100"
@@ -423,7 +436,7 @@ watch(() => form.project_id, loadAssignees);
             </div>
 
             <!-- Client Assets Section -->
-            <div class="card space-y-6">
+            <div class="card space-y-6" @dragover.prevent @drop.prevent>
                 <h2
                     class="text-lg font-semibold text-surface-900 dark:text-surface-100"
                 >
@@ -437,13 +450,22 @@ watch(() => form.project_id, loadAssignees);
                 </p>
 
                 <label
-                    class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-surface-300 bg-surface-50/40 px-4 py-6 text-sm font-medium text-surface-600 transition hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20 dark:text-surface-400"
+                    class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-6 text-sm font-medium text-surface-600 transition dark:text-surface-400"
+                    :class="
+                        isDragging
+                            ? 'border-primary-500 bg-primary-50/40 dark:border-primary-400 dark:bg-primary-950/30'
+                            : 'border-surface-300 bg-surface-50/40 hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20'
+                    "
+                    @dragenter.prevent="isDragging = true"
+                    @dragover.prevent="isDragging = true"
+                    @dragleave.prevent="isDragging = false"
+                    @drop.prevent="handleFileDrop"
                 >
                     <component
                         :is="getIcon('Plus')"
-                        class="h-5 w-5 text-surface-400"
+                        class="pointer-events-none h-5 w-5 text-surface-400"
                     />
-                    <span class="text-center">
+                    <span class="pointer-events-none text-center">
                         {{
                             selectedFiles.length === 0
                                 ? 'Pilih berkas untuk diunggah'

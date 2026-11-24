@@ -82,10 +82,8 @@ class ProjectController extends Controller
         $project = DB::transaction(function () use ($request) {
             $data = $request->validated();
 
-            // Ensure owner_id is set
-            if (! isset($data['owner_id'])) {
-                $data['owner_id'] = $request->user()->id;
-            }
+            // The creator always owns the project; ignore any client-supplied owner.
+            $data['owner_id'] = $request->user()->id;
 
             $project = Project::create($data);
 
@@ -417,7 +415,7 @@ class ProjectController extends Controller
     /**
      * List users assignable as project owner.
      *
-     * Global candidates: administrator, project_manager, team_leader.
+     * Global candidates: administrator, project_manager.
      * When `project` is provided, that project's owner and manager members
      * are included as well.
      */
@@ -435,7 +433,6 @@ class ProjectController extends Controller
                 $query->whereHas('roles', fn ($roleQuery) => $roleQuery->whereIn('name', [
                     Roles::ADMINISTRATOR,
                     Roles::PROJECT_MANAGER,
-                    Roles::TEAM_LEADER,
                 ]));
 
                 if ($projectId === null) {

@@ -50,7 +50,7 @@ const userRoles = computed(() => user.value?.roles ?? []);
 
 const isManagerial = computed(() =>
     userRoles.value.some((r) =>
-        ['administrator', 'project_manager', 'team_leader'].includes(r),
+        ['administrator', 'project_manager'].includes(r),
     ),
 );
 

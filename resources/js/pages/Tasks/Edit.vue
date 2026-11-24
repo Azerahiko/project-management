@@ -28,7 +28,7 @@ const user = page.props.auth?.user as User | null;
 const userRoles = computed(() => user?.roles ?? []);
 const isManagerial = computed(() =>
     userRoles.value.some((r: string) =>
-        ['administrator', 'project_manager', 'team_leader'].includes(r),
+        ['administrator', 'project_manager'].includes(r),
     ),
 );
 const isDeveloper = computed(() => userRoles.value.includes('developer'));

@@ -18,7 +18,6 @@ const { success, error: toastError } = useToast();
 
 const roleOptions = [
     { value: 'project_manager', label: 'Project Manager' },
-    { value: 'team_leader', label: 'Team Leader' },
     { value: 'developer', label: 'Developer' },
     { value: 'reviewer', label: 'Reviewer' },
     { value: 'client', label: 'Client' },

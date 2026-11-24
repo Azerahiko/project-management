@@ -42,7 +42,7 @@ it('allows project managers to access monitoring pages', function () {
 });
 
 it('allows every authenticated role to access personal settings and support', function () {
-    foreach (['developer', 'reviewer', 'client', 'team_leader', 'project_manager'] as $role) {
+    foreach (['developer', 'reviewer', 'client', 'project_manager'] as $role) {
         $user = User::factory()->create(['is_active' => true]);
         $user->assignRole($role);
 

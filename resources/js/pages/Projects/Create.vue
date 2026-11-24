@@ -18,7 +18,7 @@ defineOptions({
 });
 
 const { success, error: toastError, warning } = useToast();
-const { fetchManagers, fetchClients, clients } = useProjects(
+const { fetchClients, clients } = useProjects(
       {} as ProjectFilters,
   );
 
@@ -44,22 +44,11 @@ const form = reactive({
     priority: 'medium' as string,
     start_date: '',
     end_date: '',
-    owner_id: '' as string,
     client_id: '' as string,
 });
 
 const errors = ref<Record<string, string[]>>({});
 const processing = ref(false);
-const managers = ref<
-    Array<{
-        id: number;
-        name: string;
-        email: string;
-        avatar: string | null;
-        initials: string;
-    }>
->([]);
-const loadingManagers = ref(false);
   const loadingClients = ref(false);
 
 // Client Assets
@@ -69,6 +58,7 @@ const uploadingFiles = ref(false);
 const uploadResults = ref<
     Record<number, { success: boolean; message: string }>
 >({});
+const isDragging = ref(false);
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [
     'jpg',
@@ -108,17 +98,24 @@ function validateFile(file: File, index: number): boolean {
     return true;
 }
 
-function handleFileChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const newFiles = Array.from(input.files ?? []);
-
+function addFiles(incoming: FileList | null | undefined): void {
+    const newFiles = Array.from(incoming ?? []);
     newFiles.forEach((file, i) => {
         const index = selectedFiles.value.length + i;
         validateFile(file, index);
     });
-
     selectedFiles.value.push(...newFiles);
+}
+
+function handleFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    addFiles(input.files);
     input.value = '';
+}
+
+function handleFileDrop(event: DragEvent): void {
+    isDragging.value = false;
+    addFiles(event.dataTransfer?.files);
 }
 
 function removeFile(index: number): void {
@@ -174,19 +171,7 @@ async function uploadFiles(projectId: number): Promise<void> {
     uploadingFiles.value = false;
 }
 
-async function loadManagers(): Promise<void> {
-    loadingManagers.value = true;
-    try {
-        managers.value = await fetchManagers();
-    } catch {
-        toastError('Gagal memuat daftar manager', 'Silakan coba lagi.');
-    } finally {
-        loadingManagers.value = false;
-    }
-}
-
 onMounted(() => {
-      loadManagers();
       loadClients();
   });
 
@@ -223,7 +208,6 @@ async function handleSubmit(): Promise<void> {
             priority: form.priority,
             start_date: form.start_date || null,
             end_date: form.end_date || null,
-            owner_id: form.owner_id || undefined,
             client_ids: form.client_id ? [form.client_id] : [],
         };
 
@@ -363,25 +347,6 @@ function goBack(): void {
                 </div>
 
                 <Select
-                    v-model="form.owner_id"
-                    :options="[
-                        { value: '', label: 'Pilih Project Manager' },
-                        ...managers.map((m) => ({
-                            value: String(m.id),
-                            label: `${m.name} (${m.email})`,
-                        })),
-                    ]"
-                    label="Project Manager"
-                    :loading="loadingManagers"
-                    :error="errors.owner_id?.[0]"
-                    @change="clearError('owner_id')"
-                >
-                    <template #loading>
-                        <option value="" disabled>Memuat manager...</option>
-                    </template>
-                </Select>
-
-                <Select
                     v-model="form.client_id"
                     :options="[
                         { value: '', label: 'Pilih Klien' },
@@ -417,13 +382,22 @@ function goBack(): void {
                 </p>
 
                 <label
-                    class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-surface-300 bg-surface-50/40 px-4 py-6 text-sm font-medium text-surface-600 transition hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20 dark:text-surface-400"
+                    class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-6 text-sm font-medium text-surface-600 transition dark:text-surface-400"
+                    :class="
+                        isDragging
+                            ? 'border-primary-500 bg-primary-50/40 dark:border-primary-400 dark:bg-primary-950/30'
+                            : 'border-surface-300 bg-surface-50/40 hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20'
+                    "
+                    @dragenter.prevent="isDragging = true"
+                    @dragover.prevent="isDragging = true"
+                    @dragleave.prevent="isDragging = false"
+                    @drop.prevent="handleFileDrop"
                 >
                     <component
                         :is="getIcon('Plus')"
-                        class="h-5 w-5 text-surface-400"
+                        class="pointer-events-none h-5 w-5 text-surface-400"
                     />
-                    <span class="text-center">
+                    <span class="pointer-events-none text-center">
                         {{
                             selectedFiles.length === 0
                                 ? 'Pilih berkas untuk diunggah'

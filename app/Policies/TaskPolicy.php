@@ -45,7 +45,7 @@ class TaskPolicy
 
     public function create(User $user): bool
     {
-        if (! $user->hasRole([Roles::ADMINISTRATOR, Roles::PROJECT_MANAGER, Roles::TEAM_LEADER])) {
+        if (! $user->hasRole([Roles::ADMINISTRATOR, Roles::PROJECT_MANAGER])) {
             return false;
         }
 
@@ -59,10 +59,6 @@ class TaskPolicy
         }
 
         if ($user->hasRole(Roles::PROJECT_MANAGER) && $task->project->hasMember($user)) {
-            return true;
-        }
-
-        if ($user->hasRole(Roles::TEAM_LEADER) && $task->project->hasMember($user)) {
             return true;
         }
 
@@ -87,10 +83,6 @@ class TaskPolicy
             return true;
         }
 
-        if ($user->hasRole(Roles::TEAM_LEADER) && $task->project->hasMember($user)) {
-            return true;
-        }
-
         if ($user->hasRole(Roles::DEVELOPER) || $user->hasRole('reviewer') || $user->hasRole('client')) {
             return false;
         }
@@ -105,10 +97,6 @@ class TaskPolicy
         }
 
         if ($user->hasRole(Roles::PROJECT_MANAGER) && $task->project->hasMember($user)) {
-            return true;
-        }
-
-        if ($user->hasRole(Roles::TEAM_LEADER) && $task->project->hasMember($user)) {
             return true;
         }
 
@@ -129,7 +117,7 @@ class TaskPolicy
             return true;
         }
 
-        if ($user->hasRole(Roles::TEAM_LEADER) || $user->hasRole(Roles::DEVELOPER) || $user->hasRole('reviewer') || $user->hasRole('client')) {
+        if ($user->hasRole(Roles::DEVELOPER) || $user->hasRole('reviewer') || $user->hasRole('client')) {
             return false;
         }
 

@@ -38,7 +38,7 @@ class DummyDataSeeder extends Seeder
             ?? User::where('email', 'pm@example.com')->first()
             ?? $admin;
 
-        $siti = User::where('email', 'team.leader@example.com')->first() ?? $admin;
+        $siti = $budi;
         $andi = User::where('email', 'developer@example.com')->first() ?? $admin;
         $dewi = User::where('email', 'reviewer@example.com')->first() ?? $admin;
 
@@ -97,7 +97,7 @@ class DummyDataSeeder extends Seeder
             ]
         );
 
-        foreach ([$admin, $siti, $budi, $dewi] as $u) {
+        foreach ([$admin, $siti, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project3->id, 'user_id' => $u->id],
                 ['role' => $u->id === $siti->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
@@ -117,7 +117,7 @@ class DummyDataSeeder extends Seeder
             ]
         );
 
-        foreach ([$admin, $andi, $budi, $siti] as $u) {
+        foreach ([$admin, $andi, $siti] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project4->id, 'user_id' => $u->id],
                 ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
@@ -157,7 +157,7 @@ class DummyDataSeeder extends Seeder
             ]
         );
 
-        foreach ([$admin, $siti, $andi, $budi, $dewi] as $u) {
+        foreach ([$admin, $siti, $andi, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project6->id, 'user_id' => $u->id],
                 ['role' => $u->id === $siti->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]
@@ -177,7 +177,7 @@ class DummyDataSeeder extends Seeder
             ]
         );
 
-        foreach ([$admin, $budi, $siti, $dewi] as $u) {
+        foreach ([$admin, $siti, $dewi] as $u) {
             ProjectMember::updateOrCreate(
                 ['project_id' => $project7->id, 'user_id' => $u->id],
                 ['role' => $u->id === $admin->id ? ProjectRole::OWNER : ProjectRole::DEVELOPER, 'joined_at' => now()]

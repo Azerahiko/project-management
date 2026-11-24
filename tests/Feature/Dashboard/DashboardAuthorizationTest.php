@@ -32,7 +32,6 @@ test('user without dashboard.view permission gets 403', function () {
 foreach ([
     Roles::ADMINISTRATOR,
     Roles::PROJECT_MANAGER,
-    Roles::TEAM_LEADER,
     Roles::DEVELOPER,
     Roles::REVIEWER,
     Roles::CLIENT,

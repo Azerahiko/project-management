@@ -93,43 +93,6 @@ class TaskRoleMatrixTest extends TestCase
     }
 
     #[Test]
-    public function team_leader_can_view_and_update_tasks_in_project_but_cannot_delete_or_force_delete()
-    {
-        $tl = User::factory()->create();
-        $tl->assignRole('team_leader');
-
-        $admin = User::factory()->create();
-        $admin->assignRole('administrator');
-
-        $project = Project::factory()->create(['owner_id' => $admin->id]);
-        ProjectMember::create([
-            'project_id' => $project->id,
-            'user_id' => $tl->id,
-            'role' => ProjectRole::MANAGER,
-        ]);
-
-        $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'creator_id' => $admin->id,
-            'assignee_id' => $tl->id,
-        ]);
-
-        // Team leader can view
-        $this->assertTrue($tl->can('view', $task));
-
-        // Team leader can update
-        $this->assertTrue($tl->can('update', $task));
-
-        // Team leader can delete
-        $this->assertTrue($tl->can('delete', $task));
-
-        // Team leader can restore
-        $this->assertTrue($tl->can('restore', $task));
-
-        // Team leader cannot force delete
-        $this->assertFalse($tl->can('forceDelete', $task));
-    }
-
     #[Test]
     public function developer_can_only_update_assigned_tasks_execution_fields()
     {

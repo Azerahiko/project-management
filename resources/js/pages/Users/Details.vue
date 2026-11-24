@@ -23,7 +23,6 @@ const initialUser = page.props.user as User;
 const roleOptions = [
     { value: 'administrator', label: 'Administrator' },
     { value: 'project_manager', label: 'Project Manager' },
-    { value: 'team_leader', label: 'Team Leader' },
     { value: 'developer', label: 'Developer' },
     { value: 'reviewer', label: 'Reviewer' },
     { value: 'client', label: 'Client' },

@@ -35,7 +35,6 @@ class StoreProjectRequest extends FormRequest
             'priority' => ['sometimes', 'required', 'string', Rule::in(array_column(ProjectPriority::options(), 'value'))],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'owner_id' => ['sometimes', 'required', 'integer', Rule::exists('users', 'id')->where('is_active', true)],
             'client_ids' => ['required', 'array', 'min:1'],
             'client_ids.*' => ['required', 'integer', 'distinct', Rule::exists('users', 'id')->where('is_active', true)],
         ];
@@ -76,10 +75,6 @@ class StoreProjectRequest extends FormRequest
         if (! $this->has('priority')) {
             $this->merge(['priority' => ProjectPriority::MEDIUM->value]);
         }
-        if (! $this->has('owner_id') && $this->user()?->can('projects.create')) {
-            $this->merge(['owner_id' => $this->user()->id]);
-        }
-
         // Accept single client_id or array client_ids
         if ($this->has('client_id') && ! $this->has('client_ids')) {
             $clientId = $this->input('client_id');

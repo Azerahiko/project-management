@@ -61,7 +61,6 @@ const { success, error } = useToast();
 const roleLabels: Record<string, string> = {
     administrator: 'Administrator',
     project_manager: 'Manajer Proyek',
-    team_leader: 'Ketua Tim',
     developer: 'Anggota',
     reviewer: 'Peninjau',
     client: 'Klien',
@@ -70,7 +69,6 @@ const roleLabels: Record<string, string> = {
 const roleDescriptions: Record<string, string> = {
     administrator: 'Akses penuh dan kontrol sistem tertinggi',
     project_manager: 'Mengelola proyek, tugas, dan anggota tim',
-    team_leader: 'Memimpin koordinasi alur kerja tim',
     developer: 'Mengerjakan tugas dan berkolaborasi dalam proyek',
     reviewer: 'Meninjau hasil pekerjaan dan memberikan validasi',
     client: 'Akses terbatas untuk meninjau progres proyek',

@@ -33,7 +33,11 @@ const { success, error: toastError, warning } = useToast();
 const { fetchAvailableUsers, addMember, updateMember, removeMember } =
     useProjects({} as ProjectFilters);
 
-const project = page.props.project as Project;
+const props = defineProps<{
+    project: Project;
+}>();
+
+const project = computed(() => props.project);
 
 const canViewTrashedTasks = computed(() => {
     const userPerms = (page.props.auth?.user as any)?.permissions || [];
@@ -45,15 +49,15 @@ const canManageTrashedTasks = computed(() => {
     const userPerms = page.props.auth?.user?.permissions ?? [];
     return (
         userRoles.some((r: string) =>
-            ['administrator', 'project_manager', 'team_leader'].includes(r),
+            ['administrator', 'project_manager'].includes(r),
         ) || userPerms.includes('tasks.delete')
     );
 });
-const projectId = project.id;
+const projectId = props.project.id;
 
 const projectStatusForBadge = computed(() => {
-    if (project.status === 'completed') return 'done';
-    if (project.status === 'archived') return 'done';
+    if (props.project.status === 'completed') return 'done';
+    if (props.project.status === 'archived') return 'done';
     return 'todo';
 });
 
@@ -114,6 +118,26 @@ const uploadModalOpen = ref(false);
 const selectedFile = ref<File | null>(null);
 const uploadError = ref<string | null>(null);
 const uploading = ref(false);
+const isDragging = ref(false);
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'pdf',
+    'doc',
+    'docx',
+    'xls',
+    'xlsx',
+    'ppt',
+    'pptx',
+    'txt',
+    'csv',
+    'zip',
+];
 
 const fileToDelete = ref<ProjectFile | null>(null);
 const deletingFile = ref(false);
@@ -143,19 +167,55 @@ async function loadFiles(): Promise<void> {
 function openUploadModal(): void {
     selectedFile.value = null;
     uploadError.value = null;
+    isDragging.value = false;
     uploadModalOpen.value = true;
+}
+
+function closeUploadModal(): void {
+    uploadModalOpen.value = false;
+    isDragging.value = false;
+}
+
+function processFile(file: File | null | undefined): void {
+    uploadError.value = null;
+
+    if (!file) {
+        selectedFile.value = null;
+        return;
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+
+    if (!ALLOWED_EXTENSIONS.includes(extension)) {
+        selectedFile.value = null;
+        uploadError.value = `Format .${extension} tidak didukung.`;
+        return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        selectedFile.value = null;
+        uploadError.value = 'Ukuran berkas melebihi batas 25 MB.';
+        return;
+    }
+
+    selectedFile.value = file;
 }
 
 function handleFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    selectedFile.value = input.files?.[0] ?? null;
-    uploadError.value = null;
+    processFile(input.files?.[0]);
+    input.value = '';
+}
+
+function handleFileDrop(event: DragEvent): void {
+    isDragging.value = false;
+    processFile(event.dataTransfer?.files?.[0]);
 }
 
 async function submitUpload(): Promise<void> {
     if (!selectedFile.value || uploading.value) return;
 
-    if (selectedFile.value.size > 25 * 1024 * 1024) {
+    if (selectedFile.value.size > MAX_FILE_SIZE) {
         uploadError.value = 'Ukuran berkas melebihi batas 25 MB.';
         return;
     }
@@ -167,13 +227,16 @@ async function submitUpload(): Promise<void> {
     formData.append('file', selectedFile.value);
 
     try {
-        const { data } = await api.post<ProjectFile>(
+        const { data } = await api.post<{ data: ProjectFile }>(
             `/projects/${projectId}/files`,
             formData,
         );
-        files.value.unshift(data as ProjectFile);
-        uploadModalOpen.value = false;
-        success('Berkas diunggah', `${data.original_name} berhasil diunggah.`);
+        files.value.unshift(data.data);
+        closeUploadModal();
+        success(
+            'Berkas diunggah',
+            `${data.data.original_name} berhasil diunggah.`,
+        );
     } catch (err: any) {
         uploadError.value =
             err.response?.data?.errors?.file?.[0] ??
@@ -296,7 +359,7 @@ async function executeAddMember(): Promise<void> {
         );
         success('Anggota ditambahkan', 'Pengguna telah ditambahkan ke proyek.');
         addMemberModalOpen.value = false;
-        router.reload();
+        router.reload({ only: ['project'] });
     } catch (err: any) {
         if (err.response?.data?.errors) {
             newMemberErrors.value = err.response.data.errors;
@@ -328,7 +391,7 @@ async function saveMemberRole(): Promise<void> {
             `Peran ${developer.user?.name} telah diubah.`,
         );
         editMemberRole.value = null;
-        router.reload();
+        router.reload({ only: ['project'] });
     } catch (err: any) {
         if (err.response?.data?.message) {
             toastError('Gagal memperbarui peran', err.response.data.message);
@@ -357,7 +420,7 @@ async function confirmRemoveMember(developer: ProjectMember): Promise<void> {
             'Anggota dihapus',
             `${developer.user?.name} telah dihapus dari proyek.`,
         );
-        router.reload();
+        router.reload({ only: ['project'] });
     } catch (err: any) {
         if (err.response?.data?.message) {
             toastError('Gagal menghapus anggota', err.response.data.message);
@@ -1007,9 +1070,9 @@ function formatDateShort(dateString: string | null): string {
     <Modal
         :open="uploadModalOpen"
         title="Unggah Berkas"
-        @close="uploadModalOpen = false"
+        @close="closeUploadModal"
     >
-        <div class="space-y-4">
+        <div class="space-y-4" @dragover.prevent @drop.prevent>
             <p class="text-sm text-surface-600 dark:text-surface-300">
                 Format yang diterima: gambar (JPG, PNG, GIF, WEBP), PDF, dokumen
                 Office (DOC, DOCX, XLS, XLSX, PPT, PPTX), teks (TXT, CSV), dan
@@ -1017,13 +1080,22 @@ function formatDateShort(dateString: string | null): string {
             </p>
 
             <label
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-surface-300 bg-surface-50/40 px-4 py-6 text-sm font-medium text-surface-600 transition hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20 dark:text-surface-400"
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-6 text-sm font-medium text-surface-600 transition dark:text-surface-400"
+                :class="
+                    isDragging
+                        ? 'border-primary-500 bg-primary-50/40 dark:border-primary-400 dark:bg-primary-950/30'
+                        : 'border-surface-300 bg-surface-50/40 hover:border-primary-500 hover:bg-surface-50 dark:border-surface-700 dark:bg-surface-950/20'
+                "
+                @dragenter.prevent="isDragging = true"
+                @dragover.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @drop.prevent="handleFileDrop"
             >
                 <component
                     :is="getIcon('Plus')"
-                    class="h-5 w-5 text-surface-400"
+                    class="pointer-events-none h-5 w-5 text-surface-400"
                 />
-                <span class="text-center">
+                <span class="pointer-events-none text-center">
                     {{
                         selectedFile
                             ? selectedFile.name
@@ -1054,7 +1126,7 @@ function formatDateShort(dateString: string | null): string {
         </div>
 
         <template #footer>
-            <Button variant="secondary" @click="uploadModalOpen = false">
+            <Button variant="secondary" @click="closeUploadModal">
                 Batal
             </Button>
             <Button
