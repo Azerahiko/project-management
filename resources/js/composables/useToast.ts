@@ -7,6 +7,11 @@ export interface ToastAction {
     onClick: () => void;
 }
 
+export interface ToastOptions {
+    desktop?: boolean;
+    tag?: string;
+}
+
 export interface Toast {
     id: number;
     type: ToastType;
@@ -14,6 +19,8 @@ export interface Toast {
     message?: string;
     duration?: number;
     action?: ToastAction;
+    desktop?: boolean;
+    tag?: string;
 }
 
 const toasts = ref<Toast[]>([]);
@@ -21,6 +28,38 @@ const timers = new Map<number, ReturnType<typeof setTimeout>>();
 const startedAt = new Map<number, number>();
 const remaining = new Map<number, number>();
 let idCounter = 0;
+
+function dispatchDesktopNotification(toast: Omit<Toast, 'id'>): void {
+    if (toast.desktop === false) {
+        return;
+    }
+
+    if (
+        typeof window === 'undefined' ||
+        !('Notification' in window) ||
+        Notification.permission !== 'granted'
+    ) {
+        return;
+    }
+
+    try {
+        const nativeNotif = new window.Notification(toast.title, {
+            body: toast.message || undefined,
+            icon: '/favicon.ico',
+            tag: toast.tag,
+        });
+
+        nativeNotif.onclick = () => {
+            window.focus();
+            nativeNotif.close();
+            if (toast.action) {
+                toast.action.onClick();
+            }
+        };
+    } catch (e) {
+        console.error('[WebNotification] Failed to show OS notification:', e);
+    }
+}
 
 function startTimer(id: number, duration: number): void {
     startedAt.set(id, Date.now());
@@ -40,6 +79,8 @@ function addToast(toast: Omit<Toast, 'id'>): number {
     if (duration > 0) {
         startTimer(id, duration);
     }
+
+    dispatchDesktopNotification(toast);
 
     return id;
 }
@@ -92,31 +133,87 @@ function resumeToast(id: number): void {
 }
 
 export function useToast() {
-    function success(title: string, message?: string, duration?: number) {
-        return addToast({ type: 'success', title, message, duration });
+    function success(
+        title: string,
+        message?: string,
+        duration?: number,
+        action?: ToastAction,
+        options?: ToastOptions,
+    ): number {
+        return addToast({
+            type: 'success',
+            title,
+            message,
+            duration,
+            action,
+            desktop: options?.desktop,
+            tag: options?.tag,
+        });
     }
 
-    function error(title: string, message?: string, duration?: number) {
-        return addToast({ type: 'error', title, message, duration });
+    function error(
+        title: string,
+        message?: string,
+        duration?: number,
+        action?: ToastAction,
+        options?: ToastOptions,
+    ): number {
+        return addToast({
+            type: 'error',
+            title,
+            message,
+            duration,
+            action,
+            desktop: options?.desktop,
+            tag: options?.tag,
+        });
     }
 
-    function warning(title: string, message?: string, duration?: number) {
-        return addToast({ type: 'warning', title, message, duration });
+    function warning(
+        title: string,
+        message?: string,
+        duration?: number,
+        action?: ToastAction,
+        options?: ToastOptions,
+    ): number {
+        return addToast({
+            type: 'warning',
+            title,
+            message,
+            duration,
+            action,
+            desktop: options?.desktop,
+            tag: options?.tag,
+        });
     }
 
-    function info(title: string, message?: string, duration?: number) {
-        return addToast({ type: 'info', title, message, duration });
+    function info(
+        title: string,
+        message?: string,
+        duration?: number,
+        action?: ToastAction,
+        options?: ToastOptions,
+    ): number {
+        return addToast({
+            type: 'info',
+            title,
+            message,
+            duration,
+            action,
+            desktop: options?.desktop,
+            tag: options?.tag,
+        });
     }
 
-    function dismiss(id: number) {
+    function dismiss(id: number): void {
         removeToast(id);
     }
 
-    function pause(id: number) {
+    function pause(id: number): void {
         pauseToast(id);
     }
 
-    function resume(id: number) {
+    function resume(id: number): void {
         resumeToast(id);
     }
 

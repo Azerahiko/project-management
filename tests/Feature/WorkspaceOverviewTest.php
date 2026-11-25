@@ -24,7 +24,7 @@ it('exposes raw developer roles on the teams page', function () {
 
     expect($team)->not->toBeNull()
         ->and(collect($team['members'])->pluck('role')->all())
-        ->toContain('owner', 'manager', 'developer');
+        ->toContain('owner', 'manager', 'frontend');
 });
 
 it('exposes project status values and integer task counts on reports', function () {

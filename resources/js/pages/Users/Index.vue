@@ -180,6 +180,9 @@ function formatDate(dateString: string): string {
 }
 
 // Permission checks
+const isAdmin = computed(
+    () => page.props.auth.user?.roles.includes('administrator') ?? false,
+);
 const canViewDetails = computed(() =>
     page.props.auth.user?.permissions.includes('users.view'),
 );
@@ -567,7 +570,10 @@ watch(
                         <!-- Action Dropdown -->
                         <div class="flex items-center justify-end">
                             <Dropdown
-                                v-if="canViewDetails || canDeleteUser(userItem)"
+                                v-if="
+                                    isAdmin &&
+                                    (canViewDetails || canDeleteUser(userItem))
+                                "
                                 align="right"
                                 triggerClass="p-1"
                             >
@@ -581,7 +587,7 @@ watch(
                                 <Link
                                     v-if="canViewDetails"
                                     :href="
-                                        users.details.url({ user: userItem.id })
+                                        users.show.url({ user: userItem.id })
                                     "
                                     class="dropdown-item flex items-center gap-2 px-3 py-2 text-sm text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
                                 >
@@ -869,8 +875,9 @@ watch(
                             <td class="px-6 py-4 text-right">
                                 <Dropdown
                                     v-if="
-                                        canViewDetails ||
-                                        canDeleteUser(userItem)
+                                        isAdmin &&
+                                        (canViewDetails ||
+                                            canDeleteUser(userItem))
                                     "
                                     align="right"
                                     triggerClass="p-1"
@@ -885,7 +892,7 @@ watch(
                                     <Link
                                         v-if="canViewDetails"
                                         :href="
-                                            users.details.url({
+                                            users.show.url({
                                                 user: userItem.id,
                                             })
                                         "

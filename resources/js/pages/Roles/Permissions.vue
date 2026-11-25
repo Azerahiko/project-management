@@ -61,8 +61,8 @@ const { success, error } = useToast();
 const roleLabels: Record<string, string> = {
     administrator: 'Administrator',
     project_manager: 'Manajer Proyek',
-    developer: 'Anggota',
-    reviewer: 'Peninjau',
+    frontend: 'Frontend',
+    reviewer: 'Reviewer',
     client: 'Klien',
 };
 

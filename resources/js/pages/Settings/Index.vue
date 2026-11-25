@@ -103,7 +103,7 @@ const panelMeta = computed(() => {
                 eyebrow: 'Pengaturan Akun',
                 title: 'Profil Pengguna',
                 description:
-                    'Perbarui nama dan alamat email yang digunakan untuk masuk ke ruang kerja.',
+                    'Informasi akun Anda. Nama dan email hanya dapat diubah oleh Administrator melalui halaman Detail Pengguna.',
             };
         case 'appearance':
             return {
@@ -139,8 +139,8 @@ const panelMeta = computed(() => {
 const roleDisplayNames: Record<string, string> = {
     administrator: 'Administrator',
     project_manager: 'Manajer Proyek',
-    developer: 'Anggota',
-    reviewer: 'Peninjau',
+    frontend: 'Frontend',
+    reviewer: 'Reviewer',
     client: 'Klien',
 };
 
@@ -163,56 +163,7 @@ const formattedMemberSince = computed(() => {
     });
 });
 
-const profileForm = useForm({
-    name: props.account.name,
-    email: props.account.email,
-});
-
-const emailChanged = computed(
-    () => profileForm.email.trim().toLowerCase() !== props.account.email,
-);
-
-const profileDirty = computed(
-    () =>
-        profileForm.name.trim() !== props.account.name ||
-        profileForm.email.trim().toLowerCase() !== props.account.email,
-);
-
-watch(
-    () => props.account.name,
-    (name) => {
-        if (!profileForm.processing) {
-            profileForm.name = name;
-        }
-    },
-);
-
-watch(
-    () => props.account.email,
-    (email) => {
-        if (!profileForm.processing) {
-            profileForm.email = email;
-        }
-    },
-);
-
-function submitProfile(): void {
-    profileForm.put(settingsRoutes.profile.update.url(), {
-        preserveScroll: true,
-        onSuccess: () => {
-            toast.success(
-                'Profil Diperbarui',
-                'Perubahan data profil berhasil disimpan.',
-            );
-        },
-        onError: () => {
-            toast.error(
-                'Gagal Menyimpan Profil',
-                'Periksa kembali data yang Anda masukkan.',
-            );
-        },
-    });
-}
+// Profile fields (name, email) are read-only; changes must go through /users/{id}
 
 /* ------------------------------------------------------------------ */
 /* Appearance                                                          */
@@ -964,7 +915,7 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <form class="space-y-5" @submit.prevent="submitProfile">
+                        <div class="space-y-5">
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <label
@@ -972,23 +923,15 @@ onMounted(() => {
                                         class="mb-1.5 block text-xs font-semibold text-surface-700 dark:text-surface-200"
                                     >
                                         Nama Lengkap
-                                        <span class="text-rose-500">*</span>
                                     </label>
                                     <input
                                         id="profile-name"
-                                        v-model="profileForm.name"
+                                        :value="props.account.name"
                                         type="text"
-                                        required
-                                        autocomplete="name"
-                                        class="input"
-                                        placeholder="Nama lengkap Anda"
+                                        disabled
+                                        autocomplete="off"
+                                        class="input cursor-not-allowed opacity-60"
                                     />
-                                    <p
-                                        v-if="profileForm.errors.name"
-                                        class="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400"
-                                    >
-                                        {{ profileForm.errors.name }}
-                                    </p>
                                 </div>
 
                                 <div>
@@ -997,87 +940,32 @@ onMounted(() => {
                                         class="mb-1.5 block text-xs font-semibold text-surface-700 dark:text-surface-200"
                                     >
                                         Alamat Email
-                                        <span class="text-rose-500">*</span>
                                     </label>
                                     <input
                                         id="profile-email"
-                                        v-model="profileForm.email"
+                                        :value="props.account.email"
                                         type="email"
-                                        required
-                                        autocomplete="email"
-                                        class="input"
-                                        placeholder="nama@perusahaan.com"
+                                        disabled
+                                        autocomplete="off"
+                                        class="input cursor-not-allowed opacity-60"
                                     />
-                                    <p
-                                        v-if="profileForm.errors.email"
-                                        class="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400"
-                                    >
-                                        {{ profileForm.errors.email }}
-                                    </p>
                                 </div>
                             </div>
 
                             <div
-                                v-if="emailChanged"
-                                class="flex items-start gap-3 rounded-2xl border border-primary-200/70 bg-primary-50/60 p-4 text-xs text-primary-900 dark:border-primary-800/40 dark:bg-primary-950/20 dark:text-primary-200"
+                                class="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/60 p-4 text-xs text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-200"
                             >
                                 <component
-                                    :is="getIcon('Info')"
+                                    :is="getIcon('Lock')"
                                     class="mt-0.5 h-4 w-4 shrink-0"
                                 />
-                                <div>
-                                    <p class="font-semibold">
-                                        Alamat email akan diperbarui
-                                    </p>
-                                    <p
-                                        class="mt-0.5 leading-relaxed opacity-90"
-                                    >
-                                        Pastikan alamat baru aktif. Email ini
-                                        akan digunakan untuk masuk dan menerima
-                                        pemberitahuan akun.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div
-                                class="flex flex-col gap-3 border-t border-surface-100 pt-5 sm:flex-row sm:items-center sm:justify-between dark:border-surface-800"
-                            >
-                                <p
-                                    class="text-[11px] text-surface-500 dark:text-surface-400"
-                                >
-                                    Perubahan langsung tersimpan ke akun Anda
-                                    setelah tombol ditekan.
+                                <p class="leading-relaxed">
+                                    Nama dan alamat email hanya dapat diubah
+                                    oleh Administrator melalui halaman
+                                    <strong>Detail Pengguna</strong>.
                                 </p>
-                                <div class="flex items-center gap-2">
-                                    <Button
-                                        v-if="profileDirty"
-                                        type="button"
-                                        variant="secondary"
-                                        size="sm"
-                                        :disabled="profileForm.processing"
-                                        @click="
-                                            profileForm.reset();
-                                            profileForm.clearErrors();
-                                        "
-                                    >
-                                        Batalkan
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="sm"
-                                        :loading="profileForm.processing"
-                                        :disabled="!profileDirty"
-                                    >
-                                        <component
-                                            :is="getIcon('Save')"
-                                            class="h-3.5 w-3.5"
-                                        />
-                                        Simpan Profil
-                                    </Button>
-                                </div>
                             </div>
-                        </form>
+                        </div>
 
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div

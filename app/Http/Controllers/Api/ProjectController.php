@@ -95,7 +95,8 @@ class ProjectController extends Controller
                 'joined_at' => now(),
             ]);
 
-            // Add clients as project members with VIEWER role
+            // Add clients as project members with CLIENT role
+            $addedClients = [];
             if (isset($data['client_ids']) && is_array($data['client_ids'])) {
                 foreach ($data['client_ids'] as $clientId) {
                     $client = User::find($clientId);
@@ -103,11 +104,30 @@ class ProjectController extends Controller
                         ProjectMember::create([
                             'project_id' => $project->id,
                             'user_id' => $clientId,
-                            'role' => ProjectRole::VIEWER,
+                            'role' => ProjectRole::CLIENT,
                             'joined_at' => now(),
                         ]);
+                        $addedClients[] = $client;
                     }
                 }
+            }
+
+            // Send ProjectMemberAdded notification to assigned clients
+            if ($addedClients !== []) {
+                $creator = $request->user();
+                DB::afterCommit(function () use ($project, $addedClients, $creator) {
+                    foreach ($addedClients as $client) {
+                        if ($client->id !== $creator->id) {
+                            $this->notificationSender->send($client, ProjectMemberAdded::class, [
+                                'project_id' => $project->id,
+                                'project_name' => $project->name,
+                                'role' => ProjectRole::CLIENT->value,
+                                'added_by_name' => $creator->name,
+                                'action' => 'project_member_added',
+                            ]);
+                        }
+                    }
+                });
             }
 
             return $project->load(['owner', 'projectMembers.user']);
@@ -193,7 +213,7 @@ class ProjectController extends Controller
                         ProjectMember::create([
                             'project_id' => $project->id,
                             'user_id' => $clientId,
-                            'role' => ProjectRole::VIEWER,
+                            'role' => ProjectRole::CLIENT,
                         ]);
                     }
                 }

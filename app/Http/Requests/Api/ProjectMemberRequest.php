@@ -45,10 +45,10 @@ class ProjectMemberRequest extends FormRequest
             return;
         }
 
-        // Prevent adding the project owner as a developer (they're already owner)
+        // Prevent adding the project owner as a member (they're already owner)
         if ($this->has('user_id') && (int) $this->input('user_id') === $project->owner_id) {
             throw ValidationException::withMessages([
-                'user_id' => 'Tidak dapat menambahkan pemilik proyek sebagai developer.',
+                'user_id' => 'Tidak dapat menambahkan pemilik proyek sebagai anggota.',
             ]);
         }
     }

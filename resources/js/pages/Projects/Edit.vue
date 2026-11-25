@@ -18,8 +18,8 @@ defineOptions({
 
 const { success, error: toastError } = useToast();
 const { fetchManagers, fetchClients, clients } = useProjects(
-      {} as ProjectFilters,
-  );
+    {} as ProjectFilters,
+);
 
 const page = usePage();
 const initialProject = page.props.project as Project;
@@ -70,7 +70,7 @@ const managers = ref<
     }>
 >([]);
 const loadingManagers = ref(false);
-  const loadingClients = ref(false);
+const loadingClients = ref(false);
 
 function loadProject(): void {
     form.name = initialProject.name;
@@ -106,15 +106,15 @@ async function loadManagers(): Promise<void> {
 }
 
 async function loadClients(): Promise<void> {
-      loadingClients.value = true;
-      try {
-          await fetchClients();
-      } catch {
-          toastError('Gagal memuat daftar klien', 'Silakan coba lagi.');
-      } finally {
-          loadingClients.value = false;
-      }
-  }
+    loadingClients.value = true;
+    try {
+        await fetchClients();
+    } catch {
+        toastError('Gagal memuat daftar klien', 'Silakan coba lagi.');
+    } finally {
+        loadingClients.value = false;
+    }
+}
 
 onMounted(() => {
     loadProject();

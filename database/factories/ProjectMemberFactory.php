@@ -49,7 +49,7 @@ class ProjectMemberFactory extends Factory
     public function viewer(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => ProjectRole::VIEWER,
+            'role' => ProjectRole::CLIENT,
         ]);
     }
 }

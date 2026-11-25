@@ -161,6 +161,7 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
             email: string;
             avatar: string | null;
             initials: string;
+            roles?: string[];
         }>
     > {
         const { data: response } = await api.get<{
@@ -170,6 +171,7 @@ export function useProjects(filters: ProjectFilters, trashed = false) {
                 email: string;
                 avatar: string | null;
                 initials: string;
+                roles?: string[];
             }>;
         }>(`/projects/${projectId}/available-users`);
         return response.data;

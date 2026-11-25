@@ -540,7 +540,7 @@ describe('Project Management', function () {
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $newUser->id,
-                    'role' => 'developer',
+                    'role' => ProjectRole::FRONTEND->value,
                 ])
                 ->assertCreated()
                 ->assertJsonStructure(['data' => ['id', 'user_id', 'role', 'user']]);
@@ -548,7 +548,7 @@ describe('Project Management', function () {
             $this->assertDatabaseHas('project_members', [
                 'project_id' => $project->id,
                 'user_id' => $newUser->id,
-                'role' => 'developer',
+                'role' => ProjectRole::FRONTEND->value,
             ]);
         });
 
@@ -564,7 +564,7 @@ describe('Project Management', function () {
             $this->actingAs($pm)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $newUser->id,
-                    'role' => 'developer',
+                    'role' => ProjectRole::FRONTEND->value,
                 ])
                 ->assertCreated();
         });
@@ -581,7 +581,7 @@ describe('Project Management', function () {
             $this->actingAs($developer)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $newUser->id,
-                    'role' => 'developer',
+                    'role' => ProjectRole::FRONTEND->value,
                 ])
                 ->assertForbidden();
         });
@@ -592,7 +592,7 @@ describe('Project Management', function () {
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $developer->id,
-                    'role' => 'developer',
+                    'role' => ProjectRole::FRONTEND->value,
                 ])
                 ->assertUnprocessable()
                 ->assertJsonFragment(['message' => 'Pengguna sudah menjadi anggota proyek ini.']);
@@ -617,7 +617,7 @@ describe('Project Management', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $pm->id,
-                'role' => 'developer',
+                'role' => 'frontend',
             ]);
 
             $this->actingAs($admin)
@@ -638,7 +638,7 @@ describe('Project Management', function () {
             [$project] = createTestProjects($admin, $pm, $developer);
             $this->actingAs($admin)
                 ->putJson("/api/projects/{$project->id}/members/{$admin->id}", [
-                    'role' => 'developer',
+                    'role' => ProjectRole::FRONTEND->value,
                 ])
                 ->assertUnprocessable()
                 ->assertJsonFragment(['message' => 'Tidak dapat mengubah peran pemilik proyek.']);
@@ -832,7 +832,7 @@ describe('Project Management', function () {
             $this->actingAs($admin)
                 ->postJson("/api/projects/{$project->id}/members", [
                     'user_id' => $admin->id,
-                    'role' => 'developer',
+                    'role' => ProjectRole::FRONTEND->value,
                 ])
                 ->assertUnprocessable();
         });

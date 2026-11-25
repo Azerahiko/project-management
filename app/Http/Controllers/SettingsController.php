@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -92,34 +91,20 @@ class SettingsController extends Controller
             'email' => Str::lower(trim((string) $request->input('email'))),
         ]);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'lowercase',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-        ], [
-            'name.required' => 'Nama lengkap wajib diisi.',
-            'email.required' => 'Alamat email wajib diisi.',
-            'email.email' => 'Format alamat email tidak valid.',
-            'email.unique' => 'Alamat email sudah digunakan oleh akun lain.',
-        ]);
+        $incomingName = trim((string) $request->input('name', $user->name));
+        $incomingEmail = Str::lower(trim((string) $request->input('email', $user->email)));
 
-        $user->forceFill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-        ])->save();
+        if ($incomingName !== $user->name) {
+            return back()->withErrors(['name' => 'Nama tidak dapat diubah dari halaman Pengaturan.']);
+        }
+
+        if ($incomingEmail !== Str::lower($user->email)) {
+            return back()->withErrors(['email' => 'Email tidak dapat diubah dari halaman Pengaturan.']);
+        }
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
 
-    /**
-     * Update the authenticated user's password.
-     */
     public function updatePassword(Request $request): RedirectResponse
     {
         Gate::authorize(Permissions::SETTINGS_VIEW);

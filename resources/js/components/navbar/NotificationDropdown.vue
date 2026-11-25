@@ -21,10 +21,11 @@ const {
     notifications,
     loading,
     unreadCount,
+    permissionStatus,
     markAsRead,
     markAllAsRead,
     fetchNotifications,
-    stopPolling,
+    requestNotificationPermission,
 } = useNotifications();
 const { error: toastError } = useToast();
 
@@ -38,6 +39,9 @@ function toggle(): void {
     open.value = !open.value;
     if (open.value) {
         fetchNotifications(1);
+        if (permissionStatus.value === 'default') {
+            void requestNotificationPermission();
+        }
     }
 }
 
@@ -128,7 +132,10 @@ function getNotificationIcon(action: Notification['data']['action']): string {
         case 'status_changed':
             return 'RefreshCw';
         case 'project_member_added':
+        case 'project_ownership_transferred':
             return 'Users';
+        case 'user_updated':
+            return 'Shield';
         default:
             return 'Bell';
     }
@@ -161,7 +168,6 @@ onUnmounted(() => {
     document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('keydown', onEscape);
     dropdownCtx?.revert();
-    stopPolling();
 });
 </script>
 
@@ -206,6 +212,27 @@ onUnmounted(() => {
             </div>
 
             <div class="border-t border-surface-200 dark:border-surface-700" />
+
+            <!-- Desktop Notification Banner Prompt -->
+            <div
+                v-if="permissionStatus === 'default'"
+                class="flex items-center justify-between gap-2 border-b border-surface-200 bg-primary-50/50 px-3 py-2 text-xs text-primary-800 dark:border-surface-800 dark:bg-primary-950/30 dark:text-primary-300"
+            >
+                <div class="flex items-center gap-1.5">
+                    <component
+                        :is="getIcon('Bell')"
+                        class="h-3.5 w-3.5 shrink-0"
+                    />
+                    <span>Aktifkan notifikasi desktop</span>
+                </div>
+                <button
+                    type="button"
+                    class="rounded-md bg-primary-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400"
+                    @click="requestNotificationPermission"
+                >
+                    Izinkan
+                </button>
+            </div>
 
             <!-- Notification list -->
             <div class="max-h-96 overflow-y-auto">

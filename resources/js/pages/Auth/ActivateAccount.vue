@@ -31,7 +31,8 @@ async function handleVerify(): Promise<void> {
     try {
         const response = await api.post(activate.url({ token }), {});
         submitted.value = true;
-        const redirectUrl = (response.data as { redirect?: string }).redirect || '/login';
+        const redirectUrl =
+            (response.data as { redirect?: string }).redirect || '/login';
         success(
             'Verifikasi Berhasil',
             (response.data as { message: string }).message,
@@ -89,7 +90,9 @@ function goToLogin(): void {
                         Selamat Datang!
                     </h2>
                     <p class="text-sm text-surface-600 dark:text-surface-400">
-                        Klik tombol di bawah untuk memverifikasi akun Anda. Setelah diverifikasi, Anda dapat masuk menggunakan kata sandi sementara yang telah dikirimkan ke email Anda.
+                        Klik tombol di bawah untuk memverifikasi akun Anda.
+                        Setelah diverifikasi, Anda dapat masuk menggunakan kata
+                        sandi sementara yang telah dikirimkan ke email Anda.
                     </p>
                 </div>
 
@@ -143,7 +146,9 @@ function goToLogin(): void {
                         <p
                             class="mt-2 text-sm text-surface-600 dark:text-surface-400"
                         >
-                            Akun Anda telah aktif. Silakan masuk dengan kata sandi sementara dari email Anda. Mengalihkan ke halaman masuk...
+                            Akun Anda telah aktif. Silakan masuk dengan kata
+                            sandi sementara dari email Anda. Mengalihkan ke
+                            halaman masuk...
                         </p>
                     </div>
 

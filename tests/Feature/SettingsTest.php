@@ -43,56 +43,52 @@ it('renders the settings page with account and notification data', function () {
         );
 });
 
-it('updates the profile without clearing email verification', function () {
+it('rejects name change via settings profile endpoint', function () {
     $user = settingsUser();
-    $verifiedAt = $user->email_verified_at?->toDateTimeString();
+    $originalName = $user->name;
 
     $this->actingAs($user)
         ->put('/settings/profile', [
             'name' => 'Nama Diperbarui',
-            'email' => 'diperbarui@example.test',
+            'email' => $user->email,
         ])
-        ->assertRedirect()
-        ->assertSessionHas('success');
+        ->assertSessionHasErrors('name');
 
-    $user->refresh();
-
-    expect($user->name)->toBe('Nama Diperbarui')
-        ->and($user->email)->toBe('diperbarui@example.test')
-        ->and($user->email_verified_at?->toDateTimeString())->toBe($verifiedAt);
+    expect($user->fresh()->name)->toBe($originalName);
 });
 
-it('normalizes the email address when updating the profile', function () {
+it('rejects email change via settings profile endpoint', function () {
     $user = settingsUser();
-
-    $this->actingAs($user)
-        ->put('/settings/profile', [
-            'name' => '  Nama Rapi  ',
-            'email' => '  Diperbarui@Example.TEST  ',
-        ])
-        ->assertRedirect()
-        ->assertSessionHas('success');
-
-    expect($user->fresh()->name)->toBe('Nama Rapi')
-        ->and($user->fresh()->email)->toBe('diperbarui@example.test');
-});
-
-it('rejects a profile update with an email owned by another user', function () {
-    $user = settingsUser();
-    User::factory()->create(['email' => 'sudah-dipakai@example.test']);
+    $originalEmail = $user->email;
 
     $this->actingAs($user)
         ->put('/settings/profile', [
             'name' => $user->name,
-            'email' => 'sudah-dipakai@example.test',
+            'email' => 'diperbarui@example.test',
         ])
         ->assertSessionHasErrors('email');
 
-    expect($user->fresh()->email)->not->toBe('sudah-dipakai@example.test');
+    expect($user->fresh()->email)->toBe($originalEmail);
 });
 
-it('rejects an invalid profile email', function () {
+it('allows profile endpoint when name and email are unchanged', function () {
     $user = settingsUser();
+
+    $this->actingAs($user)
+        ->put('/settings/profile', [
+            'name' => $user->name,
+            'email' => $user->email,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect($user->fresh()->name)->toBe($user->name)
+        ->and($user->fresh()->email)->toBe($user->email);
+});
+
+it('rejects email change with invalid format via settings', function () {
+    $user = settingsUser();
+    $originalEmail = $user->email;
 
     $this->actingAs($user)
         ->put('/settings/profile', [
@@ -100,6 +96,8 @@ it('rejects an invalid profile email', function () {
             'email' => 'bukan-email',
         ])
         ->assertSessionHasErrors('email');
+
+    expect($user->fresh()->email)->toBe($originalEmail);
 });
 
 it('changes the password when the current password matches', function () {

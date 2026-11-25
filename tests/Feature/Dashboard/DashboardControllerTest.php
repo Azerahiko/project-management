@@ -168,7 +168,7 @@ describe('Dashboard Controller', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $client->id,
-                'role' => ProjectRole::VIEWER,
+                'role' => ProjectRole::CLIENT,
             ]);
 
             // Add activity
@@ -217,7 +217,7 @@ describe('Dashboard Controller', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $reviewer->id,
-                'role' => ProjectRole::DEVELOPER,
+                'role' => ProjectRole::FRONTEND,
             ]);
 
             $task = Task::create([

@@ -41,6 +41,27 @@ it('allows project managers to access monitoring pages', function () {
     $this->actingAs($projectManager)->get('/teams')->assertOk();
 });
 
+it('allows project managers read-only access to users list and detail', function () {
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole('administrator');
+
+    $projectManager = User::factory()->create(['is_active' => true]);
+    $projectManager->assignRole('project_manager');
+
+    $this->actingAs($projectManager)->get('/users')->assertOk();
+    $this->actingAs($projectManager)->get("/users/{$admin->id}")->assertOk();
+    $this->actingAs($projectManager)->get('/users/create')->assertForbidden();
+});
+
+it('forbids developer, reviewer, client from accessing users pages', function () {
+    foreach (['developer', 'reviewer', 'client'] as $role) {
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole($role);
+
+        $this->actingAs($user)->get('/users')->assertForbidden();
+    }
+});
+
 it('allows every authenticated role to access personal settings and support', function () {
     foreach (['developer', 'reviewer', 'client', 'project_manager'] as $role) {
         $user = User::factory()->create(['is_active' => true]);

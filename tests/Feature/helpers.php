@@ -99,7 +99,7 @@ if (! function_exists('createTestProjects')) {
         ProjectMember::create([
             'project_id' => $project->id,
             'user_id' => $developer->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $pmProject = Project::create([
@@ -121,7 +121,7 @@ if (! function_exists('createTestProjects')) {
         ProjectMember::create([
             'project_id' => $pmProject->id,
             'user_id' => $developer->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $otherProject = Project::create([

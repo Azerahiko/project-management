@@ -161,7 +161,7 @@ describe('Project file upload', function () {
         ProjectMember::create([
             'project_id' => $this->project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $this->actingAs($client)
@@ -305,7 +305,7 @@ describe('Project file download', function () {
         ProjectMember::create([
             'project_id' => $this->project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $this->actingAs($client)

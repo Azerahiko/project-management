@@ -27,7 +27,15 @@ export type ProjectStatus =
     | 'completed'
     | 'archived';
 export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
-export type ProjectRole = 'owner' | 'manager' | 'developer' | 'viewer';
+export type ProjectRole =
+    | 'owner'
+    | 'manager'
+    | 'frontend'
+    | 'backend'
+    | 'fullstack'
+    | 'ui_ux'
+    | 'reviewer'
+    | 'client';
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -262,7 +270,9 @@ export type NotificationAction =
     | 'assigned'
     | 'comment'
     | 'status_changed'
-    | 'project_member_added';
+    | 'project_member_added'
+    | 'project_ownership_transferred'
+    | 'user_updated';
 
 export type NotificationData = {
     action: NotificationAction;

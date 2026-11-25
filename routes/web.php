@@ -200,13 +200,13 @@ Route::middleware(['auth'])->group(function () {
     // User listing and details require users.view permission
     Route::middleware('can:users.view')->group(function () {
         Route::inertia('/users', 'Users/Index')->name('users.index');
-        Route::get('/users/{user}/details', function (User $user, Request $request) {
+        Route::get('/users/{user}', function (User $user, Request $request) {
             abort_unless($request->user()->can('view', $user), 403);
 
             return Inertia::render('Users/Details', [
                 'user' => UserResource::make($user->load('roles'))->toArray($request),
             ]);
-        })->name('users.details')->middleware('can:users.view');
+        })->name('users.show')->middleware('can:users.view');
     });
 
     // Role & Permission Management (system administrator only)

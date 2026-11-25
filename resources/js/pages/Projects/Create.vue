@@ -18,9 +18,7 @@ defineOptions({
 });
 
 const { success, error: toastError, warning } = useToast();
-const { fetchClients, clients } = useProjects(
-      {} as ProjectFilters,
-  );
+const { fetchClients, clients } = useProjects({} as ProjectFilters);
 
 const statusOptions = [
     { value: 'draft', label: 'Draft' },
@@ -49,7 +47,7 @@ const form = reactive({
 
 const errors = ref<Record<string, string[]>>({});
 const processing = ref(false);
-  const loadingClients = ref(false);
+const loadingClients = ref(false);
 
 // Client Assets
 const selectedFiles = ref<File[]>([]);
@@ -172,19 +170,19 @@ async function uploadFiles(projectId: number): Promise<void> {
 }
 
 onMounted(() => {
-      loadClients();
-  });
+    loadClients();
+});
 
-  async function loadClients(): Promise<void> {
-      loadingClients.value = true;
-      try {
-          await fetchClients();
-      } catch {
-          toastError('Gagal memuat daftar klien', 'Silakan coba lagi.');
-      } finally {
-          loadingClients.value = false;
-      }
-  }
+async function loadClients(): Promise<void> {
+    loadingClients.value = true;
+    try {
+        await fetchClients();
+    } catch {
+        toastError('Gagal memuat daftar klien', 'Silakan coba lagi.');
+    } finally {
+        loadingClients.value = false;
+    }
+}
 
 function setErrors(err: Record<string, string[]>): void {
     errors.value = err;

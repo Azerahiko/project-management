@@ -106,7 +106,7 @@ class TaskRoleMatrixTest extends TestCase
         ProjectMember::create([
             'project_id' => $project->id,
             'user_id' => $developer->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         // Create task where developer is assignee
@@ -146,7 +146,7 @@ class TaskRoleMatrixTest extends TestCase
         ProjectMember::create([
             'project_id' => $project->id,
             'user_id' => $reviewer->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         // Create task in review status
@@ -186,7 +186,7 @@ class TaskRoleMatrixTest extends TestCase
         ProjectMember::create([
             'project_id' => $project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $task = Task::factory()->create([
@@ -260,7 +260,7 @@ class TaskRoleMatrixTest extends TestCase
         ProjectMember::create([
             'project_id' => $project->id,
             'user_id' => $developer->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $task = Task::factory()->create([
@@ -287,7 +287,7 @@ class TaskRoleMatrixTest extends TestCase
         ProjectMember::create([
             'project_id' => $project->id,
             'user_id' => $reviewer->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::FRONTEND,
         ]);
 
         $task = Task::factory()->create([

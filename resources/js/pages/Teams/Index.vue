@@ -50,10 +50,10 @@ const roleColors: Record<string, string> = {
 };
 
 const roleLabels: Record<string, string> = {
-    owner: 'Pemilik',
+    owner: 'Project Manager',
     manager: 'Manajer',
-    developer: 'Anggota',
-    viewer: 'Peninjau',
+    frontend: 'Frontend',
+    viewer: 'Peninja',
 };
 
 const totalMembersAllocated = computed(() => {

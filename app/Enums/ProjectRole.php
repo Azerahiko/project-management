@@ -6,16 +6,24 @@ enum ProjectRole: string
 {
     case OWNER = 'owner';
     case MANAGER = 'manager';
-    case DEVELOPER = 'developer';
-    case VIEWER = 'viewer';
+    case FRONTEND = 'frontend';
+    case BACKEND = 'backend';
+    case FULLSTACK = 'fullstack';
+    case UI_UX = 'ui_ux';
+    case REVIEWER = 'reviewer';
+    case CLIENT = 'client';
 
     public function label(): string
     {
         return match ($this) {
-            self::OWNER => 'Pemilik',
+            self::OWNER => 'Project Manager',
             self::MANAGER => 'Manajer',
-            self::DEVELOPER => 'Anggota',
-            self::VIEWER => 'Peninjau',
+            self::FRONTEND => 'Frontend',
+            self::BACKEND => 'Backend',
+            self::FULLSTACK => 'Fullstack',
+            self::UI_UX => 'UI/UX',
+            self::REVIEWER => 'Reviewer',
+            self::CLIENT => 'Client',
         };
     }
 
@@ -32,6 +40,14 @@ enum ProjectRole: string
      */
     public static function assignable(): array
     {
-        return [self::MANAGER, self::DEVELOPER, self::VIEWER];
+        return [
+            self::MANAGER,
+            self::FRONTEND,
+            self::BACKEND,
+            self::FULLSTACK,
+            self::UI_UX,
+            self::REVIEWER,
+            self::CLIENT,
+        ];
     }
 }

@@ -63,8 +63,12 @@ const projectStatusForBadge = computed(() => {
 
 const memberRoleOptions = [
     { value: 'manager', label: 'Manajer' },
-    { value: 'developer', label: 'Anggota' },
-    { value: 'viewer', label: 'Peninjau' },
+    { value: 'frontend', label: 'Frontend' },
+    { value: 'backend', label: 'Backend' },
+    { value: 'fullstack', label: 'Fullstack' },
+    { value: 'ui_ux', label: 'UI/UX' },
+    { value: 'reviewer', label: 'Reviewer' },
+    { value: 'client', label: 'Client' },
 ];
 
 const memberColumns = [
@@ -81,6 +85,7 @@ const availableUsers = ref<
         email: string;
         avatar: string | null;
         initials: string;
+        roles?: string[];
     }>
 >([]);
 const loadingAvailableUsers = ref(false);
@@ -88,7 +93,7 @@ const loadingAvailableUsers = ref(false);
 const addMemberModalOpen = ref(false);
 const newMemberForm = reactive({
     user_id: '' as string,
-    role: 'developer' as string,
+    role: 'frontend' as string,
 });
 const newMemberErrors = ref<Record<string, string[]>>({});
 const newMemberErrorBag = computed(() => newMemberErrors.value);
@@ -97,7 +102,7 @@ const addingMember = ref(false);
 const deleteModalOpen = ref(false);
 const deleteLoading = ref(false);
 
-const editMemberRole = ref<{ developer: ProjectMember; role: string } | null>(
+const editMemberRole = ref<{ frontend: ProjectMember; role: string } | null>(
     null,
 );
 const savingMemberRole = ref(false);
@@ -339,12 +344,31 @@ async function loadAvailableUsers(): Promise<void> {
 
 function openAddMemberModal(): void {
     newMemberForm.user_id = '';
-    newMemberForm.role = 'developer';
+    newMemberForm.role = 'frontend' as string;
     newMemberErrors.value = {};
     addMemberModalOpen.value = true;
     void loadAvailableUsers();
 }
 
+function onUserSelected(): void {
+    if (newMemberErrorBag.value.user_id) {
+        delete newMemberErrors.value.user_id;
+    }
+    const userIndex = availableUsers.value.findIndex(
+        (u) => u.id === Number(newMemberForm.user_id),
+    );
+    if (userIndex >= 0) {
+        const userRoles = availableUsers.value[userIndex].roles ?? [];
+        if (userRoles.includes('client')) {
+            newMemberForm.role = 'client' as string;
+        } else if (userRoles.includes('reviewer')) {
+            newMemberForm.role = 'reviewer' as string;
+        } else if (userRoles.includes('frontend')) {
+            newMemberForm.role = 'frontend' as string;
+        }
+    }
+    addMemberModalOpen.value = false;
+}
 async function executeAddMember(): Promise<void> {
     if (!newMemberForm.user_id) return;
 
@@ -371,24 +395,24 @@ async function executeAddMember(): Promise<void> {
     }
 }
 
-function startEditMemberRole(developer: ProjectMember): void {
+function startEditMemberRole(frontend: ProjectMember): void {
     // Don't allow editing owner
-    if (developer.is_owner) return;
-    editMemberRole.value = { developer, role: developer.role };
+    if (frontend.is_owner) return;
+    editMemberRole.value = { frontend, role: frontend.role };
 }
 
 async function saveMemberRole(): Promise<void> {
     if (!editMemberRole.value || savingMemberRole.value) return;
 
-    const { developer, role } = editMemberRole.value;
+    const { frontend, role } = editMemberRole.value;
 
     savingMemberRole.value = true;
 
     try {
-        await updateMember(projectId, developer.user_id, role);
+        await updateMember(projectId, frontend.user_id, role);
         success(
             'Peran diperbarui',
-            `Peran ${developer.user?.name} telah diubah.`,
+            `Peran ${frontend.user?.name} telah diubah.`,
         );
         editMemberRole.value = null;
         router.reload({ only: ['project'] });
@@ -405,20 +429,20 @@ function cancelEditMemberRole(): void {
     editMemberRole.value = null;
 }
 
-async function confirmRemoveMember(developer: ProjectMember): Promise<void> {
-    if (developer.is_owner) {
+async function confirmRemoveMember(frontend: ProjectMember): Promise<void> {
+    if (frontend.is_owner) {
         warning(
             'Tidak dapat dihapus',
-            'Pemilik proyek tidak dapat dihapus dari anggota.',
+            'Project Manager proyek tidak dapat dihapus dari anggota.',
         );
         return;
     }
 
     try {
-        await removeMember(projectId, developer.user_id);
+        await removeMember(projectId, frontend.user_id);
         success(
             'Anggota dihapus',
-            `${developer.user?.name} telah dihapus dari proyek.`,
+            `${frontend.user?.name} telah dihapus dari proyek.`,
         );
         router.reload({ only: ['project'] });
     } catch (err: any) {
@@ -748,7 +772,7 @@ function formatDateShort(dateString: string | null): string {
                     <div
                         v-if="
                             editMemberRole &&
-                            editMemberRole.developer.id === row.id
+                            editMemberRole.frontend.id === row.id
                         "
                     >
                         <Select
@@ -766,7 +790,7 @@ function formatDateShort(dateString: string | null): string {
                                     ? 'bg-primary-50 text-primary-700 dark:bg-primary-950/30 dark:text-primary-300'
                                     : row.role === 'manager'
                                       ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                                      : row.role === 'developer'
+                                      : row.role === 'frontend'
                                         ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
                                         : 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',
                             ]"
@@ -806,7 +830,7 @@ function formatDateShort(dateString: string | null): string {
                         v-else-if="row.is_owner"
                         class="text-xs text-surface-600 dark:text-surface-300"
                     >
-                        Pemilik
+                        Project Manager
                     </span>
                 </template>
             </Table>
@@ -993,12 +1017,7 @@ function formatDateShort(dateString: string | null): string {
                 required
                 :error="newMemberErrorBag.user_id?.[0]"
                 :loading="loadingAvailableUsers"
-                @change="
-                    () => {
-                        if (newMemberErrorBag.user_id)
-                            delete newMemberErrorBag.user_id;
-                    }
-                "
+                @change="onUserSelected"
             >
                 <template #loading>
                     <option value="" disabled>Memuat pengguna...</option>

@@ -12,6 +12,7 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -452,7 +453,7 @@ describe('User Management RBAC', function () {
             ProjectMember::create([
                 'project_id' => $project->id,
                 'user_id' => $this->user->id,
-                'role' => ProjectRole::DEVELOPER,
+                'role' => ProjectRole::FRONTEND,
             ]);
 
             $task = Task::factory()->create([
@@ -521,4 +522,42 @@ describe('User Management RBAC', function () {
             $this->assertDatabaseHas('users', ['email' => 'newmember@example.com', 'name' => 'New Developer']);
         });
     });
+});
+
+it('logs out user when admin changes their email', function () {
+    $this->seed(RolePermissionSeeder::class);
+
+    // Ensure administrator role exists (seeder may not run for tests outside RBAC describe)
+    $adminRole = Role::firstOrCreate(
+        ['name' => 'administrator', 'guard_name' => 'web'],
+        ['name' => 'Administrator']
+    );
+
+    $admin = User::factory()->create(['is_active' => true]);
+    $admin->assignRole($adminRole);
+
+    $targetUser = User::factory()->create([
+        'email' => 'original@example.com',
+        'is_active' => true,
+    ]);
+    $targetUser->assignRole('developer');
+
+    $originalToken = $targetUser->remember_token;
+
+    $this->actingAs($admin)
+        ->put("/api/users/{$targetUser->id}", [
+            'email' => 'newemail@example.com',
+        ])
+        ->assertOk();
+
+    // Assert remember token was rotated
+    $targetUser->refresh();
+    expect($targetUser->remember_token)->not->toBe($originalToken);
+
+    // Assert session was invalidated (only when using database session driver)
+    if (config('session.driver') === 'database') {
+        $this->assertDatabaseMissing(config('session.table', 'sessions'), [
+            'user_id' => $targetUser->id,
+        ]);
+    }
 });

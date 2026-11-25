@@ -226,11 +226,12 @@ function getRoleLabel(role: string): string {
                     <Button variant="ghost">Kembali</Button>
                 </Link>
                 <Button
-                    variant="ghost"
+                    v-if="isAdmin"
+                    :variant="isEditing ? 'secondary' : 'ghost'"
                     @click="toggleEditMode"
                     :disabled="processing"
                 >
-                    {{ isEditing ? 'Batal' : 'Mode Edit' }}
+                    {{ isEditing ? 'Batal Edit' : 'Edit Pengguna' }}
                 </Button>
             </div>
         </div>
@@ -685,7 +686,7 @@ function getRoleLabel(role: string): string {
                     variant="secondary"
                     @click="toggleEditMode"
                 >
-                    Batal
+                    Batal Edit
                 </Button>
                 <Button
                     type="button"

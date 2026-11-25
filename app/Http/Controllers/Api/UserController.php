@@ -8,13 +8,16 @@ use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Invitation;
 use App\Models\User;
+use App\Notifications\UserUpdated;
 use App\Services\InvitationService;
+use App\Services\NotificationSender;
 use App\Support\Pagination;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -146,6 +149,12 @@ class UserController extends Controller
         $this->authorize('update', $user);
         $this->ensureLastActiveAdministratorIsPreserved($request, $user);
 
+        // Capture original values BEFORE any changes
+        $originalName = $user->name;
+        $originalEmail = Str::lower($user->email);
+        $originalIsActive = (bool) $user->is_active;
+        $originalRole = $user->roles()->value('name');
+
         DB::transaction(function () use ($request, $user) {
             $data = $request->safe()->only(['name', 'email', 'avatar']);
 
@@ -171,7 +180,99 @@ class UserController extends Controller
             }
         });
 
+        // Deteksi field yang sebenarnya berubah sesudah save & syncRoles
+        $changedFields = $this->detectChangedFields(
+            $originalName,
+            $originalEmail,
+            $originalIsActive,
+            $originalRole,
+            $request->input('name'),
+            $request->input('email'),
+            $request->boolean('is_active'),
+            $request->input('role'),
+            ! empty($request->validated('password'))
+        );
+
+        // Kirim notifikasi ke user yang diedit (kecuali admin sendiri)
+        if (! empty($changedFields) && $user->id !== $request->user()->id) {
+            $sender = app(NotificationSender::class);
+            $sender->send(
+                $user,
+                UserUpdated::class,
+                [
+                    'changed_fields' => implode(', ', $changedFields),
+                    'updated_by_name' => $request->user()->name,
+                ],
+            );
+        }
+
+        $emailChanged = Str::lower($user->email) !== $originalEmail;
+        if ($emailChanged && $user->id !== $request->user()->id) {
+            $this->logoutUserOnEmailChange($user);
+        }
+
         return UserResource::make($user->fresh('roles'));
+    }
+
+    /**
+     * Logout user by invalidating session and rotating remember token.
+     * Panggil ketika admin mengubah email user lain.
+     */
+    protected function logoutUserOnEmailChange(User $user): void
+    {
+        // Hapus seluruh sesi aktif user
+        if (config('session.driver') === 'database') {
+            DB::table(config('session.table', 'sessions'))
+                ->where('user_id', $user->id)
+                ->delete();
+        }
+
+        // Rotasi remember token
+        $user->setRememberToken(Str::random(60));
+        $user->saveQuietly();
+
+        // Hapus token API (Sanctum)
+        $user->tokens()->delete();
+    }
+
+    /**
+     * Deteksi field yang sebenarnya berubah.
+     *
+     * @return array<int, string>
+     */
+    protected function detectChangedFields(string $originalName,
+        string $originalEmail,
+        bool $originalIsActive,
+        ?string $originalRole,
+        ?string $newName,
+        ?string $newEmail,
+        bool $newIsActive,
+        ?string $newRole,
+        bool $passwordChanged,
+    ): array {
+        $fields = [];
+
+        if ($newName !== null && $newName !== $originalName) {
+            $fields[] = 'Nama';
+        }
+
+        if ($newEmail !== null && Str::lower($newEmail) !== $originalEmail) {
+            $fields[] = 'Email';
+        }
+
+        if ($newIsActive !== $originalIsActive) {
+            $fields[] = 'Status Akun';
+        }
+
+        if ($newRole !== null && $newRole !== $originalRole) {
+            $fields[] = 'Peran';
+        }
+
+        if ($passwordChanged) {
+            $fields[] = 'Kata Sandi';
+        }
+
+        return $fields;
     }
 
     /**

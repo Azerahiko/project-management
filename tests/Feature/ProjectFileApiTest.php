@@ -106,7 +106,7 @@ describe('Project files authorization', function () {
         ProjectMember::create([
             'project_id' => $this->project->id,
             'user_id' => $client->id,
-            'role' => ProjectRole::DEVELOPER,
+            'role' => ProjectRole::CLIENT,
         ]);
 
         expect($client->can('documents.view'))->toBeFalse();

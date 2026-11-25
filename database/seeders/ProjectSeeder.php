@@ -74,7 +74,7 @@ class ProjectSeeder extends Seeder
 
         ProjectMember::updateOrCreate(
             ['project_id' => $project1->id, 'user_id' => $developer->id],
-            ['role' => ProjectRole::DEVELOPER, 'joined_at' => $project1->created_at]
+            ['role' => ProjectRole::FRONTEND, 'joined_at' => $project1->created_at]
         );
 
         // Project 2: Draft project owned by PM
@@ -97,7 +97,7 @@ class ProjectSeeder extends Seeder
 
         ProjectMember::updateOrCreate(
             ['project_id' => $project2->id, 'user_id' => $developer->id],
-            ['role' => ProjectRole::DEVELOPER, 'joined_at' => $project2->created_at]
+            ['role' => ProjectRole::BACKEND, 'joined_at' => $project2->created_at]
         );
 
         // Project 3: Completed project

@@ -46,7 +46,7 @@ it('allows clients to view the timeline for their accessible projects', function
     ProjectMember::create([
         'project_id' => $project->id,
         'user_id' => $client->id,
-        'role' => ProjectRole::VIEWER,
+        'role' => ProjectRole::CLIENT,
     ]);
 
     $this->actingAs($client)->get(route('timeline'))->assertOk();

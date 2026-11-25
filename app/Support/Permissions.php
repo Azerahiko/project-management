@@ -148,6 +148,7 @@ class Permissions
                 self::REPORTS_VIEW,
                 self::ACTIVITY_LOG_VIEW,
                 self::SETTINGS_VIEW,
+                self::USERS_VIEW,
             ],
             Roles::DEVELOPER => [
                 self::DASHBOARD_VIEW,

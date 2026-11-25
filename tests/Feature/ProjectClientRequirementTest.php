@@ -69,7 +69,7 @@ describe('Project Client Requirement Enforcement', function () {
         $this->assertDatabaseHas('project_members', [
             'project_id' => $projectId,
             'user_id' => $this->client->id,
-            'role' => 'viewer',
+            'role' => 'client',
         ]);
 
         $project = Project::find($projectId);
