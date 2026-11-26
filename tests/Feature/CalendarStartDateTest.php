@@ -26,10 +26,10 @@ describe('Calendar start_date query', function () {
             'creator_id' => $this->admin->id,
             'title' => 'Task with only due date',
             'start_date' => null,
-            'due_date' => now()->addDays(5),
+            'due_date' => now()->startOfMonth()->addDays(5),
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/calendar?month='.now()->format('Y-m'));
+        $response = $this->actingAs($this->admin)->get('/calendar?month='.now()->startOfMonth()->format('Y-m'));
         $response->assertOk();
 
         $calendarTasks = $response->inertiaProps('tasks');
@@ -47,11 +47,11 @@ describe('Calendar start_date query', function () {
             'project_id' => $project->id,
             'creator_id' => $this->admin->id,
             'title' => 'Task with only start date',
-            'start_date' => now()->addDays(3),
+            'start_date' => now()->startOfMonth()->addDays(3),
             'due_date' => null,
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/calendar?month='.now()->format('Y-m'));
+        $response = $this->actingAs($this->admin)->get('/calendar?month='.now()->startOfMonth()->format('Y-m'));
         $response->assertOk();
 
         $calendarTasks = $response->inertiaProps('tasks');
@@ -69,11 +69,11 @@ describe('Calendar start_date query', function () {
             'project_id' => $project->id,
             'creator_id' => $this->admin->id,
             'title' => 'Task with both dates',
-            'start_date' => now()->addDays(2),
-            'due_date' => now()->addDays(7),
+            'start_date' => now()->startOfMonth()->addDays(2),
+            'due_date' => now()->startOfMonth()->addDays(7),
         ]);
 
-        $response = $this->actingAs($this->admin)->get('/calendar?month='.now()->format('Y-m'));
+        $response = $this->actingAs($this->admin)->get('/calendar?month='.now()->startOfMonth()->format('Y-m'));
         $response->assertOk();
 
         $calendarTasks = $response->inertiaProps('tasks');

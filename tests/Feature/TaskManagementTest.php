@@ -27,19 +27,49 @@ describe('Task Management', function () {
             $this->actingAs($developer)->get('/tasks')->assertOk();
         });
 
-        it('allows admin to access create task page', function () {
+        it('allows admin to access create assignment page', function () {
             [$admin] = createTestUsers();
-            $this->actingAs($admin)->get('/tasks/create')->assertOk();
+            $this->actingAs($admin)->get('/penugasan/create')->assertOk();
         });
 
-        it('allows project manager to access create task page', function () {
+        it('allows project manager to access create assignment page', function () {
             [, $pm] = createTestUsers();
-            $this->actingAs($pm)->get('/tasks/create')->assertOk();
+            $this->actingAs($pm)->get('/penugasan/create')->assertOk();
         });
 
-        it('allows developer to access create task page', function () {
+        it('forbids developer from accessing create assignment page', function () {
             [, , $developer] = createTestUsers();
-            $this->actingAs($developer)->get('/tasks/create')->assertOk();
+            $this->actingAs($developer)->get('/penugasan/create')->assertForbidden();
+        });
+
+        it('allows admin and project manager to access penugasan pages', function () {
+            [$admin, $pm] = createTestUsers();
+
+            foreach ([$admin, $pm] as $user) {
+                $this->actingAs($user)->get('/penugasan')->assertOk();
+                $this->actingAs($user)->get('/penugasan/trashed')->assertOk();
+            }
+        });
+
+        it('forbids roles without tasks.create from accessing penugasan pages', function () {
+            [, , $developer, $client] = createTestUsers();
+            $reviewer = User::factory()->create(['is_active' => true]);
+            $reviewer->assignRole('reviewer');
+
+            foreach ([$developer, $reviewer, $client] as $user) {
+                $this->actingAs($user)->get('/penugasan')->assertForbidden();
+                $this->actingAs($user)->get('/penugasan/create')->assertForbidden();
+                $this->actingAs($user)->get('/penugasan/trashed')->assertForbidden();
+            }
+        });
+
+        it('no longer serves the legacy task create and trashed pages', function () {
+            createTestUsers();
+
+            [$admin] = [User::where('email', 'admin@example.com')->firstOrFail()];
+
+            $this->actingAs($admin)->get('/tasks/create')->assertNotFound();
+            $this->actingAs($admin)->get('/tasks/trashed')->assertNotFound();
         });
 
         it('allows project developer to view task detail', function () {

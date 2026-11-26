@@ -121,9 +121,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->middleware('can:task-comments.delete', 'token.ability:tasks:write');
         // Project task trash
         Route::get('projects/{project}/tasks/trashed', [TaskController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
-        // Task comment trash
-        Route::get('tasks/{task}/comments/trashed', [TaskCommentController::class, 'trashed'])->middleware('can:tasks.view', 'token.ability:tasks:read');
-        Route::post('comments/{comment}/restore', [TaskCommentController::class, 'restore'])->withTrashed()->middleware('can:task-comments.update', 'token.ability:tasks:write');
         // Project files
         Route::post('projects/{project}/files', [ProjectFileController::class, 'store'])
             ->middleware(['can:projects.update', 'token.ability:projects:write']);

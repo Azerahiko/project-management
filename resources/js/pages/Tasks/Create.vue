@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import tasks from '@/routes/tasks';
+import penugasan from '@/routes/penugasan';
 import api from '@/lib/api';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useTasks } from '@/composables/useTasks';
@@ -31,7 +31,7 @@ onMounted(() => {
     const hasCreatePerm = user?.permissions?.includes('tasks.create') ?? false;
 
     if (!isManagerial && !hasCreatePerm) {
-        router.visit(tasks.index.url());
+        router.visit(penugasan.index.url());
     }
 });
 
@@ -284,7 +284,7 @@ async function handleSubmit(): Promise<void> {
             }
         }
 
-        router.visit(tasks.index.url());
+        router.visit(penugasan.index.url());
     } catch (err: any) {
         if (err.response?.data?.errors) {
             setErrors(err.response.data.errors);
@@ -295,7 +295,7 @@ async function handleSubmit(): Promise<void> {
 }
 
 function goBack(): void {
-    router.visit(tasks.index.url());
+    router.visit(penugasan.index.url());
 }
 
 onMounted(loadProjects);
@@ -317,7 +317,7 @@ watch(() => form.project_id, loadAssignees);
                     Isi formulir di bawah untuk membuat tugas baru
                 </p>
             </div>
-            <Link :href="tasks.index.url()">
+            <Link :href="penugasan.index.url()">
                 <Button variant="ghost">Kembali</Button>
             </Link>
         </div>
@@ -539,7 +539,7 @@ watch(() => form.project_id, loadAssignees);
             </div>
 
             <div class="flex justify-end gap-3">
-                <Link :href="tasks.index.url()">
+                <Link :href="penugasan.index.url()">
                     <Button type="button" variant="secondary">Batal</Button>
                 </Link>
                 <Button type="submit" variant="primary" :loading="processing">

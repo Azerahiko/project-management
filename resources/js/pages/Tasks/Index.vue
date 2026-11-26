@@ -7,8 +7,9 @@ import {
     ref,
     watch,
 } from 'vue';
-import { usePage, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import tasksRoute from '@/routes/tasks';
+import penugasanRoute from '@/routes/penugasan';
 import projectsRoute from '@/routes/projects';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useTasks } from '@/composables/useTasks';
@@ -42,29 +43,11 @@ defineOptions({
     layout: AppLayout,
 });
 
-const page = usePage();
+const props = defineProps<{ mode?: 'tasks' | 'penugasan' }>();
+
+const isPenugasan = computed(() => props.mode === 'penugasan');
+
 const { success } = useToast();
-
-const user = computed(() => page.props.auth.user);
-const userRoles = computed(() => user.value?.roles ?? []);
-
-const isManagerial = computed(() =>
-    userRoles.value.some((r) =>
-        ['administrator', 'project_manager'].includes(r),
-    ),
-);
-
-const canCreate = computed(
-    () =>
-        isManagerial.value ||
-        Boolean(user.value?.permissions.includes('tasks.create')),
-);
-
-const canViewTrashed = computed(
-    () =>
-        isManagerial.value ||
-        Boolean(user.value?.permissions.includes('tasks.delete')),
-);
 
 const search = ref('');
 let searchTimeout: ReturnType<typeof setTimeout>;
@@ -292,24 +275,26 @@ watch(
                     <span
                         class="text-xs font-semibold tracking-wider text-surface-500 uppercase dark:text-surface-400"
                     >
-                        Manajemen Tugas
+                        {{ isPenugasan ? 'Delegasi Tugas' : 'Manajemen Tugas' }}
                     </span>
                 </div>
                 <h1
                     class="text-xl font-bold tracking-tight text-surface-900 sm:text-2xl dark:text-surface-50"
                 >
-                    Tugas Tim
+                    {{ isPenugasan ? 'Penugasan' : 'Tugas Saya' }}
                 </h1>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
-                    Pantau status sprint, alokasi penanggung jawab, dan tenggat
-                    waktu tugas.
+                    {{
+                        isPenugasan
+                            ? 'Buat dan delegasikan tugas ke anggota tim.'
+                            : 'Pantau status sprint, alokasi penanggung jawab, dan tenggat waktu tugas.'
+                    }}
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div v-if="isPenugasan" class="flex flex-wrap items-center gap-2.5">
                 <Link
-                    v-if="canViewTrashed"
-                    href="/tasks/trashed"
+                    :href="penugasanRoute.trashed.url()"
                     class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
                 >
                     <Trash2 class="h-3.5 w-3.5 text-surface-400" />
@@ -317,12 +302,11 @@ watch(
                 </Link>
 
                 <Link
-                    v-if="canCreate"
-                    :href="tasksRoute.create.url()"
+                    :href="penugasanRoute.create.url()"
                     class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 text-xs font-medium text-white shadow-xs transition hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
                 >
                     <Plus class="h-3.5 w-3.5 stroke-[2.5]" />
-                    <span>Tambah Tugas</span>
+                    <span>Penugasan Baru</span>
                 </Link>
             </div>
         </div>
@@ -349,15 +333,6 @@ watch(
 
                 <!-- Right controls: Priority, Sort, View Toggle -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <Link
-                        v-if="canViewTrashed"
-                        href="/tasks/trashed"
-                        class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-surface-200 bg-white px-3 text-xs font-medium text-surface-700 shadow-2xs transition hover:bg-surface-50 dark:border-surface-800 dark:bg-surface-900 dark:text-surface-300 dark:hover:bg-surface-800"
-                    >
-                        <Trash2 class="h-3.5 w-3.5 text-surface-400" />
-                        <span>Sampah</span>
-                    </Link>
-
                     <div class="w-36">
                         <Select
                             v-model="filters.priority"

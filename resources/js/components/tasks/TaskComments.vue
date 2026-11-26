@@ -351,7 +351,7 @@ async function loadMoreComments(): Promise<void> {
                 Apakah Anda yakin ingin menghapus komentar ini?
             </p>
             <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
-                Tindakan ini tidak dapat dibatalkan.
+                Komentar akan dihapus permanen dan tidak dapat dipulihkan.
             </p>
 
             <template #footer>

@@ -91,7 +91,6 @@ export type TaskComment = {
     content: string;
     created_at: string;
     updated_at: string;
-    deleted_at: string | null;
     user?: User;
     can_update?: boolean;
     can_delete?: boolean;
@@ -221,14 +220,6 @@ export type ProjectFilters = {
     status: string;
     priority: string;
     owner_id: string;
-    sort_by: string;
-    sort_direction: 'asc' | 'desc';
-    page: number;
-    per_page: number;
-};
-
-export type TaskCommentFilters = {
-    search: string;
     sort_by: string;
     sort_direction: 'asc' | 'desc';
     page: number;

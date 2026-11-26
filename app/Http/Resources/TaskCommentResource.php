@@ -23,7 +23,6 @@ class TaskCommentResource extends JsonResource
             'content' => $comment->content,
             'created_at' => $comment->created_at?->toISOString(),
             'updated_at' => $comment->updated_at?->toISOString(),
-            'deleted_at' => $comment->deleted_at?->toISOString(),
             'user' => $comment->relationLoaded('user') ? UserResource::make($comment->user)->resolve() : null,
             'can_update' => $request->user()?->can('update', $comment) ?? false,
             'can_delete' => $request->user()?->can('delete', $comment) ?? false,

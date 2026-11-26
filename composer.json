@@ -75,7 +75,7 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "php artisan test --no-parallel"
+            "php artisan test"
         ],
         "parallel-test": [
             "@php artisan config:clear --ansi",

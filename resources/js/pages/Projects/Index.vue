@@ -79,7 +79,7 @@ const canCreate = computed(() =>
 );
 
 const canViewTrashed = computed(() =>
-    Boolean(page.props.auth.user?.permissions.includes('projects.view')),
+    Boolean(page.props.auth.user?.permissions.includes('projects.delete')),
 );
 
 const canCreateTask = computed(() => {
@@ -548,7 +548,7 @@ watch(
                                 </Link>
                                 <Link
                                     v-if="canCreateTask"
-                                    :href="`/tasks/create?project_id=${project.id}`"
+                                    :href="`/penugasan/create?project_id=${project.id}`"
                                     class="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-800"
                                 >
                                     <PlusCircle

@@ -63,9 +63,13 @@ Route::middleware(['auth'])->group(function () {
         ->name('notifications')
         ->middleware('can:notifications.view');
 
-    // Project routes
+    // Projects viewable by users with projects.view permission
     Route::middleware('can:projects.view')->group(function () {
         Route::inertia('/projects', 'Projects/Index')->name('projects.index');
+    });
+
+    // Projects trashed only viewable by administrators and project managers
+    Route::middleware('can:projects.delete')->group(function () {
         Route::inertia('/projects/trashed', 'Projects/Trashed')->name('projects.trashed');
     });
 
@@ -73,9 +77,9 @@ Route::middleware(['auth'])->group(function () {
         Route::inertia('/projects/create', 'Projects/Create')->name('projects.create');
     });
 
+    // Detailed project routes
     Route::middleware('can:projects.view')->group(function () {
         Route::inertia('/projects', 'Projects/Index')->name('projects.index');
-        Route::inertia('/projects/trashed', 'Projects/Trashed')->name('projects.trashed');
 
         Route::get('/projects/{project}', function (Project $project, Request $request) {
             abort_unless($request->user()->can('view', $project), 403);
@@ -112,11 +116,15 @@ Route::middleware(['auth'])->group(function () {
         })->name('projects.edit');
     });
 
+    Route::middleware(['can:tasks.view', 'can:tasks.create'])->group(function () {
+        Route::inertia('/penugasan', 'Tasks/Index', ['mode' => 'penugasan'])->name('penugasan.index');
+        Route::inertia('/penugasan/create', 'Tasks/Create')->name('penugasan.create');
+        Route::inertia('/penugasan/trashed', 'Tasks/Trashed')->name('penugasan.trashed');
+    });
+
     Route::middleware('can:tasks.view')->group(function () {
         Route::inertia('/tasks', 'Tasks/Index')->name('tasks.index');
-        Route::inertia('/tasks/create', 'Tasks/Create')->name('tasks.create');
-        Route::inertia('/tasks/trashed', 'Tasks/WorkspaceTrashed')->name('tasks.trashed.workspace');
-        Route::redirect('/task/trashed', '/tasks/trashed');
+        Route::redirect('/task/trashed', '/penugasan/trashed');
         Route::get('/projects/{project}/tasks/trashed', function (Project $project, Request $request) {
             abort_unless($request->user()->can('view', $project), 403);
 
@@ -148,15 +156,6 @@ Route::middleware(['auth'])->group(function () {
             ]);
         })->name('tasks.edit');
 
-        Route::get('/tasks/{task}/comments/trashed', function (Task $task, Request $request) {
-            abort_unless($request->user()->can('view', $task), 403);
-
-            $task->load(['project', 'assignee', 'creator']);
-
-            return Inertia::render('TaskComments/Trashed', [
-                'task' => TaskResource::make($task)->toArray($request),
-            ]);
-        })->name('task-comments.trashed');
     });
     Route::get('/timeline', [TimelineController::class, 'index'])
         ->name('timeline')

@@ -8,6 +8,7 @@ import { useTheme } from '@/composables/useTheme';
 import { useToast } from '@/composables/useToast';
 import { Plus, Search, Moon, Sun, Menu } from '@lucide/vue';
 import tasks from '@/routes/tasks';
+import penugasan from '@/routes/penugasan';
 import type { User } from '@/types';
 
 interface Props {
@@ -36,7 +37,8 @@ const currentPath = computed(() => {
 const pageTitle = computed(() => {
     const p = currentPath.value;
     if (p === '/dashboard' || p === '/') return 'Dashboard';
-    if (p.startsWith('/tasks')) return 'Tugas Tim';
+    if (p.startsWith('/penugasan')) return 'Penugasan';
+    if (p.startsWith('/tasks')) return 'Tugas Saya';
     if (p.startsWith('/projects')) return 'Proyek Tim';
     if (p.startsWith('/calendar')) return 'Jadwal & Kalender';
     if (p.startsWith('/timeline')) return 'Timeline & Roadmap';
@@ -156,12 +158,12 @@ onUnmounted(() => {
         <div class="flex shrink-0 items-center gap-2 sm:gap-2.5">
             <!-- + New Task Primary Action (Linear Style) -->
             <Link
-                :href="tasks.index.url()"
+                :href="penugasan.create.url()"
                 v-if="canCreateTask"
                 class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary-600 px-2.5 text-xs font-medium text-white shadow-xs transition-all hover:bg-primary-700 active:scale-98 dark:bg-primary-500 dark:text-surface-950 dark:hover:bg-primary-400"
             >
                 <Plus class="h-3.5 w-3.5 stroke-[2.5]" />
-                <span class="hidden sm:inline">Tugas Baru</span>
+                <span class="hidden sm:inline">Penugasan Baru</span>
             </Link>
 
             <div class="mx-0.5 h-4 w-px bg-surface-200 dark:bg-surface-800" />

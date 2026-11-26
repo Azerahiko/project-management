@@ -2,9 +2,6 @@
 
 require_once __DIR__.'/helpers.php';
 
-use App\Models\Task;
-use App\Models\TaskComment;
-
 describe('Trashed Resources', function () {
     beforeEach(function () {
         [$this->admin, $this->pm, $this->developer] = createTestUsers();
@@ -58,26 +55,5 @@ describe('Trashed Resources', function () {
             ->getJson("/api/projects/{$this->project->id}/tasks/trashed?status=done")
             ->assertOk()
             ->assertJsonCount(0, 'data');
-    });
-
-    it('restores a trashed task and comment', function () {
-        $comment = TaskComment::factory()->create([
-            'task_id' => $this->task->id,
-            'user_id' => $this->admin->id,
-        ]);
-
-        $this->task->delete();
-        $comment->delete();
-
-        $this->actingAs($this->admin)
-            ->postJson("/api/tasks/{$this->task->id}/restore")
-            ->assertOk();
-
-        $this->actingAs($this->admin)
-            ->postJson("/api/comments/{$comment->id}/restore")
-            ->assertOk();
-
-        expect(Task::withTrashed()->find($this->task->id)->deleted_at)->toBeNull();
-        expect(TaskComment::withTrashed()->find($comment->id)->deleted_at)->toBeNull();
     });
 });

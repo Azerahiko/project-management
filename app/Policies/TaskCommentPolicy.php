@@ -76,20 +76,4 @@ class TaskCommentPolicy
 
         return $role === ProjectRole::OWNER;
     }
-
-    /**
-     * Determine whether the user can restore the comment.
-     */
-    public function restore(User $user, TaskComment $comment): bool
-    {
-        return $this->delete($user, $comment);
-    }
-
-    /**
-     * Determine whether the user can permanently delete the comment.
-     */
-    public function forceDelete(User $user, TaskComment $comment): bool
-    {
-        return $this->delete($user, $comment);
-    }
 }

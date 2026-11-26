@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { usePage, Link } from '@inertiajs/vue3';
 import tasks from '@/routes/tasks';
-import taskComments from '@/routes/task-comments';
+
 import api from '@/lib/api';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useTasks } from '@/composables/useTasks';
@@ -32,20 +32,23 @@ const page = usePage();
 const { success, error: toastError, warning } = useToast();
 const { fetchAssignees } = useTasks({} as TaskFilters);
 
-const task = page.props.task as Task;
-const taskId = task.id;
+const task = ref<Task>({ ...(page.props.task as Task) });
+const taskId = (page.props.task as Task).id;
 const user = page.props.auth?.user as User | null;
 
-const canViewTrashedComments = computed(() => {
-    const userPerms = user?.permissions || [];
-    return userPerms.includes('tasks.view');
-});
+watch(
+    () => page.props.task as Task | undefined,
+    (newTask) => {
+        if (newTask) {
+            task.value = { ...newTask };
+        }
+    },
+    { deep: true },
+);
 
 const activities = ref<TaskActivityItem[]>([]);
 const activitiesLoading = ref(false);
 const activitiesError = ref<string | null>(null);
-
-const editStatus = ref(false);
 
 // Role-based capability flags
 const userRoles = computed(() => user?.roles ?? []);
@@ -57,7 +60,7 @@ const isManagerial = computed(() =>
 const isDeveloper = computed(() => userRoles.value.includes('developer'));
 const isReviewer = computed(() => userRoles.value.includes('reviewer'));
 const isClient = computed(() => userRoles.value.includes('client'));
-const isAssignee = computed(() => task.assignee_id === user?.id);
+const isAssignee = computed(() => task.value.assignee_id === user?.id);
 
 // Status options filtering based on role & current status
 const statusOptions = computed(() => {
@@ -73,7 +76,7 @@ const statusOptions = computed(() => {
 
     // Reviewer: can ONLY transition when status is 'review'
     if (isReviewer.value) {
-        const current = task.status;
+        const current = task.value.status;
         // When status is 'review', allowed targets are 'done' and 'in_progress'
         if (current === 'review') {
             return [
@@ -104,11 +107,11 @@ const canChangeStatus = computed(() => {
     if (isManagerial.value) return true;
     // Reviewer can only change when status is 'review'
     if (isReviewer.value) {
-        return task.status === 'review';
+        return task.value.status === 'review';
     }
     // Assigned developer can change status (excluding 'done')
     if (isDeveloper.value && isAssignee.value) {
-        return task.status !== 'done';
+        return task.value.status !== 'done';
     }
     return false;
 });
@@ -132,7 +135,7 @@ const assigningMember = ref(false);
 async function loadAssignees(): Promise<void> {
     loadingAssignees.value = true;
     try {
-        assigneeOptions.value = await fetchAssignees(task.project_id);
+        assigneeOptions.value = await fetchAssignees(task.value.project_id);
     } catch {
         toastError('Gagal memuat daftar anggota', 'Silakan coba lagi.');
     } finally {
@@ -141,7 +144,7 @@ async function loadAssignees(): Promise<void> {
 }
 
 onMounted(() => {
-    if (task.can_update) {
+    if (task.value.can_update) {
         loadAssignees();
     }
     fetchActivities();
@@ -165,26 +168,51 @@ async function fetchActivities(): Promise<void> {
     }
 }
 
-async function updateStatus(newStatus: string): Promise<void> {
-    if (newStatus === task.status) return;
+const statusUpdating = ref(false);
+const activeUpdatingStatus = ref<string | null>(null);
 
-    editStatus.value = false;
+async function updateStatus(newStatus: string): Promise<void> {
+    if (newStatus === task.value.status || statusUpdating.value) return;
+
+    statusUpdating.value = true;
+    activeUpdatingStatus.value = newStatus as Task['status'];
+    const previousTask = { ...task.value };
 
     try {
-        await api.put(`/tasks/${taskId}`, {
-            status: newStatus,
-        });
-        success('Status diperbarui', `Status tugas telah diubah.`);
-        router.reload();
+        const { data: response } = await api.put<{ data: Task }>(
+            `/tasks/${taskId}`,
+            { status: newStatus },
+        );
+
+        if (response?.data) {
+            task.value = { ...task.value, ...response.data };
+        } else {
+            task.value.status = newStatus as Task['status'];
+        }
+
+        success('Status diperbarui', 'Status tugas telah diubah.');
+        fetchActivities();
+        router.reload({ only: ['task'] });
     } catch (err: any) {
+        task.value = previousTask;
         if (err.response?.data?.message) {
             toastError('Gagal memperbarui status', err.response.data.message);
+        } else {
+            toastError(
+                'Gagal memperbarui status',
+                'Terjadi kesalahan jaringan.',
+            );
         }
+    } finally {
+        statusUpdating.value = false;
+        activeUpdatingStatus.value = null;
     }
 }
 
 function openAssigneeModal(): void {
-    newAssigneeId.value = task.assignee_id ? String(task.assignee_id) : '';
+    newAssigneeId.value = task.value.assignee_id
+        ? String(task.value.assignee_id)
+        : '';
     assigneeModalOpen.value = true;
 }
 
@@ -192,14 +220,23 @@ async function executeAssign(): Promise<void> {
     assigningMember.value = true;
 
     try {
-        await api.put(`/tasks/${taskId}`, {
-            assignee_id: newAssigneeId.value
-                ? Number(newAssigneeId.value)
-                : null,
-        });
+        const { data: response } = await api.put<{ data: Task }>(
+            `/tasks/${taskId}`,
+            {
+                assignee_id: newAssigneeId.value
+                    ? Number(newAssigneeId.value)
+                    : null,
+            },
+        );
+
+        if (response?.data) {
+            task.value = { ...task.value, ...response.data };
+        }
+
         success('Penugasan diperbarui', 'Penugasan tugas telah diubah.');
         assigneeModalOpen.value = false;
-        router.reload();
+        fetchActivities();
+        router.reload({ only: ['task'] });
     } catch (err: any) {
         if (err.response?.data?.message) {
             toastError(
@@ -344,18 +381,6 @@ function formatDateShort(dateString: string | null): string {
                         />
                         Ubah Penugasan
                     </div>
-
-                    <Link
-                        v-if="canViewTrashedComments"
-                        :href="taskComments.trashed.url({ task: taskId })"
-                        class="dropdown-item"
-                    >
-                        <component
-                            :is="getIcon('Archive')"
-                            class="mr-2 h-4 w-4"
-                        />
-                        Komentar yang Dihapus
-                    </Link>
 
                     <button
                         v-if="task.can_delete"
@@ -536,19 +561,21 @@ function formatDateShort(dateString: string | null): string {
                 Aksi Cepat
             </h3>
             <div class="flex flex-wrap gap-2">
-                <button
+                <Button
                     v-for="status in statusOptions"
                     :key="status.value"
-                    :class="[
-                        'btn-sm',
-                        task.status === status.value
-                            ? 'btn-primary'
-                            : 'btn-secondary',
-                    ]"
+                    :variant="
+                        task.status === status.value ? 'primary' : 'secondary'
+                    "
+                    size="sm"
+                    :loading="
+                        statusUpdating && activeUpdatingStatus === status.value
+                    "
+                    :disabled="statusUpdating || task.status === status.value"
                     @click="updateStatus(status.value)"
                 >
                     {{ status.label }}
-                </button>
+                </Button>
             </div>
         </div>
 

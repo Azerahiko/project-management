@@ -26,6 +26,24 @@ describe('Project Management', function () {
             $this->actingAs($developer)->get('/projects')->assertOk();
         });
 
+        it('allows admin and project manager to access trashed projects page', function () {
+            [$admin, $pm] = createTestUsers();
+
+            foreach ([$admin, $pm] as $user) {
+                $this->actingAs($user)->get('/projects/trashed')->assertOk();
+            }
+        });
+
+        it('forbids developer, reviewer, client from accessing trashed projects page', function () {
+            [, , $developer, $client] = createTestUsers();
+            $reviewer = User::factory()->create(['is_active' => true]);
+            $reviewer->assignRole('reviewer');
+
+            foreach ([$developer, $reviewer, $client] as $user) {
+                $this->actingAs($user)->get('/projects/trashed')->assertForbidden();
+            }
+        });
+
         it('allows admin to access create project page', function () {
             [$admin] = createTestUsers();
             $this->actingAs($admin)->get('/projects/create')->assertOk();

@@ -56,7 +56,7 @@ const projectToRestore = ref<Project | null>(null);
 const restoring = ref(false);
 
 const canRestore = computed(() =>
-    Boolean(page.props.auth.user?.permissions.includes('projects.update')),
+    Boolean(page.props.auth.user?.permissions.includes('projects.delete')),
 );
 
 const sortValue = ref('deleted_at:desc');
@@ -116,7 +116,7 @@ function getProjectCover(id: number): string {
 function canUpdateProject(project: Project): boolean {
     return Boolean(
         project.can_update &&
-        page.props.auth.user?.permissions.includes('projects.update'),
+        page.props.auth.user?.permissions.includes('projects.delete'),
     );
 }
 

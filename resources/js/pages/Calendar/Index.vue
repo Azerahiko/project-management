@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { calendar } from '@/routes';
 import taskRoutes from '@/routes/tasks';
+import penugasan from '@/routes/penugasan';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Avatar from '@/components/ui/Avatar.vue';
 import { getIcon } from '@/components/sidebar/icons';
@@ -436,7 +437,7 @@ function relativeDueLabel(value: string): string {
 
                 <Link
                     v-if="canViewTasks"
-                    :href="taskRoutes.create.url()"
+                    :href="penugasan.create.url()"
                     class="btn btn-primary text-xs shadow-2xs"
                 >
                     <component :is="getIcon('Plus')" class="h-4 w-4" />

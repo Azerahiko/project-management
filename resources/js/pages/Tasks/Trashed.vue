@@ -9,6 +9,7 @@ import {
 } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import tasksRoute from '@/routes/tasks';
+import penugasanRoute from '@/routes/penugasan';
 import projectsRoute from '@/routes/projects';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useTrashedTasks } from '@/composables/useTrashedTasks';
@@ -29,7 +30,7 @@ const page = usePage();
 const { success, error: toastError } = useToast();
 
 const props = defineProps<{
-    project: Project;
+    project?: Project;
 }>();
 
 const search = ref('');
@@ -40,7 +41,7 @@ const filters = reactive<TaskFilters>({
     status: '',
     priority: '',
     assignee_id: '',
-    project_id: String(props.project.id),
+    project_id: props.project ? String(props.project.id) : '',
     sort_by: 'deleted_at',
     sort_direction: 'desc',
     page: 1,
@@ -54,7 +55,7 @@ const {
     error,
     fetchTasks,
     restoreTask,
-} = useTrashedTasks(props.project.id, filters);
+} = useTrashedTasks(props.project?.id ?? null, filters);
 
 const restoreModalOpen = ref(false);
 const taskToRestore = ref<Task | null>(null);
@@ -229,8 +230,15 @@ watch(
                 <p
                     class="mt-1 max-w-2xl text-sm leading-6 text-surface-700 dark:text-surface-200"
                 >
-                    Kelola tugas yang dihapus dari proyek "{{ project.name }}".
-                    Pulihkan atau biarkan mereka dihapus permanen.
+                    <template v-if="project">
+                        Kelola tugas yang dihapus dari proyek "{{
+                            project.name
+                        }}". Pulihkan atau biarkan mereka dihapus permanen.
+                    </template>
+                    <template v-else>
+                        Kelola seluruh tugas yang dihapus di workspace. Pulihkan
+                        atau hapus permanen.
+                    </template>
                 </p>
             </div>
 
@@ -245,11 +253,15 @@ watch(
                     {{ meta.total }} tugas dihapus
                 </span>
                 <Link
-                    :href="projectsRoute.show.url({ project: project.id })"
+                    :href="
+                        project
+                            ? projectsRoute.show.url({ project: project.id })
+                            : penugasanRoute.index.url()
+                    "
                     class="btn btn-secondary w-full sm:w-auto"
                 >
                     <component :is="getIcon('ArrowLeft')" class="h-4 w-4" />
-                    Kembali ke Proyek
+                    {{ project ? 'Kembali ke Proyek' : 'Kembali ke Penugasan' }}
                 </Link>
             </div>
         </div>
@@ -628,11 +640,15 @@ watch(
                     Reset Filter
                 </button>
                 <Link
-                    :href="projectsRoute.show.url({ project: project.id })"
+                    :href="
+                        project
+                            ? projectsRoute.show.url({ project: project.id })
+                            : penugasanRoute.index.url()
+                    "
                     class="btn btn-primary"
                 >
                     <component :is="getIcon('ArrowLeft')" class="h-4 w-4" />
-                    Kembali ke Proyek
+                    {{ project ? 'Kembali ke Proyek' : 'Kembali ke Penugasan' }}
                 </Link>
             </div>
         </div>

@@ -146,7 +146,7 @@ describe('Task Collaboration', function () {
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertNoContent();
 
-            $this->assertSoftDeleted('task_comments', ['id' => $comment->id]);
+            $this->assertDatabaseMissing('task_comments', ['id' => $comment->id]);
         });
 
         it('allows project owner to delete any comment in project', function () {
@@ -160,7 +160,7 @@ describe('Task Collaboration', function () {
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertNoContent();
 
-            $this->assertSoftDeleted('task_comments', ['id' => $comment->id]);
+            $this->assertDatabaseMissing('task_comments', ['id' => $comment->id]);
         });
 
         it('denies project manager deleting comment (only owner can)', function () {
@@ -417,7 +417,7 @@ describe('Task Collaboration', function () {
                 ->deleteJson("/api/comments/{$comment->id}")
                 ->assertNoContent();
 
-            $this->assertSoftDeleted('task_comments', ['id' => $comment->id]);
+            $this->assertDatabaseMissing('task_comments', ['id' => $comment->id]);
         });
 
         it('excludes soft deleted comments from index', function () {
@@ -454,6 +454,27 @@ describe('Task Collaboration', function () {
 
             $activities = TaskActivity::where('task_id', $this->task->id)->get();
             $this->assertCount(2, $activities); // task.created + comment.created + task.deleted
+        });
+
+        describe('Removed comment trash endpoints', function () {
+            it('returns 404 for removed comment trash and restore routes', function () {
+                $comment = TaskComment::factory()->create([
+                    'task_id' => $this->task->id,
+                    'user_id' => $this->developer->id,
+                ]);
+
+                $this->actingAs($this->developer)
+                    ->get("/tasks/{$this->task->id}/comments/trashed")
+                    ->assertNotFound();
+
+                $this->actingAs($this->developer)
+                    ->getJson("/api/tasks/{$this->task->id}/comments/trashed")
+                    ->assertNotFound();
+
+                $this->actingAs($this->developer)
+                    ->postJson("/api/comments/{$comment->id}/restore")
+                    ->assertNotFound();
+            });
         });
     });
 });

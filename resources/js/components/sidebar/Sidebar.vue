@@ -15,6 +15,7 @@ import { prefersReducedMotion } from '@/lib/motion';
 import { useNotifications } from '@/composables/useNotifications';
 import { logout } from '@/routes';
 import tasks from '@/routes/tasks';
+import penugasan from '@/routes/penugasan';
 import projects from '@/routes/projects';
 import users from '@/routes/users';
 
@@ -94,6 +95,12 @@ const menuSections = computed<MenuSection[]>(() => [
                 icon: 'CheckSquare',
                 permission: 'tasks.view',
                 badge: stats.value.my_tasks_count,
+            },
+            {
+                label: 'Penugasan',
+                href: penugasan.index.url(),
+                icon: 'ListChecks',
+                permission: 'tasks.create',
             },
             {
                 label: 'Proyek Tim',
