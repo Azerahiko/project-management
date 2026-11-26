@@ -193,12 +193,14 @@ function handlePageChange(pageNumber: number): void {
 }
 
 function confirmDelete(task: Task): void {
+    if (!isPenugasan.value) return;
+
     taskToDelete.value = task;
     deleteModalOpen.value = true;
 }
 
 async function executeDelete(): Promise<void> {
-    if (!taskToDelete.value || deletingTask.value) return;
+    if (!isPenugasan.value || !taskToDelete.value || deletingTask.value) return;
 
     deletingTask.value = true;
     try {
@@ -575,7 +577,7 @@ watch(
 
                         <!-- Delete Action Button -->
                         <button
-                            v-if="task.can_delete"
+                            v-if="isPenugasan && task.can_delete"
                             type="button"
                             class="rounded-lg p-1 text-surface-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400"
                             title="Hapus Tugas"
@@ -650,7 +652,7 @@ watch(
                                 </span>
 
                                 <button
-                                    v-if="task.can_delete"
+                                    v-if="isPenugasan && task.can_delete"
                                     type="button"
                                     class="rounded p-0.5 text-surface-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400"
                                     title="Hapus Tugas"
@@ -758,6 +760,7 @@ watch(
 
         <!-- Delete Confirmation Modal -->
         <Modal
+            v-if="isPenugasan"
             :open="deleteModalOpen"
             title="Hapus Tugas"
             @close="deleteModalOpen = false"
